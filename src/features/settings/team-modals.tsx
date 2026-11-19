@@ -71,14 +71,14 @@ export function InviteModal({
       open={open}
       onClose={onClose}
       size="md"
-      title="Invite teammates"
+      title="Invite Teammates"
       description="They join with the role you pick and get exactly its access."
       footer={
         <div className="flex w-full items-center justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button size="sm" onClick={send} disabled={!list.length}>
             <Send className="size-3.5" />
-            {list.length > 1 ? `Send ${list.length} invites` : "Send invite"}
+            {list.length > 1 ? `Send ${list.length} Invites` : "Send Invite"}
           </Button>
         </div>
       }
@@ -103,7 +103,7 @@ export function InviteModal({
         </div>
 
         <div>
-          <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">What {activeRole} can do</Text>
+          <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">What {activeRole} Can Do</Text>
           {/* Read, not set: access belongs to the role. Changing it for a few
               invitees would make people with the same role able to do
               different things, with nothing on the role to say so. */}
@@ -180,7 +180,7 @@ export function EmailChips({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="invite-emails" className="text-label font-semibold text-ink-2">Email addresses</label>
+      <label htmlFor="invite-emails" className="text-label font-semibold text-ink-2">Email Addresses</label>
       <div
         onClick={() => inputRef.current?.focus()}
         className="flex min-h-[2.75rem] w-full cursor-text flex-wrap items-center gap-1.5 rounded-control border border-hair-2 bg-card px-2 py-1.5 transition-colors focus-within:border-brand focus-within:ring-1 focus-within:ring-brand/20"
@@ -327,7 +327,7 @@ export function RoleConfigModal({
       open={open}
       onClose={onClose}
       size="xl"
-      title="Role configuration"
+      title="Role Configuration"
       description="Define what each role can do. Invites start from these; a teammate can still be adjusted one by one."
       footer={
         <div className="flex w-full items-center justify-end">
@@ -340,7 +340,7 @@ export function RoleConfigModal({
         <div className="flex flex-col gap-1.5">
           <Button size="sm" variant="secondary" onClick={startNew} className={cn("mb-1 justify-start gap-1.5", isNew && "border-brand text-brand-deep")}>
             <Plus className="size-3.5" />
-            New role
+            New Role
           </Button>
           {s.roles.map((r) => (
             <button
@@ -370,12 +370,12 @@ export function RoleConfigModal({
         <div className="flex min-w-0 flex-col gap-4 rounded-panel border border-hair bg-canvas p-4">
           {/* Save and delete sit at the top, and stay there while the access grid scrolls. */}
           <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-center gap-2 rounded-t-panel border-b border-hair bg-canvas px-4 py-3">
-            <Text size="body" weight="bold" className="min-w-0 truncate">{isNew ? "New role" : role?.name}</Text>
+            <Text size="body" weight="bold" className="min-w-0 truncate">{isNew ? "New Role" : role?.name}</Text>
             <div className="ml-auto flex items-center gap-2">
             {!isNew && !role?.locked && (
               <Button size="sm" variant="ghost" onClick={tryDelete} className="gap-1.5 text-danger hover:text-danger">
                 <Trash2 className="size-3.5" />
-                Delete role
+                Delete Role
               </Button>
             )}
             {!isNew && role?.locked && (
@@ -387,7 +387,7 @@ export function RoleConfigModal({
                 <Button size="sm" variant="ghost" onClick={() => open_(selected)}>Discard</Button>
               )}
               <Button size="sm" onClick={save} disabled={!dirty || !valid}>
-                {isNew ? "Create role" : "Save changes"}
+                {isNew ? "Create Role" : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -419,7 +419,7 @@ export function RoleConfigModal({
                     onClose();
                   }}
                 >
-                  Show these members
+                  Show These Members
                 </Button>
               )}
             </div>
@@ -430,14 +430,14 @@ export function RoleConfigModal({
               <Text size="body" weight="bold" className="block text-danger">Delete {role?.name}?</Text>
               <Text size="label" tone="muted" className="mt-1 block">Nobody uses it, so nothing else changes. It won&rsquo;t be offered in invites any more.</Text>
               <div className="mt-2 flex items-center gap-2">
-                <Button size="sm" variant="danger" onClick={doDelete}>Delete role</Button>
+                <Button size="sm" variant="danger" onClick={doDelete}>Delete Role</Button>
                 <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
               </div>
             </div>
           )}
 
           <Field
-            label="Role name"
+            label="Role Name"
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
             placeholder="e.g. Creative team"
@@ -452,7 +452,7 @@ export function RoleConfigModal({
 
           {/* The permissions in the app's own words: what someone in this role will find. */}
           <div className="rounded-control border border-hair bg-card p-3">
-            <Text size="label" weight="bold" className="mb-1.5 block">What this role sees</Text>
+            <Text size="label" weight="bold" className="mb-1.5 block">What This Role Sees</Text>
             <ul className="grid gap-1">
               {roleSees(draftPerms).sees.map((line) => (
                 <li key={line} className="flex items-start gap-1.5">

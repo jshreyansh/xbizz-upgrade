@@ -81,9 +81,9 @@ export function DevShapeMenuItems({ editorVersion, onDone }: { editorVersion?: E
   return (
     <>
       <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-2 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
-        Video shape
+        Video Shape
         <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
-          Dev only
+          Dev Only
         </span>
       </div>
       {options.map((option) => {
@@ -110,9 +110,9 @@ export function DevShapeMenuItems({ editorVersion, onDone }: { editorVersion?: E
         <>
           <div className="mx-1 my-1 border-t border-hair" />
           <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-1.5 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
-            Editor build
+            Editor Build
             <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
-              Dev only
+              Dev Only
             </span>
           </div>
           {([

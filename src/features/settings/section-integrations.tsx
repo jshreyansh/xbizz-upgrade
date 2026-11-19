@@ -70,7 +70,7 @@ function IntegrationCard({
           className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-card px-2.5 py-1.5 transition-colors hover:border-brand"
         >
           <BookOpen className="size-3.5 text-ink-3" />
-          <span className="text-label font-bold text-ink">See docs</span>
+          <span className="text-label font-bold text-ink">See Docs</span>
         </a>
         {primary && <Button size="sm" variant="secondary" onClick={onOpen}>{primary}</Button>}
       </div>
@@ -82,7 +82,7 @@ export function SectionIntegrations() {
   const s = useSettingsStore();
   /* Integrations: View sees what's connected and its activity; Manage connects and configures. */
   const canManage = useCan().can("integrationsManage");
-  const DIRECTION = { pull: "Pull only", push: "Push only", both: "Both" } as const;
+  const DIRECTION = { pull: "Pull Only", push: "Push Only", both: "Both" } as const;
   const [open, setOpen] = useState<"veeva" | "teams" | "imessage" | null>(null);
 
   /** Connect, then verify — a card saying Connected before a successful call is
@@ -95,7 +95,7 @@ export function SectionIntegrations() {
   return (
     <Stack gap={4}>
       <SettingsCard
-        title="Connected systems"
+        title="Connected Systems"
         description={canManage
           ? "Review and distribution. Each one links out to its own configuration docs."
           : "What this workspace is connected to, for review and distribution. Connecting and configuring comes with Integrations: Manage."}
@@ -139,20 +139,20 @@ export function SectionIntegrations() {
                 </Chip>
                 {canManage && (
                   <Button size="sm" variant="secondary" onClick={() => connectAndVerify("veeva")}>
-                    <RefreshCw className="size-3.5" /> Test connection
+                    <RefreshCw className="size-3.5" /> Test Connection
                   </Button>
                 )}
               </div>
             </SettingRow>
-            <SettingRow label="Sync direction" hint="Pharma teams rarely want blind push">
+            <SettingRow label="Sync Direction" hint="Pharma teams rarely want blind push">
               {canManage ? (
                 <Segmented
                   ariaLabel="Sync direction"
                   value={s.veevaDirection}
                   onChange={s.setVeevaDirection}
                   options={[
-                    { id: "pull", label: "Pull only" },
-                    { id: "push", label: "Push only" },
+                    { id: "pull", label: "Pull Only" },
+                    { id: "push", label: "Push Only" },
                     { id: "both", label: "Both" },
                   ]}
                 />
@@ -176,7 +176,7 @@ export function SectionIntegrations() {
       >
         <Stack gap={4}>
           <div>
-            <SettingRow label="Agent identity" hint="The address the agent posts as" htmlFor="t-email">
+            <SettingRow label="Agent Identity" hint="The address the agent posts as" htmlFor="t-email">
               {canManage ? (
                 <Field id="t-email" value={s.teamsAgentEmail}
                   onChange={(e) => s.setTeamsAgentEmail(e.target.value)} className="text-body" />
@@ -184,7 +184,7 @@ export function SectionIntegrations() {
                 <ReadOnlyValue value={s.teamsAgentEmail} />
               )}
             </SettingRow>
-            <SettingRow label="Direct messages" hint="Whether the agent may DM people">
+            <SettingRow label="Direct Messages" hint="Whether the agent may DM people">
               {canManage ? (
                 <Toggle checked={s.teamsAllowDm} label="Allow direct messages" onChange={s.setTeamsAllowDm} />
               ) : (
@@ -239,7 +239,7 @@ export function SectionIntegrations() {
         title="iMessage" description="A sender number for field-force messaging."
       >
         <Stack gap={4}>
-          <SettingRow label="Sender number" htmlFor="im-num">
+          <SettingRow label="Sender Number" htmlFor="im-num">
             {canManage ? (
               <Field id="im-num" value={s.imessageNumber}
                 onChange={(e) => s.setImessageNumber(e.target.value)}

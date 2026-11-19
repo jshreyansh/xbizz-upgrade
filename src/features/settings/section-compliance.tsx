@@ -70,7 +70,7 @@ export function SectionCompliance() {
       <Stack gap={4}>
         {me?.permissions.includes("create") && (
           <SettingsCard
-            title="Your approval chain"
+            title="Your Approval Chain"
             description="The stages your work passes through. Set by an admin."
           >
             {mine.length === 0 ? (
@@ -142,7 +142,7 @@ export function SectionCompliance() {
   return (
     <Stack gap={4}>
       <SettingsCard
-        title="Default chain for new creators"
+        title="Default Chain for New Creators"
         description="Anyone who can create and has no chain of their own goes through this, including people who join later."
         actions={<Button size="sm" variant="secondary" onClick={() => setEditing(DEFAULT_CHAIN_ID)}>Edit</Button>}
       >
@@ -164,7 +164,7 @@ export function SectionCompliance() {
       </SettingsCard>
 
       <SettingsCard
-        title="Approval chains"
+        title="Approval Chains"
         description="One chain per person, for everyone who creates work. Reviewers do not appear. They are the approvers."
       >
         <DataTable
@@ -179,9 +179,9 @@ export function SectionCompliance() {
         </Text>
       </SettingsCard>
 
-      <SettingsCard title="Content expiry" description="What happens as approved content ages.">
+      <SettingsCard title="Content Expiry" description="What happens as approved content ages.">
         <div>
-          <SettingRow label="Warn before expiry" hint="Days ahead" htmlFor="c-warn">
+          <SettingRow label="Warn Before Expiry" hint="Days ahead" htmlFor="c-warn">
             <Field
               id="c-warn"
               type="number"
@@ -190,7 +190,7 @@ export function SectionCompliance() {
               className="max-w-24 text-body"
             />
           </SettingRow>
-          <SettingRow label="Auto-archive after expiry" hint="Removes it from the library">
+          <SettingRow label="Auto-Archive After Expiry" hint="Removes it from the library">
             <Toggle
               checked={s.autoArchive}
               label="Auto-archive after expiry"
@@ -206,12 +206,12 @@ export function SectionCompliance() {
         onClose={() => setEditing(null)}
         side="right"
         size={560}
-        title={editMember ? (editMember.id === DEFAULT_CHAIN_ID ? "Default chain for new creators" : `${editMember.name}'s chain`) : ""}
+        title={editMember ? (editMember.id === DEFAULT_CHAIN_ID ? "Default Chain for New Creators" : `${editMember.name}'s Chain`) : ""}
         description="Draft and Approved are the fixed ends. Drag to reorder the middle."
         footer={
           editMember && (
             <div className="flex w-full items-center justify-between gap-2">
-              <Button size="sm" variant="ghost" onClick={() => s.clearChain(editMember.id)}>Clear chain</Button>
+              <Button size="sm" variant="ghost" onClick={() => s.clearChain(editMember.id)}>Clear Chain</Button>
               <Button
                 size="sm"
                 onClick={() => {
@@ -221,7 +221,7 @@ export function SectionCompliance() {
                   ]);
                 }}
               >
-                <Plus className="size-3.5" /> Add stage
+                <Plus className="size-3.5" /> Add Stage
               </Button>
             </div>
           )
@@ -264,7 +264,7 @@ export function SectionCompliance() {
 
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="flex w-48 flex-col gap-1">
-                        <Text size="caption" tone="muted" weight="semibold">Role considered</Text>
+                        <Text size="caption" tone="muted" weight="semibold">Role Considered</Text>
                         <SelectMenu
                           size="sm"
                           ariaLabel="Role considered"
@@ -296,9 +296,9 @@ export function SectionCompliance() {
                               chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo } : x)));
                           }}
                           options={[
-                            { value: "anyone", label: "Anyone in the role" },
-                            { value: "person", label: "A named person" },
-                            { value: "seniority", label: "A seniority floor" },
+                            { value: "anyone", label: "Anyone in the Role" },
+                            { value: "person", label: "A Named Person" },
+                            { value: "seniority", label: "A Seniority Floor" },
                           ]}
                         />
                       </div>
@@ -320,7 +320,7 @@ export function SectionCompliance() {
 
                       {st.narrowTo.kind === "seniority" && (
                         <div className="flex w-40 flex-col gap-1">
-                          <Text size="caption" tone="muted" weight="semibold">Floor, and above</Text>
+                          <Text size="caption" tone="muted" weight="semibold">Floor and Above</Text>
                           <SelectMenu
                             size="sm"
                             ariaLabel="Seniority floor"
@@ -377,12 +377,12 @@ function ChainsYouReview({ meId }: { meId: string }) {
 
   return (
     <SettingsCard
-      title="Chains you review in"
+      title="Chains You Review In"
       description="Whose work comes to you in MLR Review, and at which step. Set by an admin."
     >
       {rows.length === 0 ? (
         <Text size="body" tone="muted">
-          You aren&apos;t on anyone&apos;s approval chain yet, so nothing comes to you for review. An admin adds reviewers in Compliance &amp; MLR.
+          You aren&apos;t on anyone&apos;s approval chain yet, so nothing comes to you for review. An admin adds reviewers in Compliance and MLR.
         </Text>
       ) : (
         <div className="divide-y divide-hair">

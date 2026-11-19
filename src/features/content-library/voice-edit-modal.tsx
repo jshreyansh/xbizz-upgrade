@@ -47,7 +47,7 @@ export function VoiceEditModal({ voice, onCancel, onSave }: { voice: Voice; onCa
     <Modal
       open
       onClose={close}
-      title="Edit voice"
+      title="Edit Voice"
       description="Change how it's named and tagged. To change the recording, clone it again."
       size="md"
       footer={
@@ -70,8 +70,8 @@ export function VoiceEditModal({ voice, onCancel, onSave }: { voice: Voice; onCa
         {voice.source === "team" && (
           <div className="grid gap-2 sm:grid-cols-2">
             {([
-              { id: "source" as const, title: "Original recording", sub: `${voice.seconds ?? "—"} sec · ${voice.method ?? "recorded"}`, disabled: false },
-              { id: "clone" as const, title: "Cloned voice", sub: voice.similarity ? `Sounds ${voice.similarity}% like the recording` : "Reads its preview line", disabled: false },
+              { id: "source" as const, title: "Original Recording", sub: `${voice.seconds ?? "—"} sec · ${voice.method ?? "recorded"}`, disabled: false },
+              { id: "clone" as const, title: "Cloned Voice", sub: voice.similarity ? `Sounds ${voice.similarity}% like the recording` : "Reads its preview line", disabled: false },
             ]).map((card) => (
               <div key={card.id} className={cn("flex items-center gap-3 rounded-control border p-3", card.id === "clone" ? "border-brand/30 bg-tint" : "border-hair-2")}>
                 <button

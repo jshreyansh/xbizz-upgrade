@@ -60,7 +60,7 @@ export function ClaimRow({
         </span>
         <span>Updated {claimUpdatedOn(claim.id)}</span>
         <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-label font-bold text-ink-3 transition-colors group-hover:text-brand">
-          View details
+          View Details
           <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
         </span>
       </div>

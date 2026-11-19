@@ -32,7 +32,7 @@ export function MediaPlaceholder({
   className,
 }: {
   kind: "image" | "video" | "background" | "graph";
-  /** What is coming, e.g. "Cardiac & Vascular Model". */
+  /** What is coming, e.g. "Cardiac and Vascular Model". */
   label: string;
   /**
    * The element's real in/out and transition, from the scene. Optional

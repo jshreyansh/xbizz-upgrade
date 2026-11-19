@@ -8,6 +8,7 @@ import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
 import { dossierFor } from "@/features/dossiers/dossier-for";
 import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
+import { Chip } from "@/components/ui/chip";
 
 /**
  * The approved claims, beside whatever is being written.
@@ -48,15 +49,15 @@ export function ClaimsPanel({
       <div className="flex items-center justify-between border-b border-hair pb-2.5">
         <div>
           <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
-            Compliance grounding
+            Compliance Grounding
           </div>
           <h2 className="mt-0.5 text-body-lg font-[800] text-ink">
             {APPROVED_CLAIMS.length} approved claims
           </h2>
         </div>
-        <span className="rounded-chip border border-ok-line bg-ok-bg px-2.5 py-0.5 text-micro font-bold text-ok">
+        <Chip tone="ok" size="xs" weight="bold" className="px-2.5">
           ✓ PromoMats verified
-        </span>
+        </Chip>
       </div>
 
       <div className="space-y-2.5">
@@ -119,7 +120,7 @@ export function ClaimsPanel({
               )}
             >
               <BookOpen className="size-3" />
-              See in dossier
+              See in Dossier
             </button>
           </div>
         ))}

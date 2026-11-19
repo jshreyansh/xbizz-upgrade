@@ -17,13 +17,14 @@ export function useTokenValues(names: string[]) {
     // come from resolved CSS custom properties, so the stylesheet has to be
     // applied first, and a synchronous setState here would also cascade an
     // extra render pass.
-    const raf = requestAnimationFrame(() => {
+    /* A timer rather than requestAnimationFrame: a frame never comes in a background tab, and the table would stay empty. */
+    const t = setTimeout(() => {
       const cs = getComputedStyle(document.documentElement);
       const next: Record<string, string> = {};
       for (const n of key.split("|")) next[n] = cs.getPropertyValue(n).trim();
       setValues(next);
-    });
-    return () => cancelAnimationFrame(raf);
+    }, 0);
+    return () => clearTimeout(t);
   }, [key]);
 
   return values;
@@ -51,7 +52,7 @@ export function SwatchRow({
               className="size-9 shrink-0 rounded-chip squircle"
               style={{
                 background: `var(${n})`,
-                outline: "1px solid rgba(10,13,20,.12)",
+                outline: "1px solid var(--color-hair-2)",
                 outlineOffset: -1,
               }}
             />

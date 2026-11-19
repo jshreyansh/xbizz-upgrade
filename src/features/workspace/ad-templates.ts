@@ -23,30 +23,30 @@ export interface AdTemplate {
 }
 
 export const IMAGE_TEMPLATES: AdTemplate[] = [
-  { id: "img-stat", name: "Result front and centre", blurb: "The number leads; the picture supports it.", layout: "stat" },
-  { id: "img-photo", name: "Full picture, words on top", blurb: "A real moment fills the frame.", layout: "photo" },
-  { id: "img-product", name: "Product hero", blurb: "The pack is the picture.", layout: "product" },
-  { id: "img-split", name: "Picture beside the words", blurb: "Half picture, half message.", layout: "split" },
-  { id: "img-headline", name: "Bold headline card", blurb: "Brand colour and one strong line.", layout: "headline" },
-  { id: "img-quote", name: "In their words", blurb: "A patient's line, with their picture.", layout: "quote" },
-  { id: "img-minimal", name: "Quiet and minimal", blurb: "Lots of space, one line, small picture.", layout: "minimal" },
+  { id: "img-stat", name: "Result Front and Centre", blurb: "The number leads; the picture supports it.", layout: "stat" },
+  { id: "img-photo", name: "Full Picture, Words on Top", blurb: "A real moment fills the frame.", layout: "photo" },
+  { id: "img-product", name: "Product Hero", blurb: "The pack is the picture.", layout: "product" },
+  { id: "img-split", name: "Picture Beside the Words", blurb: "Half picture, half message.", layout: "split" },
+  { id: "img-headline", name: "Bold Headline Card", blurb: "Brand colour and one strong line.", layout: "headline" },
+  { id: "img-quote", name: "In Their Words", blurb: "A patient's line, with their picture.", layout: "quote" },
+  { id: "img-minimal", name: "Quiet and Minimal", blurb: "Lots of space, one line, small picture.", layout: "minimal" },
 ];
 
 export const CAROUSEL_TEMPLATES: AdTemplate[] = [
-  { id: "car-stack", name: "Picture, then words", blurb: "Picture on top, the line beneath.", layout: "split" },
-  { id: "car-photo", name: "Full-picture cards", blurb: "Each card is a moment, words over it.", layout: "photo" },
-  { id: "car-stat", name: "Number-led cards", blurb: "Results lead on the proof cards.", layout: "stat" },
-  { id: "car-headline", name: "Solid colour cards", blurb: "Brand colour, one line per card.", layout: "headline" },
+  { id: "car-stack", name: "Picture, Then Words", blurb: "Picture on top, the line beneath.", layout: "split" },
+  { id: "car-photo", name: "Full-Picture Cards", blurb: "Each card is a moment, words over it.", layout: "photo" },
+  { id: "car-stat", name: "Number-Led Cards", blurb: "Results lead on the proof cards.", layout: "stat" },
+  { id: "car-headline", name: "Solid Colour Cards", blurb: "Brand colour, one line per card.", layout: "headline" },
 ];
 
 /* A document is read, not glanced at: its templates are page designs, with
    the safety and reference pages always plain text whichever is chosen. */
 export const DOCUMENT_TEMPLATES: AdTemplate[] = [
-  { id: "doc-split", name: "Clinical summary", blurb: "Picture on top, the finding beneath, on white.", layout: "split" },
-  { id: "doc-stat", name: "Data-first pages", blurb: "Each result leads with its number.", layout: "stat" },
-  { id: "doc-photo", name: "Picture-led pages", blurb: "A full picture on every page, words over it.", layout: "photo" },
-  { id: "doc-headline", name: "Brand colour pages", blurb: "Solid colour, one finding per page.", layout: "headline" },
-  { id: "doc-minimal", name: "Quiet and minimal", blurb: "Mostly words and space, a small picture.", layout: "minimal" },
+  { id: "doc-split", name: "Clinical Summary", blurb: "Picture on top, the finding beneath, on white.", layout: "split" },
+  { id: "doc-stat", name: "Data-First Pages", blurb: "Each result leads with its number.", layout: "stat" },
+  { id: "doc-photo", name: "Picture-Led Pages", blurb: "A full picture on every page, words over it.", layout: "photo" },
+  { id: "doc-headline", name: "Brand Colour Pages", blurb: "Solid colour, one finding per page.", layout: "headline" },
+  { id: "doc-minimal", name: "Quiet and Minimal", blurb: "Mostly words and space, a small picture.", layout: "minimal" },
 ];
 
 export interface TemplateFit {

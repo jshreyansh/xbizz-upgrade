@@ -32,6 +32,7 @@ import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 
 import { Portal } from "@/components/ui/portal";
+import { Chip } from "@/components/ui/chip";
 
 export interface BrandItem {
   id: string;
@@ -98,13 +99,13 @@ const INITIAL_BRANDS: BrandItem[] = [
     hasDossier: true,
     dossierIds: ["pulmovax-sample"],
   },
-  { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
+  { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology and Musculoskeletal"], hasDossier: false },
+  { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology and Musculoskeletal"], hasDossier: false },
+  { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology and Musculoskeletal"], hasDossier: false },
   { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives & Antimicrobials"], hasDossier: false },
   { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false },
   { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false },
-  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false },
+  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology and Urology"], hasDossier: false },
 ];
 
 const DOSSIERS: Record<string, DossierItem> = {
@@ -263,8 +264,8 @@ const DOSSIERS: Record<string, DossierItem> = {
 
 const ALL_THERAPY_AREAS = [
   "Cardiology",
-  "Diabetology & Metabolic Disorders",
-  "CNS & Neurology",
+  "Diabetology and Metabolic Disorders",
+  "CNS and Neurology",
   "Psychiatry",
   "Respiratory",
   "Gastroenterology",
@@ -272,14 +273,14 @@ const ALL_THERAPY_AREAS = [
   "Anti-infectives & Antimicrobials",
   "Gynaecology & Women's Health",
   "Dermatology",
-  "Nephrology & Urology",
-  "Rheumatology & Musculoskeletal",
+  "Nephrology and Urology",
+  "Rheumatology and Musculoskeletal",
   "Ophthalmology",
   "Paediatrics",
   "General Medicine & Primary Care",
-  "Allergy & ENT",
-  "Nutrition & Supplements",
-  "Dermatology & Aesthetics",
+  "Allergy and ENT",
+  "Nutrition and Supplements",
+  "Dermatology and Aesthetics",
   "Haematology",
   "Endocrinology",
   "Immunology",
@@ -292,7 +293,7 @@ const TOPIC_OPTIONS = [
   "Product Introduction",
   "Mechanism of Action",
   "Indications",
-  "Dosage & Safety",
+  "Dosage and Safety",
   "Drug Interactions",
   "Side Effects",
 ];
@@ -301,7 +302,7 @@ const topicIcons: Record<string, typeof Pill> = {
   "Product Introduction": Pill,
   "Mechanism of Action": Activity,
   "Indications": Target,
-  "Dosage & Safety": ShieldAlert,
+  "Dosage and Safety": ShieldAlert,
   "Drug Interactions": Zap,
   "Side Effects": HelpCircle,
 };
@@ -526,7 +527,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   className="rounded-control border-hair-2 bg-card hover:bg-subtle text-body font-bold text-ink shadow-2xs hover:border-brand cursor-pointer shrink-0 gap-1.5 h-8.5 px-3"
                 >
                   <Building2 className="size-3.5 text-brand" />
-                  <span>Change brand</span>
+                  <span>Change Brand</span>
                 </Button>
               </div>
             </div>
@@ -536,7 +537,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="grid size-5.5 place-items-center rounded-full bg-brand text-white text-caption font-bold">1</span>
-                  <h3 className="text-body-lg font-[850] text-ink">Search &amp; Pick Brand</h3>
+                  <h3 className="text-body-lg font-[850] text-ink">Search and Pick Brand</h3>
                 </div>
                 <button
                   type="button"
@@ -554,7 +555,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   type="text"
                   value={brandSearchQuery}
                   onChange={(e) => setBrandSearchQuery(e.target.value)}
-                  placeholder="Search brands (e.g. Velmora, Onkavia, 3D)..."
+                  placeholder="Search brands (e.g. Velmora, Onkavia, 3D)…"
                   className="w-full pl-8.5 pr-4 py-2 rounded-control border border-hair-2 bg-card text-body text-ink placeholder:text-ink-4 focus:outline-none focus:border-brand transition-all shadow-2xs"
                   autoFocus
                 />
@@ -625,7 +626,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 className="w-full flex items-center justify-center gap-1.5 py-2 rounded-control border border-dashed border-hair-2 hover:border-brand bg-card text-body font-bold text-brand transition-all cursor-pointer"
               >
                 <Plus className="size-3.5" />
-                <span>Add a new brand</span>
+                <span>Add a New Brand</span>
               </button>
             </div>
           )}
@@ -636,13 +637,13 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               <div className="flex items-center gap-2">
                 <FileText className="size-4 text-brand" />
                 <h3 className="text-subhead font-[850] text-ink">
-                  Available Dossiers &amp; Regulatory Sources for {selectedBrand.name}
+                  Available Dossiers and Regulatory Sources for {selectedBrand.name}
                 </h3>
               </div>
               {selectedBrand.hasDossier && (
-                <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
+                <Chip tone="ok" size="md" weight="bold" className="px-2">
                   ✓ {availableDossiers.length} Options Available · Pick One
-                </span>
+                </Chip>
               )}
             </div>
 
@@ -718,7 +719,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       {dossier.documents && dossier.documents.length > 0 && (
                         <div className="mt-3.5 space-y-1.5 border-t border-hair pt-3">
                           <div className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                            Attached Clinical Documents &amp; Labels ({dossier.documents.length})
+                            Attached Clinical Documents and Labels ({dossier.documents.length})
                           </div>
                           {dossier.documents.map((doc, dIdx) => (
                             <div
@@ -749,7 +750,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     No Dossier Found for {selectedBrand.name}
                   </h4>
                   <p className="text-body text-ink-3 max-w-[420px] mx-auto mt-1 leading-relaxed">
-                    SwishX requires an approved brand dossier grounded in FDA/EMA prescribing labels and clinical readouts to synthesize compliant video.
+                    SwishX requires an approved brand dossier grounded in FDA/EMA prescribing labels and clinical readouts to synthesise compliant video.
                   </p>
                 </div>
                 <Button
@@ -839,7 +840,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   onChange={(next) => setAudience(next as Audience)}
                   options={AUDIENCE_OPTIONS}
                   ariaLabel="Target Audience"
-                  placeholder="Choose target audience..."
+                  placeholder="Choose target audience…"
                   renderIcon={(item) => <AudienceIcon value={item} />}
                 />
               </div>
@@ -853,9 +854,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     <span className="text-label text-brand font-bold">*</span>
                   </label>
                   {topics.length > 0 && (
-                    <span className="text-caption font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-chip border border-tint-line">
+                    <Chip tone="brand" weight="bold">
                       {topics.length} selected
-                    </span>
+                    </Chip>
                   )}
                 </div>
                 <MultiSelectMenu
@@ -863,7 +864,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   onChange={(next) => setTopics(next)}
                   options={TOPIC_OPTIONS}
                   ariaLabel="Focus Topics"
-                  placeholder="Select one or more topics..."
+                  placeholder="Select one or more topics…"
                   renderIcon={(item) => {
                     const Icon = topicIcons[item] || Pill;
                     return <Icon className="size-3.5 text-brand" />;
@@ -901,7 +902,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             ) : (
               <>
                 <ShieldCheck className="size-3.5 text-brand" />
-                <span>Step 1 and 2 are mandatory</span>
+                <span>Steps 1 and 2 are mandatory</span>
               </>
             )}
           </div>
@@ -923,7 +924,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-hair px-6 py-4 shrink-0 bg-card">
-              <h3 className="text-title font-[850] text-ink tracking-tight">Add brand</h3>
+              <h3 className="text-title font-[850] text-ink tracking-tight">Add Brand</h3>
               <button
                 type="button"
                 onClick={() => setIsAddBrandModalOpen(false)}
@@ -981,8 +982,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       className="text-label font-bold text-brand hover:underline cursor-pointer"
                     >
                       {newBrandTherapyAreas.length === ALL_THERAPY_AREAS.length
-                        ? "Clear all"
-                        : `Select all (${ALL_THERAPY_AREAS.length})`}
+                        ? "Clear All"
+                        : `Select All (${ALL_THERAPY_AREAS.length})`}
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-subtle rounded-control border border-hair">
@@ -1023,7 +1024,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   disabled={!newBrandName.trim()}
                   className="bg-brand hover:bg-brand-deep text-white font-bold text-body h-9 px-5 rounded-control cursor-pointer shadow-xs disabled:opacity-40"
                 >
-                  Add brand
+                  Add Brand
                 </Button>
               </div>
             </form>

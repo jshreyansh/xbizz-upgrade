@@ -139,7 +139,7 @@ export function TeamDock() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--ok)", fontWeight: 700 }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ok)", display: "block", animation: "blink 2s infinite" }} />
-          Session live · All specialists on standby
+          Session live · all specialists on standby
         </div>
       </div>
 

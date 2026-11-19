@@ -33,13 +33,13 @@ const IMAGE_GUIDE: Array<{ id: (typeof CHARACTER_VIEWS)[number]; hint: string; e
 const METHODS: Array<{ id: CreationMethod; title: string; detail: string; icon: typeof Images }> = [
   {
     id: "prompt",
-    title: "Prompt led",
+    title: "Prompt Led",
     detail: "Describe the person and we build the identity from the description.",
     icon: MessageSquareQuote,
   },
   {
     id: "reference",
-    title: "Reference led",
+    title: "Reference Led",
     detail: "Upload footage or photographs of a real person and we build from those.",
     icon: Images,
   },
@@ -127,16 +127,16 @@ export function CharacterCreateModal({
       className="fixed inset-0 z-[9999] grid place-items-center bg-ink/60 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label="Create a character"
+      aria-label="Create a Character"
     >
       <div className="flex max-h-[90vh] w-full max-w-[680px] flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float">
         <div className="flex items-start justify-between gap-3 border-b border-hair bg-canvas px-5 py-4">
           <div>
             <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-              <LogoMark size={13} /> Character studio
+              <LogoMark size={13} /> Character Studio
             </div>
             <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-              Create a character
+              Create a Character
             </h2>
             <p className="mt-0.5 text-label text-ink-3">
               One identity, rendered from four angles, reusable across every asset.
@@ -165,7 +165,7 @@ export function CharacterCreateModal({
         ) : (
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
             <section className="space-y-2.5">
-              <SectionTitle index={1}>Creation method</SectionTitle>
+              <SectionTitle index={1}>Creation Method</SectionTitle>
               <div className="grid gap-2 sm:grid-cols-2">
                 {METHODS.map((option) => {
                   const active = method === option.id;
@@ -208,7 +208,7 @@ export function CharacterCreateModal({
                   <div className="rounded-control border border-hair-2 bg-canvas p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="flex items-center gap-1.5 text-body font-extrabold text-ink">
-                        <Clapperboard className="size-3.5 text-brand" /> Add video
+                        <Clapperboard className="size-3.5 text-brand" /> Add Video
                       </span>
                       <Button
                         size="sm"
@@ -222,7 +222,7 @@ export function CharacterCreateModal({
                           </>
                         ) : (
                           <>
-                            <Upload className="size-3.5" /> Upload footage
+                            <Upload className="size-3.5" /> Upload Footage
                           </>
                         )}
                       </Button>
@@ -249,7 +249,7 @@ export function CharacterCreateModal({
                   {/* Stills. */}
                   <div className="rounded-control border border-hair-2 bg-canvas p-3">
                     <span className="flex items-center gap-1.5 text-body font-extrabold text-ink">
-                      <Images className="size-3.5 text-brand" /> Add images
+                      <Images className="size-3.5 text-brand" /> Add Images
                     </span>
                     <p className="mt-1.5 text-caption leading-snug text-ink-3">
                       Four shots, one per angle. Match the examples and the identity holds.
@@ -304,7 +304,7 @@ export function CharacterCreateModal({
             </section>
 
             <section className="space-y-2">
-              <SectionTitle index={3}>Character type</SectionTitle>
+              <SectionTitle index={3}>Character Type</SectionTitle>
               <div className="flex flex-wrap gap-1.5">
                 {CHARACTER_TYPES.map((option) => {
                   const active = type === option;

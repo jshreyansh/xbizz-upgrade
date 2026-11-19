@@ -444,7 +444,7 @@ export function DynamicSceneComposition({
               color: currentTheme.accent,
             }}
           >
-            {scene.narrativeTag || "EVIDENCE"}
+            {scene.narrativeTag || "Evidence"}
           </span>
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>
             {chromeLabel}

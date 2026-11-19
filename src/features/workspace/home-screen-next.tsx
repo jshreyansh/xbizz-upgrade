@@ -71,7 +71,7 @@ const CREATION_OPTIONS: CreationOption[] = [
   },
   {
     icon: LayoutTemplate,
-    title: "Canvas & Creatives",
+    title: "Canvas and Creatives",
     description: "Print and digital layouts, ads, leave-behinds, banners.",
     href: "#",
     gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
@@ -130,13 +130,13 @@ function CreationCard({ option, index, onOpen }: { option: CreationOption; index
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <b style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px" }}>{option.title}</b>
         {option.soon && (
-          <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
+          <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>Soon</span>
         )}
       </div>
       <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>{option.description}</p>
       {!option.soon && (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--brand)" }}>
-          Get started
+          Get Started
           <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
         </span>
       )}
@@ -251,7 +251,7 @@ export function HomeScreenNext() {
               transition: "background .18s var(--e), color .18s var(--e)",
             }}
           >
-            {mode === "first" ? "First visit" : "Returning"}
+            {mode === "first" ? "First Visit" : "Returning"}
           </button>
         ))}
       </div>
@@ -292,8 +292,8 @@ export function HomeScreenNext() {
       <div key={`aux-${audience}`} className="rise-in-stagger" style={{ marginBottom: 28 }}>
         {audience === "first" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--tint-2)", border: "1px solid var(--tint-line)" }}>
-            <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--brand-deep)", marginRight: 4 }}>Your path</span>
-            {["Brand dossier", "Video & Creatives", "Send for review"].map((step, i, arr) => (
+            <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--brand-deep)", marginRight: 4 }}>Your Path</span>
+            {["Brand Dossier", "Video and Creatives", "Send for Review"].map((step, i, arr) => (
               <div key={step} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>
                   <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: "1px solid var(--hair-2)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>{i + 1}</span>
@@ -315,7 +315,7 @@ export function HomeScreenNext() {
       </div>
 
       {/* ── Showcase — Video · Creatives · Web ─── */}
-      <Panel eyebrow="Video · Creatives · Web" title="See what your team already shipped" subtitle="Every piece below is cited, MLR-cleared, and ready to reuse." delay={90}>
+      <Panel eyebrow="Video · Creatives · Web" title="See What Your Team Already Shipped" subtitle="Every piece below is cited, MLR-cleared, and ready to reuse." delay={90}>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           {SHOWCASE.map((asset, i) => (
             <ShowcaseCard

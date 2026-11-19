@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ChevronLeft,
   ChevronRight,
   ExternalLink,
   Eye,
@@ -15,6 +14,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
+import { BackLink } from "@/components/patterns/back-link";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { Chip } from "@/components/ui/chip";
 import { ProductMark } from "@/features/product-library/product-mark";
 import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -64,13 +66,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
 
   return (
     <div className="page-enter max-w-[980px] space-y-6">
-      <button
-        onClick={() => router.push("/claims-library")}
-        className="inline-flex cursor-pointer items-center gap-1.5 text-body-lg font-bold text-ink-3 transition-colors hover:text-ink"
-      >
-        <ChevronLeft size={15} />
-        Claims Library
-      </button>
+      <BackLink href="/claims-library">Claims Library</BackLink>
 
       {/* The claim, and the two ways of looking at it — one card. The
           statement can run to a paragraph, so the header gives it the room
@@ -85,7 +81,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
               {/* The statement is the heading. The dossier type was standing
                   in for one, which put a category where the claim should be. */}
               <span className="text-label font-extrabold uppercase tracking-[.12em] text-ink-4">
-                Approved claim
+                Approved Claim
               </span>
               <span
                 className={cn(
@@ -127,15 +123,12 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
             </div>
 
             <div className="mt-4 border-t border-hair pt-3.5">
-              <Fact label="Variants included">
+              <Fact label="Variants Included">
                 <div className="flex flex-wrap gap-1.5">
                   {detail.variations.map((variation) => (
-                    <span
-                      key={variation}
-                      className="rounded-chip border border-hair-2 bg-subtle px-2.5 py-1 text-label font-bold text-ink-2"
-                    >
+                    <Chip key={variation} tone="neutral" size="md" weight="bold">
                       {variation}
-                    </span>
+                    </Chip>
                   ))}
                 </div>
               </Fact>
@@ -147,7 +140,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
             <h2 className="text-body font-extrabold uppercase tracking-[.05em] text-ink-4">Record</h2>
             <div className="mt-3 grid gap-4 sm:grid-cols-3">
               <Fact label="Added">{detail.addedOn}</Fact>
-              <Fact label="Last updated">{detail.updatedOn}</Fact>
+              <Fact label="Last Updated">{detail.updatedOn}</Fact>
               <Fact label="Source">
                 {detail.origin === "authored" ? (
                   <span className="block leading-snug">
@@ -236,19 +229,19 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
                       <MessageSquare size={12} /> {asset.comments}
                     </span>
                   )}
-                  <span className="ml-auto font-bold text-brand">Open review</span>
+                  <span className="ml-auto font-bold text-brand">Open Review</span>
                 </div>
               </div>
             </button>
           ))}
 
           {detail.usedIn.length === 0 && (
-            <div className="col-span-full rounded-panel border border-dashed border-hair-2 py-14 text-center">
-              <p className="text-body-lg font-bold text-ink-2">Not used in anything yet</p>
-              <p className="mt-1 text-body text-ink-4">
-                Assets that cite this claim will appear here once they are published.
-              </p>
-            </div>
+            <EmptyState
+              size="md"
+              className="col-span-full"
+              title="Not used in anything yet"
+              hint="Assets that cite this claim will appear here once they are published."
+            />
           )}
         </div>
       )}

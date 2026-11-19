@@ -2,23 +2,45 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Sparkles, Upload } from "lucide-react";
+import { Grid3x3, List, Plus, Sparkles, Upload } from "lucide-react";
 import { useCan } from "@/features/settings/view-as";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { PageHeading } from "@/components/patterns/page-heading";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { PickSearch } from "@/components/patterns/pick-list";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DataList } from "@/components/patterns/data-list";
 import { DISEASE_THERAPY_AREAS } from "@/features/workspace/ad-options";
 import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { TherapyAreaMark, areaMark } from "@/features/therapy-library/therapy-area-mark";
 import { NewTherapyDossierModal } from "@/features/therapy-library/new-therapy-dossier-modal";
-import { TherapyDossierReader } from "@/features/therapy-library/therapy-dossier-reader";
-import { TherapyDossierRow } from "@/features/therapy-library/therapy-dossier-row";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+
+type Kind = "all" | "area" | "disease";
+
+/** One row of the library: a therapy area, or a disease in one. */
+interface Item {
+  key: string;
+  kind: "area" | "disease";
+  areaId: string;
+  name: string;
+  /** For an area, its diseases; for a disease, its area. */
+  detail: string;
+  version?: number;
+  making?: boolean;
+  dossiers: number;
+  sources: number;
+  images: number;
+  updated?: string;
+  href: string;
+}
+
+const KIND_LABEL = { area: "Therapy Area", disease: "Disease" } as const;
 
 /**
- * Therapy areas with their disease dossiers, for unbranded and awareness
+ * Therapy areas and their disease dossiers, for unbranded and awareness
  * content. The Product Library holds brands; this holds the conditions.
+ * Laid out like the Product Library: a filter, then grid or list.
  */
 export function TherapyLibraryScreen() {
   const router = useRouter();
@@ -27,28 +49,54 @@ export function TherapyLibraryScreen() {
   const dossiers = useTherapyLibraryStore((s) => s.dossiers);
   const images = useTherapyLibraryStore((s) => s.images);
   const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<Kind>("all");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [adding, setAdding] = useState(false);
-  /* Browse by therapy area, or straight to the diseases across every area. */
-  const [by, setBy] = useState<"areas" | "diseases">("areas");
-  const [reading, setReading] = useState<string>();
 
-  /* Only areas with something in them; the pop-up offers every area. */
-  const areas = useMemo(() => {
+  const items = useMemo(() => {
+    const areas: Item[] = DISEASE_THERAPY_AREAS
+      .map((a) => {
+        const own = dossiers.filter((d) => d.areaId === a.id);
+        return {
+          key: a.id,
+          kind: "area" as const,
+          areaId: a.id,
+          name: a.name,
+          detail: own.map((d) => d.disease).join(", ") || "No dossiers yet",
+          dossiers: own.length,
+          sources: own.reduce((n, d) => n + d.sources, 0),
+          images: images[a.id]?.length ?? 0,
+          updated: own[0]?.updated,
+          href: `/therapy-library/${a.id}`,
+        };
+      })
+      .filter((a) => a.dossiers > 0 || a.images > 0);
+    const diseases: Item[] = dossiers
+      .map((d) => ({
+        key: d.id,
+        kind: "disease" as const,
+        areaId: d.areaId,
+        name: d.disease,
+        detail: DISEASE_THERAPY_AREAS.find((a) => a.id === d.areaId)?.name ?? "",
+        version: d.version,
+        making: d.status === "making",
+        dossiers: 1,
+        sources: d.sources,
+        /* Its own images plus the area's, which every disease in it can use. */
+        images: (images[d.areaId] ?? []).filter((i) => !i.dossierId || i.dossierId === d.id).length,
+        updated: d.updated,
+        href: `/therapy-library/${d.areaId}?disease=${d.id}`,
+      }))
+      .sort((x, y) => x.name.localeCompare(y.name));
+    return { areas, diseases };
+  }, [dossiers, images]);
+
+  const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return DISEASE_THERAPY_AREAS
-      .map((a) => ({ ...a, dossiers: dossiers.filter((d) => d.areaId === a.id) }))
-      .filter((a) => a.dossiers.length > 0 || (images[a.id]?.length ?? 0) > 0)
-      .filter((a) => !q || a.name.toLowerCase().includes(q) || a.dossiers.some((d) => d.disease.toLowerCase().includes(q)));
-  }, [dossiers, images, query]);
+    const pool = kind === "area" ? items.areas : kind === "disease" ? items.diseases : [...items.areas, ...items.diseases];
+    return pool.filter((i) => !q || i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q));
+  }, [items, kind, query]);
   const empty = dossiers.length === 0;
-  const diseases = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return dossiers
-      .map((d) => ({ d, areaName: DISEASE_THERAPY_AREAS.find((a) => a.id === d.areaId)?.name ?? "" }))
-      .filter(({ d, areaName }) => !q || d.disease.toLowerCase().includes(q) || areaName.toLowerCase().includes(q))
-      .sort((x, y) => x.d.disease.localeCompare(y.d.disease));
-  }, [dossiers, query]);
-  const areaCount = DISEASE_THERAPY_AREAS.filter((a) => dossiers.some((d) => d.areaId === a.id) || (images[a.id]?.length ?? 0) > 0).length;
 
   return (
     <div className="page-enter space-y-6">
@@ -82,61 +130,112 @@ export function TherapyLibraryScreen() {
         <>
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="min-w-[240px] max-w-[420px] flex-1">
-              <PickSearch value={query} onChange={setQuery} placeholder={by === "areas" ? "Search therapy areas or diseases…" : "Search diseases…"} />
+              <PickSearch value={query} onChange={setQuery} placeholder="Search therapy areas or diseases…" />
             </div>
-            <Segmented aria-label="Browse by">
-              <SegmentedButton active={by === "areas"} onClick={() => setBy("areas")}>
-                Therapy Areas <span className="tabular-nums text-ink-4">{areaCount}</span>
-              </SegmentedButton>
-              <SegmentedButton active={by === "diseases"} onClick={() => setBy("diseases")}>
-                Diseases <span className="tabular-nums text-ink-4">{dossiers.length}</span>
-              </SegmentedButton>
+            <Segmented aria-label="Therapy areas or diseases">
+              {([
+                ["all", "All", items.areas.length + items.diseases.length],
+                ["area", "Therapy Areas", items.areas.length],
+                ["disease", "Diseases", items.diseases.length],
+              ] as const).map(([k, label, n]) => (
+                <SegmentedButton key={k} active={kind === k} onClick={() => setKind(k)}>
+                  {label}
+                  <span className="tabular-nums text-ink-4">{n}</span>
+                </SegmentedButton>
+              ))}
+            </Segmented>
+            <Segmented aria-label="Grid or list">
+              {(["grid", "list"] as const).map((v) => (
+                <SegmentedButton key={v} active={view === v} onClick={() => setView(v)}>
+                  {v === "grid" ? <Grid3x3 size={13} /> : <List size={13} />}
+                  {v === "grid" ? "Grid" : "List"}
+                </SegmentedButton>
+              ))}
             </Segmented>
           </div>
-          {by === "diseases" ? (
-            <div className="flex flex-col gap-2.5">
-              {diseases.map(({ d, areaName }) => (
-                <TherapyDossierRow key={d.id} dossier={d} areaName={areaName} onOpen={() => setReading(d.id)} />
+
+          {view === "grid" ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
+              {shown.map((it, i) => (
+                <LibraryTile
+                  key={it.key}
+                  delayMs={80 + i * 45}
+                  onClick={() => router.push(it.href)}
+                  media={
+                    <div className="relative grid h-[140px] w-full place-items-center overflow-hidden" style={{ background: areaMark(it.areaId).wash }}>
+                      <TherapyAreaMark areaId={it.areaId} className="size-16 rounded-full bg-card/60" iconClassName="size-8" />
+                    </div>
+                  }
+                  mediaTopLeft={
+                    <span className="rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90">
+                      {KIND_LABEL[it.kind]}
+                    </span>
+                  }
+                  title={it.name}
+                  subtitle={it.kind === "disease" ? `In ${it.detail}` : it.detail}
+                  chips={
+                    <>
+                      <Chip tone={it.making ? "brand" : "ok"} weight="bold">
+                        {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version} · ${it.sources} sources`) : `${it.dossiers} ${it.dossiers === 1 ? "disease" : "diseases"}`}
+                      </Chip>
+                      <Chip tone="neutral" weight="bold">{it.images} images</Chip>
+                    </>
+                  }
+                  footerLeft={it.updated ? `Updated ${it.updated}` : undefined}
+                  footerRight={<TileOpen />}
+                />
               ))}
-              {diseases.length === 0 && <p className="py-14 text-center text-body text-ink-4">No disease matches &ldquo;{query}&rdquo;.</p>}
             </div>
           ) : (
-          <>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
-            {areas.map((a, i) => (
-              <LibraryTile
-                key={a.id}
-                delayMs={80 + i * 45}
-                onClick={() => router.push(`/therapy-library/${a.id}`)}
-                media={
-                  <div className="relative grid h-[140px] w-full place-items-center overflow-hidden" style={{ background: areaMark(a.id).wash }}>
-                    <TherapyAreaMark areaId={a.id} className="size-16 rounded-full bg-card/60" iconClassName="size-8" />
-                  </div>
-                }
-                title={a.name}
-                subtitle={a.dossiers.map((d) => d.disease).join(", ") || "No dossiers yet"}
-                chips={
-                  <>
-                    <span className="rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
-                      {a.dossiers.length} {a.dossiers.length === 1 ? "dossier" : "dossiers"}
+            <DataList
+              rows={shown}
+              rowKey={(it) => it.key}
+              onRowClick={(it) => router.push(it.href)}
+              emptyLabel={`Nothing matches “${query}”.`}
+              columns={[
+                {
+                  id: "name",
+                  header: "Name",
+                  minWidth: 260,
+                  cell: (it) => (
+                    <div className="flex min-w-0 items-center gap-3">
+                      <TherapyAreaMark areaId={it.areaId} className="size-10 shrink-0 rounded-chip" iconClassName="size-5" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-body font-bold text-ink">{it.name}</span>
+                        <span className="block truncate text-caption text-ink-3">{it.kind === "disease" ? `In ${it.detail}` : it.detail}</span>
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  id: "type",
+                  header: "Type",
+                  width: 130,
+                  cell: (it) => (
+                    <Chip tone="neutral" weight="bold" className="uppercase tracking-[.03em]">{KIND_LABEL[it.kind]}</Chip>
+                  ),
+                },
+                {
+                  id: "dossier",
+                  header: "Dossier",
+                  width: 130,
+                  cell: (it) => (
+                    <span className="text-body font-bold tabular-nums text-ink-2">
+                      {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version}`) : `${it.dossiers} ${it.dossiers === 1 ? "disease" : "diseases"}`}
                     </span>
-                    <span className="rounded-chip border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                      {images[a.id]?.length ?? 0} images
-                    </span>
-                  </>
-                }
-                footerLeft={a.dossiers[0] ? `Updated ${a.dossiers[0].updated}` : undefined}
-                footerRight={<TileOpen />}
-              />
-            ))}
-          </div>
-          {areas.length === 0 && <p className="py-14 text-center text-body text-ink-4">Nothing matches &ldquo;{query}&rdquo;.</p>}
-          </>
+                  ),
+                },
+                { id: "sources", header: "Sources", width: 90, cell: (it) => <span className="text-body font-bold tabular-nums text-ink-2">{it.sources}</span> },
+                { id: "images", header: "Images", width: 90, cell: (it) => <span className="text-body font-bold tabular-nums text-ink-2">{it.images}</span> },
+                { id: "updated", header: "Updated", width: 130, cell: (it) => <span className="truncate text-caption text-ink-4">{it.updated ?? "—"}</span> },
+                { id: "open", header: "", width: 80, align: "right", hideHeader: true, cell: () => <span className="text-label font-bold text-brand">Open →</span> },
+              ]}
+            />
           )}
+          {view === "grid" && shown.length === 0 && <p className="py-14 text-center text-body text-ink-4">Nothing matches &ldquo;{query}&rdquo;.</p>}
         </>
       )}
 
-      <TherapyDossierReader id={reading} onClose={() => setReading(undefined)} canManage={canManage} />
       <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={(id) => { setAdding(false); router.push(`/therapy-library/${id}`); }} />
     </div>
   );

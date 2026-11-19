@@ -28,7 +28,7 @@ export function useAssetReview(key: string) {
   const canEdit = can("create");
   const shareLocked = !canEdit || (!!item && item.status !== "approved");
   const shareNote = !canEdit
-    ? "Sharing comes with Create, edit & publish"
+    ? "Sharing comes with Content: Create"
     : shareLocked ? "Opens once the review chain approves it" : undefined;
   return { me, stages, item, submit, shareLocked, shareNote, canEdit };
 }
@@ -83,7 +83,7 @@ export function ReviewStatusBanner({ item, onEdit }: { item: ReviewItem; onEdit:
           onClick={onEdit}
           className="focus-ring inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-control bg-ink px-3 text-label font-bold text-card transition-opacity hover:opacity-90"
         >
-          <RotateCcw className="size-3.5" /> Edit and resubmit
+          <RotateCcw className="size-3.5" /> Edit and Resubmit
         </button>
       ) : (
         <Link

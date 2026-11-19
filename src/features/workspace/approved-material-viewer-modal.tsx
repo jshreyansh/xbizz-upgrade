@@ -42,7 +42,7 @@ const DOC_PAGES = [
     footnote: "AFFIRM-3: Randomized, double-blind, multicenter trial in adult patients (N=1,248).",
   },
   {
-    role: "Durability & QoL",
+    role: "Durability and QoL",
     title: "Durability of Response & Patient-Reported Outcomes",
     headline: "Sustained Maintenance Through Week 52",
     metric: "78% Maintained",
@@ -55,7 +55,7 @@ const DOC_PAGES = [
     footnote: "LTE-301 Open-label extension cohort. Data lock August 2026.",
   },
   {
-    role: "Safety & ISI",
+    role: "Safety and ISI",
     title: "Safety Profile, Adverse Reactions & Contraindications",
     headline: "Well-Tolerated with Low Discontinuation Rates",
     metric: "1.8% Discontinuation",
@@ -68,15 +68,15 @@ const DOC_PAGES = [
     footnote: "Safety population analysis across pooled Phase II/III clinical database (N=2,180).",
   },
   {
-    role: "Dosing & Access",
-    title: "Administration Guidelines & Patient Support Programs",
+    role: "Dosing and Access",
+    title: "Administration Guidelines & Patient Support Programmes",
     headline: "Convenient Dosing Schedule with Direct Support",
     metric: "Once Monthly",
     metricSub: "Subcutaneous self-injection following initial loading phase",
     keyPoints: [
       "Initiation: 200 mg subcutaneous loading dose at Weeks 0 and 2, followed by 100 mg Q4W",
       "Pre-filled autoinjector designed for simplified at-home administration",
-      "Co-pay savings program: eligible commercially insured patients may pay as little as $0/month",
+      "Co-pay savings programme: eligible commercially insured patients may pay as little as $0/month",
     ],
     footnote: "See section 2.1 of Full Prescribing Information for detailed reconstitution instructions.",
   },
@@ -125,7 +125,7 @@ export function ApprovedMaterialViewerModal({
         className="fixed inset-0 z-50 flex items-center justify-center bg-ink/75 p-3 backdrop-blur-sm sm:p-5"
         role="dialog"
         aria-modal="true"
-        aria-label={`${piece.title} Full Preview`}
+        aria-label={`${piece.title} full preview`}
         onClick={onClose}
       >
         <div
@@ -151,10 +151,10 @@ export function ApprovedMaterialViewerModal({
                 </div>
                 <p className="truncate text-label text-ink-3">
                   {piece.kind === "Video"
-                    ? "Full Video Material"
+                    ? "Full video material"
                     : piece.kind === "Docs"
-                    ? "Clinical Document & Slide Deck"
-                    : `Ad Creative Cutdown · ${piece.spec}`}
+                    ? "Clinical document and slide deck"
+                    : `Ad creative cutdown · ${piece.spec}`}
                   {" · "}
                   {piece.asset.brand}
                   {" · "}
@@ -174,12 +174,12 @@ export function ApprovedMaterialViewerModal({
                   {isAttached ? (
                     <>
                       <Check className="size-3.5 stroke-[3] text-ok" />
-                      <span>Attached to email</span>
+                      <span>Attached to Email</span>
                     </>
                   ) : (
                     <>
                       <Plus className="size-3.5" />
-                      <span>Attach to email</span>
+                      <span>Attach to Email</span>
                     </>
                   )}
                 </Button>
@@ -218,7 +218,7 @@ export function ApprovedMaterialViewerModal({
             </div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="secondary" onClick={onClose} className="px-4 font-bold cursor-pointer">
-                Back to materials
+                Back to Materials
               </Button>
             </div>
           </div>

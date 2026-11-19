@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DropZone } from "@/components/patterns/drop-zone";
 import { cn } from "@/lib/cn";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { MediaPickerModal, brandImageItems, workspaceMediaItems, type MediaItem } from "@/features/workspace/insert-pickers";
@@ -60,14 +61,14 @@ export type EmailInsertRequest = "brand-images" | "workspace-images" | "upload-i
 /** A toolbar Insert option, as the dialog it opens. Options email has no use for map to nothing. */
 export function insertRequestFor(option: string): EmailInsertRequest | null {
   const map: Record<string, EmailInsertRequest> = {
-    "Brand images library": "brand-images",
-    "Workspace media library": "workspace-images",
+    "Brand Images Library": "brand-images",
+    "Workspace Media Library": "workspace-images",
     Upload: "upload-image",
-    "Video library": "videos",
-    "Upload video": "upload-video",
+    "Video Library": "videos",
+    "Upload Video": "upload-video",
     "Paste a URL": "url",
     Document: "documents",
-    "Upload document": "upload-doc",
+    "Upload Document": "upload-doc",
   };
   return map[option] ?? null;
 }
@@ -95,11 +96,11 @@ export function EmailInsertDialogs({
   );
   switch (request) {
     case "brand-images":
-      return picker(`Brand images library · ${brandName}`, `Images attached to ${brandName} in the Product Library. Already approved.`, Package, library.brandImages, `No images are attached to ${brandName} yet.`);
+      return picker(`Brand Images Library · ${brandName}`, `Images attached to ${brandName} in the Product Library. Already approved.`, Package, library.brandImages, `No images are attached to ${brandName} yet.`);
     case "workspace-images":
-      return picker("Workspace media library", "Images used across the workspace, each with the drug or project it came from.", FolderOpen, library.workspaceImages, "No images in the workspace yet.");
+      return picker("Workspace Media Library", "Images used across the workspace, each with the drug or project it came from.", FolderOpen, library.workspaceImages, "No images in the workspace yet.");
     case "videos":
-      return picker(`Video library · ${brandName}`, "Approved videos. Each goes out as a thumbnail that opens the video.", Film, library.videos, `No approved videos for ${brandName} yet.`, "video");
+      return picker(`Video Library · ${brandName}`, "Approved videos. Each goes out as a thumbnail that opens the video.", Film, library.videos, `No approved videos for ${brandName} yet.`, "video");
     case "documents":
       return picker(`Documents · ${brandName}`, "Approved leave-behinds and detail aids. Linked, never attached.", FileText, library.documents, `No approved documents for ${brandName} yet.`, "document");
     case "upload-image":
@@ -147,7 +148,6 @@ export function EmailUploadModal({
   const [gif, setGif] = useState(false);
   const [vaultNo, setVaultNo] = useState("");
   const accept = { image: "image/*", video: "video/*", doc: "application/pdf" }[kind];
-  const noun = { image: "image", video: "video", doc: "document" }[kind];
   const found = (file?.numbers ?? []).map((n) => (n === "matched" ? { n: lead?.stat ?? "the result", claim: lead } : { n, claim: undefined }));
   const ready = !!file && (kind === "doc" || !!alt.trim());
 
@@ -155,7 +155,7 @@ export function EmailUploadModal({
     <Modal
       open
       onClose={onClose}
-      title={`Upload ${noun === "image" ? "an image" : `a ${noun}`}`}
+      title={`Upload ${{ image: "an Image", video: "a Video", doc: "a Document" }[kind]}`}
       description="Uploads aren't approved yet, so each one goes to MLR as its own item."
       size="md"
       footer={
@@ -192,22 +192,17 @@ export function EmailUploadModal({
       }
     >
       <div className="space-y-3">
-        <label className="grid cursor-pointer justify-items-center gap-1.5 rounded-panel border border-dashed border-hair-3 bg-canvas p-5 text-center transition hover:border-brand">
-          <Upload className="size-5 text-ink-3" />
-          <span className="text-body font-bold text-ink">Drop a file or choose one</span>
-          <span className="text-label text-ink-3">{kind === "image" ? "PNG or JPG" : kind === "video" ? "MP4 or MOV" : "PDF"}</span>
-          <input
-            type="file"
-            accept={accept}
-            className="sr-only"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              setFile({ title: f.name, gradient: "linear-gradient(135deg,#5b6474,#9aa3b2)", label: "", numbers: [], real: true, previewUrl: kind === "image" ? URL.createObjectURL(f) : undefined });
-              setAlt("");
-            }}
-          />
-        </label>
+        <DropZone
+          size="sm"
+          title="Drop a file or choose one"
+          hint={kind === "image" ? "PNG or JPG" : kind === "video" ? "MP4 or MOV" : "PDF"}
+          icon={<Upload className="size-5 text-ink-3" />}
+          accept={accept}
+          onFiles={([f]) => {
+            setFile({ title: f.name, gradient: "linear-gradient(135deg,#5b6474,#9aa3b2)", label: "", numbers: [], real: true, previewUrl: kind === "image" ? URL.createObjectURL(f) : undefined });
+            setAlt("");
+          }}
+        />
         <p className="text-label text-ink-3">
           Or try a sample:{" "}
           {SAMPLE_UPLOADS[kind].map((s, i) => (
@@ -241,7 +236,7 @@ export function EmailUploadModal({
                 <p>Plays inside Apple Mail only. Everywhere else the doctor sees a thumbnail with the play button drawn in, opening the hosted video.</p>
                 <Segmented className="mt-2 w-fit">
                   <SegmentedButton active={!gif} onClick={() => setGif(false)}>
-                    Still thumbnail
+                    Still Thumbnail
                   </SegmentedButton>
                   <SegmentedButton active={gif} onClick={() => setGif(true)}>
                     Animated GIF
@@ -272,7 +267,7 @@ export function EmailUploadModal({
             )}
             {kind !== "doc" && (
               <Field
-                label="Alt text"
+                label="Alt Text"
                 hint="Required. Outlook often hides images, so this is what the doctor reads."
                 placeholder="What the image shows"
                 value={alt}
@@ -302,7 +297,7 @@ export function EmailLinkModal({ onInsert, onClose }: { onInsert: (media: EmailM
     <Modal
       open
       onClose={onClose}
-      title="Add a link"
+      title="Add a Link"
       description="Every link is tracked and labelled for click reports."
       size="md"
       footer={
@@ -341,7 +336,7 @@ export function EmailLinkModal({ onInsert, onClose }: { onInsert: (media: EmailM
                 Check
               </Button>
             </div>
-            <Field label="Link text" placeholder="What the doctor clicks, e.g. Read the guideline" value={text} onChange={(e) => setText(e.target.value)} />
+            <Field label="Link Text" placeholder="What the doctor clicks, e.g. Read the guideline" value={text} onChange={(e) => setText(e.target.value)} />
             {checked && (
               <div className="space-y-2">
                 <Check ok>Opens: the page loads. Title: &ldquo;{host || "page"}&rdquo;</Check>

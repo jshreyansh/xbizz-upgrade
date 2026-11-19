@@ -89,7 +89,7 @@ export function CaptionsMenu({ value, onChange }: { value: CaptionStyle; onChang
           >
             <CaptionsOff className="mt-0.5 size-4 shrink-0 text-ink-3" />
             <span className="grid min-w-0 flex-1 gap-0.5">
-              <span className="text-body font-semibold text-ink">No captions</span>
+              <span className="text-body font-semibold text-ink">No Captions</span>
               <span className="text-caption text-ink-3">People watching with the sound off won&apos;t hear the claims.</span>
             </span>
             {value === "off" && <Check className="size-3.5 shrink-0 text-brand" />}
@@ -169,13 +169,13 @@ export function videoSelection({
         { key: "captions", node: <CaptionsMenu value={captions} onChange={onCaptions} /> },
         toolbarDivider("d1"),
         { key: "words", node: <ToolNote icon={Check} tone="ok">Words follow the voiceover</ToolNote> },
-        { key: "voiceover", node: <ToolButton icon={Mic2} label="Edit voiceover" onClick={() => ask("Change the voiceover so that ")} /> },
+        { key: "voiceover", node: <ToolButton icon={Mic2} label="Edit Voiceover" onClick={() => ask("Change the voiceover so that ")} /> },
       ];
       break;
     case "image":
       items = [
         { key: "replace", node: <ToolButton icon={Replace} label="Replace" onClick={() => ask("Replace this image with ")} /> },
-        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate image" onClick={() => ask("Regenerate this image so that ")} /> },
+        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate Image" onClick={() => ask("Regenerate this image so that ")} /> },
       ];
       break;
     case "video-clip":
@@ -184,23 +184,23 @@ export function videoSelection({
         { key: "replace", node: <ToolButton icon={Replace} label="Replace" onClick={() => ask("Replace this footage with ")} /> },
         {
           key: "regenerate",
-          node: <ToolButton icon={RefreshCw} label="Regenerate video" onClick={onRegenerateVideo} disabled={!shotReady} title={shotReady ? undefined : "Being made"} />,
+          node: <ToolButton icon={RefreshCw} label="Regenerate Video" onClick={onRegenerateVideo} disabled={!shotReady} title={shotReady ? undefined : "Being made"} />,
         },
       ];
       break;
     case "moa":
-      items = [{ key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate model" onClick={() => ask("Redraw the 3D model so that ")} /> }];
+      items = [{ key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate Model" onClick={() => ask("Redraw the 3D model so that ")} /> }];
       break;
     case "graph":
-      items = [{ key: "chart", node: <ToolButton icon={ChartColumn} label="Change the chart" onClick={() => ask("Change the chart so that ")} /> }];
+      items = [{ key: "chart", node: <ToolButton icon={ChartColumn} label="Change the Chart" onClick={() => ask("Change the chart so that ")} /> }];
       break;
     case "background":
-      items = [{ key: "background", node: <ToolButton icon={Wallpaper} label="Change background" onClick={() => ask("Change the background to ")} /> }];
+      items = [{ key: "background", node: <ToolButton icon={Wallpaper} label="Change Background" onClick={() => ask("Change the background to ")} /> }];
       break;
     case "avatar":
       items = [
-        { key: "presenter", node: <ToolButton icon={UserRound} label="Change presenter" onClick={() => ask("Use a different presenter: ")} /> },
-        { key: "voice", node: <ToolButton icon={Mic2} label="Change voice" onClick={() => ask("Change the presenter's voice to ")} /> },
+        { key: "presenter", node: <ToolButton icon={UserRound} label="Change Presenter" onClick={() => ask("Use a different presenter: ")} /> },
+        { key: "voice", node: <ToolButton icon={Mic2} label="Change Voice" onClick={() => ask("Change the presenter's voice to ")} /> },
       ];
       break;
     case "logo":
@@ -208,7 +208,7 @@ export function videoSelection({
         {
           key: "position",
           node: (
-            <ToolMenu label="Logo position" trigger={<span>{LOGO_CORNERS.find((c) => c.id === logo.position)?.label ?? "Bottom right"}</span>}>
+            <ToolMenu label="Logo Position" trigger={<span>{LOGO_CORNERS.find((c) => c.id === logo.position)?.label ?? "Bottom right"}</span>}>
               {(close) => (
                 <div className="grid w-60 gap-0.5">
                   {LOGO_CORNERS.map((c) => (
@@ -237,7 +237,7 @@ export function videoSelection({
     case "claim":
       items = [
         { key: "approved", node: <ToolNote icon={BadgeCheck} tone="ok">Approved claim · Claims Library</ToolNote> },
-        { key: "swap", node: <ToolButton icon={RefreshCw} label="Swap claim" onClick={() => ask("Use a different approved claim here: ")} /> },
+        { key: "swap", node: <ToolButton icon={RefreshCw} label="Swap Claim" onClick={() => ask("Use a different approved claim here: ")} /> },
       ];
       break;
     default:

@@ -216,7 +216,7 @@ export function MediaPickerModal({
             {chosen ? chosen.name : `${shown.length} ${shown.length === 1 ? noun : `${noun}s`}`}
           </span>
           <Button size="sm" disabled={!chosen} onClick={() => chosen && onUse(chosen)} className="shrink-0">
-            Use this {noun}
+            Use This {noun.charAt(0).toUpperCase() + noun.slice(1)}
           </Button>
         </>
       }
@@ -345,7 +345,7 @@ export function IconPickerModal({ onUse, onClose }: { onUse: (name: string, labe
             {picked ? iconLabel(picked) : `${shown.length} icons`}
           </span>
           <Button size="sm" disabled={!picked} onClick={() => picked && onUse(picked, iconLabel(picked))} className="shrink-0">
-            Use this icon
+            Use This Icon
           </Button>
         </>
       }
@@ -415,7 +415,7 @@ export function QrCodeModal({ onUse, onClose }: { onUse: (url: string, image: st
   return (
     <PickerShell
       icon={QrCode}
-      title="QR code"
+      title="QR Code"
       sub="Links the printed page to a web address: the full prescribing information, or a copy of the poster."
       onClose={onClose}
       wide={false}
@@ -423,10 +423,10 @@ export function QrCodeModal({ onUse, onClose }: { onUse: (url: string, image: st
         qr ? (
           <>
             <Button size="sm" variant="ghost" onClick={() => setQr(null)}>
-              Change link
+              Change Link
             </Button>
             <Button size="sm" onClick={() => onUse(qr.url, qr.image)}>
-              Use this image
+              Use This Image
             </Button>
           </>
         ) : (

@@ -5,7 +5,6 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
-  ChevronLeft,
   Image as ImageIcon,
   FileText,
   ListChecks,
@@ -32,6 +31,13 @@ import { originLabel } from "@/features/product-library/asset-origin";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
+import { BackLink } from "@/components/patterns/back-link";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { RowCard } from "@/components/patterns/row-card";
+import { SectionHeading } from "@/components/patterns/section-heading";
+import { Stat } from "@/components/patterns/stat";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { ClaimRow } from "@/features/claims-library/claim-row";
@@ -81,17 +87,6 @@ const FILE_TONE: Record<string, string> = {
   PPTX: "bg-warn-bg text-warn",
   XLSX: "bg-ok-bg text-ok",
 };
-
-/** Small stat used in the compact profile row — a single solid number, never
- *  an "x/y" fraction (a completed count reads clearer than a ratio here). */
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="text-center">
-      <b className="block text-subhead font-extrabold leading-none text-ink">{value}</b>
-      <span className="text-micro font-bold uppercase tracking-[.05em] text-ink-4">{label}</span>
-    </div>
-  );
-}
 
 export function ProductDetailScreen({
   product,
@@ -188,10 +183,10 @@ export function ProductDetailScreen({
   const activeImageTotal = variations.reduce((sum, v) => sum + v.images.filter((i) => !i.archived).length, 0);
 
   const TABS: DetailTab<Tab>[] = [
-    { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
+    { key: "dossier", label: "Dossiers", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
-    { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
-    { key: "images", label: "Product Images", icon: ImageIcon, count: activeImageTotal },
+    { key: "documents", label: "Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
+    { key: "images", label: "Images", icon: ImageIcon, count: activeImageTotal },
     /* Brand kit: View sees it, Manage changes it — the same rule as the workspace kit. */
     ...(canSeeKit ? [{ key: "brand-kit" as const, label: "Brand Kit", icon: Palette }] : []),
   ];
@@ -284,13 +279,7 @@ export function ProductDetailScreen({
   return (
     <div className="page-enter space-y-6 max-w-[980px]">
       {/* Back */}
-      <button
-        onClick={() => router.push("/product-library")}
-        className="inline-flex items-center gap-1.5 text-body-lg font-bold text-ink-3 hover:text-ink transition-colors"
-      >
-        <ChevronLeft size={15} />
-        Product Library
-      </button>
+      <BackLink href="/product-library">Product Library</BackLink>
 
       {/* What this brand is, and the five ways of looking at it — one card,
           because the tabs belong to the brand rather than to the page. */}
@@ -312,15 +301,15 @@ export function ProductDetailScreen({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-title font-extrabold tracking-tight text-ink">{product.name}</h1>
-              <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">{product.type}</span>
+              <Chip tone="neutral" weight="bold" className="uppercase tracking-[.03em]">{product.type}</Chip>
             </div>
             <span className="text-body italic text-ink-3">{product.genericName}</span>
           </div>
           <div className="flex items-center gap-5">
-            <Stat value={product.dossiersVerified} label="Dossiers" />
-            <Stat value={product.claimsApproved} label="Claims" />
-            <Stat value={documents.filter((d) => !d.archived).length} label="Attachments" />
-            <Stat value={activeImageTotal} label="Images" />
+            <Stat size="subhead" value={product.dossiersVerified} label="Dossiers" />
+            <Stat size="subhead" value={product.claimsApproved} label="Claims" />
+            <Stat size="subhead" value={documents.filter((d) => !d.archived).length} label="Attachments" />
+            <Stat size="subhead" value={activeImageTotal} label="Images" />
           </div>
         </div>
       </DetailHeader>
@@ -331,12 +320,10 @@ export function ProductDetailScreen({
       {tab === "images" && (
         <div className="space-y-4" onClick={() => setOpenImageMenuId(null)}>
           {/* Section header */}
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
-              <p className="text-body text-ink-3">Every image this brand has, by presentation, with what the person who uploaded it said it was for</p>
-            </div>
-          </div>
+          <SectionHeading
+            title="Images"
+            description="Every image this brand has, by presentation, with what the person who uploaded it said it was for"
+          />
 
           {/* Variations */}
           <div className="flex flex-wrap items-center gap-2">
@@ -375,7 +362,7 @@ export function ProductDetailScreen({
               className="flex min-h-[178px] flex-col items-center justify-center gap-1.5 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
             >
               <Upload size={18} />
-              <span className="text-body font-bold">Add product image</span>
+              <span className="text-body font-bold">Add Product Image</span>
               <span className="text-caption text-ink-4">JPG, PNG or WebP (max 10MB)</span>
             </button>}
 
@@ -468,38 +455,24 @@ export function ProductDetailScreen({
 
       {tab === "dossier" && (
         <div className="space-y-4">
-          <div>
-            <h2 className="text-title font-extrabold tracking-tight text-ink">Dossier</h2>
-            <p className="text-body text-ink-3">The six sections every claim in this brand traces back to</p>
-          </div>
+          <SectionHeading title="Dossiers" description="The six sections every claim in this brand traces back to" />
           <div className="flex flex-col gap-2.5">
           {detail.dossiers.map((d) => {
             const s = STATUS_STYLE[d.status];
             return (
-              <div
+              <RowCard
                 key={d.type}
-                onClick={() => router.push(`/product-library/${product.id}/dossier/${d.type}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") router.push(`/product-library/${product.id}/dossier/${d.type}`);
-                }}
-                className="group flex cursor-pointer items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
-              >
-                <span className={`grid size-9 shrink-0 place-items-center rounded-control ${s.bg} ${s.tone}`}>
-                  <s.icon size={16} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <b className="block text-subhead font-bold text-ink">{d.type} dossier</b>
-                  <span className="text-body text-ink-3">
-                    {d.status === "not started" ? "Not started yet" : `${d.sections} sections · ${d.claimsCited} claims cited · Updated ${d.updated}`}
+                onOpen={() => router.push(`/product-library/${product.id}/dossier/${d.type}`)}
+                leading={
+                  <span className={`grid size-9 place-items-center rounded-control ${s.bg} ${s.tone}`}>
+                    <s.icon size={16} />
                   </span>
-                </div>
-                <span className={`rounded-chip px-2.5 py-1 text-caption font-extrabold ${s.bg} ${s.tone}`}>{s.label}</span>
-                <span className="inline-flex items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">
-                  {d.status === "not started" ? "Start" : "View"} →
-                </span>
-              </div>
+                }
+                title={`${d.type} Dossier`}
+                meta={d.status === "not started" ? "Not started yet" : `${d.sections} sections · ${d.claimsCited} claims cited · Updated ${d.updated}`}
+                trailing={<span className={`rounded-chip px-2.5 py-1 text-caption font-extrabold ${s.bg} ${s.tone}`}>{s.label}</span>}
+                openLabel={d.status === "not started" ? "Start" : "View"}
+              />
             );
           })}
           </div>
@@ -508,25 +481,24 @@ export function ProductDetailScreen({
 
       {tab === "claims" && (
         <div className="space-y-4">
-          <div>
-            <h2 className="text-title font-extrabold tracking-tight text-ink">Claims</h2>
-            <p className="text-body text-ink-3">Every statement approved for use, open one for its sources, the presentations it holds for, and where it has gone out</p>
-          </div>
+          <SectionHeading
+            title="Claims"
+            description="Every statement approved for use, open one for its sources, the presentations it holds for, and where it has gone out"
+          />
 
           {detail.claims.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-hair-2 py-14 text-center">
-              <span className="grid size-11 place-items-center rounded-full bg-subtle text-ink-4">
-                <ListChecks size={20} />
-              </span>
-              <p className="text-body-lg font-bold text-ink-2">No claims cited yet</p>
-              <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started, claims appear here once a dossier cites them.</p>
-            </div>
+            <EmptyState
+              size="md"
+              icon={<ListChecks size={20} />}
+              title="No claims cited yet"
+              hint={<>Dossiers for this product haven&rsquo;t started, claims appear here once a dossier cites them.</>}
+            />
           ) : (
             <>
             <div className="flex flex-wrap items-center gap-2.5">
               <ClaimSearchInput value={claimQuery} onChange={setClaimQuery} placeholder="Search claims, IDs or dossiers…" />
               <FilterTrigger
-                label={pickedLabel(claimSourceList.filter((x) => claimSources.includes(x)), "All sources")}
+                label={pickedLabel(claimSourceList.filter((x) => claimSources.includes(x)), "All Sources")}
                 active={claimSources.length > 0}
                 onOpen={() => setSourcePickerOpen(true)}
                 onClear={() => setClaimSources([])}
@@ -540,19 +512,12 @@ export function ProductDetailScreen({
             </div>
 
             {visibleClaims.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-hair-2 py-14 text-center">
-                <p className="text-body-lg font-bold text-ink-2">No claims match</p>
-                <p className="max-w-[40ch] text-body text-ink-4">
-                  {claimQuery ? `Nothing found for "${claimQuery}" in the sources you picked.` : "No claim here comes from the sources you picked."}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { setClaimQuery(""); setClaimSources([]); }}
-                  className="mt-1 cursor-pointer rounded-control bg-brand px-4 py-2 text-body-lg font-bold text-white shadow-brand-lift transition hover:bg-brand-deep"
-                >
-                  Clear filters
-                </button>
-              </div>
+              <EmptyState
+                size="md"
+                title="No claims match"
+                hint={claimQuery ? `Nothing found for "${claimQuery}" in the sources you picked.` : "No claim here comes from the sources you picked."}
+                action={<Button onClick={() => { setClaimQuery(""); setClaimSources([]); }}>Clear Filters</Button>}
+              />
             ) : (
             /* Rows, like the dossiers and the attachments above. A claim is a
                sentence and a way in; a card gave it a picture's worth of room
@@ -561,16 +526,9 @@ export function ProductDetailScreen({
                this brand's. */
             <div className="flex flex-col gap-2">
               {visibleClaims.map((c) => (
-                <div
-                  key={c.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => router.push(`/claims-library/${c.id}`)}
-                  onKeyDown={(e) => { if (e.key === "Enter") router.push(`/claims-library/${c.id}`); }}
-                  className="group flex cursor-pointer flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair transition-all hover:border-hair-3 hover:shadow-soft"
-                >
+                <RowCard key={c.id} onOpen={() => router.push(`/claims-library/${c.id}`)} className="gap-3.5 p-3.5">
                   <ClaimRow claim={c} product={product} />
-                </div>
+                </RowCard>
               ))}
             </div>
             )}
@@ -592,18 +550,16 @@ export function ProductDetailScreen({
 
       {tab === "documents" && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-title font-extrabold tracking-tight text-ink">Team Attachments</h2>
-              <p className="text-body text-ink-3">Prescribing information, decks, and anything else your team grounded this brand in</p>
-            </div>
-            <div className="flex items-center gap-2">
+          <SectionHeading
+            title="Attachments"
+            description="Prescribing information, decks, and anything else your team grounded this brand in"
+            actions={<>
             {canManage && <button
               type="button"
               onClick={() => docInputRef.current?.click()}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-control border border-hair-2 bg-card px-3 py-1.5 text-body font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand-deep"
             >
-              <Upload size={14} /> Add attachment
+              <Upload size={14} /> Add Attachment
             </button>}
             <Segmented>
               <SegmentedButton active={docShelf === "active"} onClick={() => setDocShelf("active")}>
@@ -613,8 +569,8 @@ export function ProductDetailScreen({
                 Archived {archivedDocCount}
               </SegmentedButton>
             </Segmented>
-            </div>
-          </div>
+            </>}
+          />
           <div className="flex flex-col gap-2">
             {visibleDocs.map((doc) => (
               <div key={doc.id} className="flex flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
@@ -685,7 +641,7 @@ export function ProductDetailScreen({
       {pendingImages && (
         <FileNoteDialog
           files={pendingImages}
-          title={pendingImages.length === 1 ? "Add this image" : `Add ${pendingImages.length} images`}
+          title={pendingImages.length === 1 ? "Add This Image" : `Add ${pendingImages.length} Images`}
           prompt="Say what the shot is for and which presentation it is of, so anyone picking it later knows."
           placeholder="e.g. Front-of-pack hero, approved for HCP material"
           variations={variations.map((v) => v.label)}
@@ -697,7 +653,7 @@ export function ProductDetailScreen({
       {pendingDocs && (
         <FileNoteDialog
           files={pendingDocs}
-          title={pendingDocs.length === 1 ? "Add this attachment" : `Add ${pendingDocs.length} attachments`}
+          title={pendingDocs.length === 1 ? "Add This Attachment" : `Add ${pendingDocs.length} Attachments`}
           prompt="Say what the team should use it for. The note sits under the file on the shelf."
           placeholder="e.g. Signed MLR minutes for the launch pack"
           onCancel={() => setPendingDocs(null)}

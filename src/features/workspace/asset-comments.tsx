@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
 import { Portal } from "@/components/ui/portal";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 export type CommentSurface = "video" | "creative";
 
@@ -199,7 +200,7 @@ export function ElementActionBar({
           className="w-full gap-1.5 text-label font-bold cursor-pointer disabled:opacity-40"
         >
           <Send className="size-3" />
-          <span>Add suggestion</span>
+          <span>Add Suggestion</span>
         </Button>
       </div>
     </div>
@@ -281,8 +282,8 @@ export function CommentsModal({
 
         <div className="flex gap-1 border-b border-hair px-4 pt-3">
           {([
-            { id: "mine" as const, label: "My comments", items: mine, enabled: true },
-            { id: "team" as const, label: "Team comments", items: team, enabled: teamUnlocked },
+            { id: "mine" as const, label: "My Comments", items: mine, enabled: true },
+            { id: "team" as const, label: "Team Comments", items: team, enabled: teamUnlocked },
           ]).map((t) => (
             <button
               key={t.id}
@@ -310,16 +311,15 @@ export function CommentsModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {!teamUnlocked && tab === "team" ? null : list.length === 0 ? (
-            <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-10 text-center">
-              <p className="text-body font-bold text-ink-2">
-                {tab === "mine" ? "No comments yet" : "No comments from the team yet"}
-              </p>
-              <p className="mt-0.5 text-label text-ink-4">
-                {tab === "mine"
-                  ? "Click any element on the canvas and choose Add comment."
-                  : "Comments left on the shared link will appear here."}
-              </p>
-            </div>
+            <EmptyState
+              tone="canvas"
+              title={tab === "mine" ? "No comments yet" : "No comments from the team yet"}
+              hint={
+                tab === "mine"
+                  ? "Click any element on the canvas and add a suggestion."
+                  : "Comments left on the shared link will appear here."
+              }
+            />
           ) : (
             <ul className="space-y-2.5">
               {list.map((comment) => (
@@ -474,7 +474,7 @@ export function CommentCard({
               onClick={onSendToChat}
               className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition hover:bg-tint"
             >
-              <Send className="size-3" /> Add to chat
+              <Send className="size-3" /> Add to Chat
             </button>
           )}
         </div>

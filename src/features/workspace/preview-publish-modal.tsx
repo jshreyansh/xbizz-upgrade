@@ -8,6 +8,7 @@ import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import { PreflightPanel, type PreflightCheck } from "@/features/workspace/preflight-panel";
 import { timeAgo, type MlrReview } from "@/features/workspace/mlr-review";
+import { Chip } from "@/components/ui/chip";
 
 /**
  * Preview and Publish — the last look before an asset goes out.
@@ -79,9 +80,9 @@ export function PreviewPublishModal({
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
                 <h2 className="truncate text-title font-[850] tracking-tight text-ink">{title}</h2>
-                <span className="rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
+                <Chip tone="brand" weight="bold">
                   {submit ? `Submitting ${version} for review` : `Publishing as ${version}`}
-                </span>
+                </Chip>
               </div>
             </div>
             {!running && (
@@ -113,7 +114,7 @@ export function PreviewPublishModal({
                     <ShieldCheck className="size-4" />
                   </span>
                   <div className="min-w-0">
-                    <div className="text-body-lg font-extrabold text-ink">Quality and regulatory check</div>
+                    <div className="text-body-lg font-extrabold text-ink">Quality and Regulatory Check</div>
                     <div className="text-label text-ink-3">
                       {running
                         ? "Running now"
@@ -158,7 +159,7 @@ export function PreviewPublishModal({
                       className="w-full gap-1.5 font-bold"
                     >
                       <ShieldCheck className="size-4" />
-                      Run SwishX MLR review
+                      Run SwishX MLR Review
                     </Button>
                   </>
                 )}

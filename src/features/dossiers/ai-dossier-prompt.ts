@@ -90,9 +90,9 @@ export interface AiDossierResult {
 const SECTION_TITLES: Record<string, string> = {
   "01_brand_basics": "Brand Basics",
   "02_visual_identity": "Visual Identity",
-  "03_voice_and_tone": "Voice & Tone",
+  "03_voice_and_tone": "Voice and Tone",
   "04_audience_personas": "Audience Personas",
-  "05_positioning_messaging": "Positioning & Messaging",
+  "05_positioning_messaging": "Positioning and Messaging",
   "06_guardrails": "Guardrails",
   "07_asset_library": "Asset Library",
 };

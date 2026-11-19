@@ -14,7 +14,7 @@ import { SEED_WORKSPACE_ID, useSettingsStore } from "@/features/settings/setting
 import { canSeeDraft, sharedWith, useSharingStore, visibilityLabel } from "@/features/workspace/project-sharing";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
-import { AssetPreview, STATUS_STYLE } from "@/features/content-library/asset-preview";
+import { AssetPreview, StatusChip } from "@/features/content-library/asset-preview";
 
 /**
  * Published work, and the way back into it.
@@ -32,7 +32,7 @@ import { AssetPreview, STATUS_STYLE } from "@/features/content-library/asset-pre
 type KindFilter = "all" | "video" | "infographic" | "ad" | "email";
 
 const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone, email: Mail };
-const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / image", visual: "Doc / image", carousel: "Doc / image", ad: "Ads", email: "Email" };
+const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / Image", visual: "Doc / Image", carousel: "Doc / Image", ad: "Ads", email: "Email" };
 export type StageFilter = "all" | "draft" | "shared" | "published" | "archived";
 
 export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
@@ -95,7 +95,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
           items={[
             { id: "all", label: "All", count: kindCount("all") },
             { id: "video", label: "Video", count: kindCount("video") },
-            { id: "infographic", label: "Doc & image", count: kindCount("infographic") },
+            { id: "infographic", label: "Doc and Image", count: kindCount("infographic") },
             { id: "ad", label: "Ads", count: kindCount("ad") },
             { id: "email", label: "Email", count: kindCount("email") },
           ]}
@@ -112,9 +112,9 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               defaultValue: "all",
               onChange: (v) => setStage(v as StageFilter),
               options: [
-                { id: "all", label: "Any status" },
+                { id: "all", label: "Any Status" },
                 { id: "draft", label: "Drafts" },
-                { id: "shared", label: "Shared with me" },
+                { id: "shared", label: "Shared with Me" },
                 { id: "published", label: "Published" },
                 { id: "archived", label: "Archived" },
               ],
@@ -138,7 +138,6 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
       {view === "grid" ? (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
         {filtered.map((a, i) => {
-          const status = STATUS_STYLE[a.status];
           const KindIcon = KIND_ICON[a.kind];
           return (
             <LibraryTile
@@ -170,12 +169,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               subtitle={`${a.brand} · ${a.audience}`}
               chips={
                 <>
-                  <span
-                    className="rounded-chip px-2 py-0.5 text-caption font-bold"
-                    style={{ background: status.bg, color: status.fg, border: `1px solid ${status.line}` }}
-                  >
-                    {a.status}
-                  </span>
+                  <StatusChip status={a.status} />
                   <DraftVisibility entry={draftSharing(a)} me={me} ownerName={members.find((m) => m.id === a.ownerId)?.name} />
                   {a.comments > 0 && (
                     <span className="inline-flex items-center gap-1 text-caption font-bold text-brand">
@@ -185,7 +179,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
                 </>
               }
               footerLeft={a.updated}
-              footerRight={<TileOpen label="Open review" />}
+              footerRight={<TileOpen label="Open Review" />}
             />
           );
         })}
@@ -234,7 +228,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
                     const Icon = KIND_ICON[a.kind];
                     return <Icon size={11} />;
                   })()}
-                  {KIND_LABEL[a.kind] === "Doc / image" ? "Doc" : KIND_LABEL[a.kind]}
+                  {KIND_LABEL[a.kind] === "Doc / Image" ? "Doc" : KIND_LABEL[a.kind]}
                 </span>
               ),
             },
@@ -243,15 +237,9 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               header: "Status",
               width: 170,
               cell: (a) => {
-                const tone = STATUS_STYLE[a.status];
                 return (
                   <span className="flex items-center gap-1.5">
-                    <span
-                      className="rounded-chip px-2 py-0.5 text-caption font-bold"
-                      style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.line}` }}
-                    >
-                      {a.status}
-                    </span>
+                    <StatusChip status={a.status} />
                     <DraftVisibility entry={draftSharing(a)} me={me} iconOnly />
                   </span>
                 );
@@ -288,7 +276,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               width: 120,
               align: "right",
               hideHeader: true,
-              cell: () => <span className="whitespace-nowrap text-label font-bold text-brand">Open review →</span>,
+              cell: () => <span className="whitespace-nowrap text-label font-bold text-brand">Open Review →</span>,
             },
           ]}
         />

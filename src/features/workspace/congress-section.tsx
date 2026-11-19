@@ -28,6 +28,7 @@ import {
   type Congress,
   type PresentationType,
 } from "@/features/workspace/congress-guidelines";
+import { Chip } from "@/components/ui/chip";
 
 type PosterType = PresentationType["id"];
 
@@ -197,7 +198,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
               </span>
               <div className="flex shrink-0 items-center gap-1.5">
                 <Button size="sm" variant="secondary" onClick={() => setModal({ mode: "view", congress })}>
-                  View rules
+                  View Rules
                 </Button>
                 <Button
                   size="sm"
@@ -214,9 +215,9 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
             {chips.length > 0 && (
               <div className="flex flex-wrap gap-1.5 sm:pl-11">
                 {chips.map((rule) => (
-                  <span key={rule} className="rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-caption font-bold text-ink-2">
+                  <Chip key={rule} tone="neutral" weight="bold" className="border-hair-2 text-ink-2">
                     {rule}
-                  </span>
+                  </Chip>
                 ))}
               </div>
             )}
@@ -227,8 +228,8 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
               ref={searchRef}
               value={query}
               onChange={setQuery}
-              placeholder="Search congress by name, acronym, city or therapy area (e.g. ESMO, ASCO, lung)..."
-              label="Search a congress"
+              placeholder="Search congress by name, acronym, city or therapy area (e.g. ESMO, ASCO, lung)…"
+              label="Search a Congress"
             />
             {!query.trim() ? (
               /* Two to start from, and a row saying the rest are a search away. */
@@ -258,7 +259,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
                     <p>Upload its author guidelines, or type the rules you know. Your team can pick it next time.</p>
                     <Button size="sm" className="mt-3 gap-1.5" onClick={() => setModal({ mode: "add", name: query.trim() })}>
                       <Plus className="size-3.5" />
-                      Add congress guidelines
+                      Add Congress Guidelines
                     </Button>
                   </PickEmpty>
                 )}
@@ -288,7 +289,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
       </div>
 
       {/* Until there is a congress, everything it sets is one locked row. */}
-      {!congress && <SettledRow icon={<Tag className="size-4" />} label="Visual guidelines" value={null} />}
+      {!congress && <SettledRow icon={<Tag className="size-4" />} label="Visual Guidelines" value={null} />}
 
       {/* ── Question 2: how they're presenting, where the congress offers more than one ── */}
       {congress && typeOptions.length > 1 && (
@@ -321,7 +322,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
       {congress && typeOptions.length === 1 && typeChosen && (
         <SettledRow
           icon={<Tag className="size-4" />}
-          label="Presentation type"
+          label="Presentation Type"
           value={typeChosen.label}
           source={`${typeChosen.line} The only type ${congress.acronym} offers.`}
         />
@@ -381,7 +382,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
       {/* ── Required on the poster: never blocks; the check flags anything missing later ── */}
       {congress && posterType && focus && required.length > 0 && (
         <div className="space-y-2 rounded-control border border-hair bg-card px-3.5 py-3">
-          <RowLabel>Required on the poster · add now or later</RowLabel>
+          <RowLabel>Required on the Poster · add now or later</RowLabel>
           {required.map((item) => (
             <div key={item.id} className="grid grid-cols-1 items-center gap-1.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
               <span className="min-w-0">

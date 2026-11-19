@@ -11,6 +11,7 @@ import { firstFrame, useNearViewport, usePageSettled } from "@/lib/use-load-gate
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { Portal } from "@/components/ui/portal";
+import { SectionHeading } from "@/components/patterns/section-heading";
 import { useCan } from "@/features/settings/view-as";
 import { canDecide, useWorkspaceReviewItems } from "@/features/review/review-store";
 import { useSettingsStore } from "@/features/settings/settings-store";
@@ -84,7 +85,7 @@ const CREATION_TILES: TileOption[] = [
   {
     icon: ImageIcon,
     title: "Docs",
-    subtitle: "Infographics, Banners & Detail Aids",
+    subtitle: "Infographics, Banners and Detail Aids",
     accent: "var(--brand-deep)",
     description: "Leave-behinds, journal ads and print-ready banners built straight from your approved claims.",
     href: "#",
@@ -96,7 +97,7 @@ const CREATION_TILES: TileOption[] = [
   {
     icon: Globe,
     title: "Web",
-    subtitle: "Interactive Web for your Brand",
+    subtitle: "Interactive Web for Your Brand",
     accent: "#0a8556",
     description: "On-label microsites and HCP portals, signed off before publish.",
     href: "/create",
@@ -130,7 +131,7 @@ const HERO_SAMPLE: ShowcaseItem = {
 const SHOWCASE_LANES: ShowcaseLane[] = [
   {
     label: "Video Samples",
-    title: "Reels and avatars your team already shipped",
+    title: "Reels and Avatars Your Team Already Shipped",
     subtitle: "Real videos made on SwishX Studio. Two Reel cuts, two Avatar presenters. Play one before you build.",
     items: [
       {
@@ -144,7 +145,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         videoSrc: "/reel-moa.mp4",
       },
       {
-        title: "Dosing & titration explainer",
+        title: "Dosing and titration explainer",
         subtitle: "Endocrinology · US · FDA",
         meta: "0:30",
         aspect: "16/9",
@@ -177,7 +178,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
   },
   {
     label: "Web Samples",
-    title: "Microsites, live in a day",
+    title: "Microsites, Live in a Day",
     subtitle: "Microsites and HCP portals your field team can ship the same day.",
     items: [
       {
@@ -220,7 +221,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
   },
   {
     label: "Creatives Samples",
-    title: "Print and digital, done right",
+    title: "Print and Digital, Done Right",
     subtitle: "Layouts your reps actually use, journal ads, booth panels, and payer infographics.",
     items: [
       {
@@ -948,7 +949,7 @@ function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelec
               gap: 2,
             }}
           >
-            Inspect dossier →
+            Inspect Dossier →
           </span>
         </div>
       </div>
@@ -962,7 +963,7 @@ const EXAMPLE_DOSSIERS = MOCK_DOSSIERS.filter((d) => d.isSample);
 const EXAMPLE_STARTERS: ShowcaseItem[] = [
   {
     title: "Mechanism of action, cardiology",
-    subtitle: "Example Video · Cardiologists",
+    subtitle: "Example video · Cardiologists",
     meta: "1:00",
     aspect: "16/9",
     gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
@@ -1186,7 +1187,7 @@ export function HomeScreen() {
               className="flex w-full cursor-pointer items-center gap-4 rounded-card border border-hair bg-card px-6 py-4 text-left shadow-hair transition-colors hover:border-brand"
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-body-lg font-extrabold text-ink">Browse published content</span>
+                <span className="block text-body-lg font-extrabold text-ink">Browse Published Content</span>
                 <span className="block text-body text-ink-3">
                   {can("comment") ? "Open anything your team has published, and comment on it." : "Everything your team has published, ready to view and share."}
                 </span>
@@ -1198,20 +1199,23 @@ export function HomeScreen() {
           {/* Studio tiles — sitting in the same soft ambient zone */}
           {can("create") && (
           <div>
-            <div className="mb-5 flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between">
-              <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
-              <span className="flex flex-wrap items-center gap-2 text-body text-ink-4">
-                Every asset traces back to your Brand Dossier
-                <span aria-hidden className="hidden text-ink-4 sm:inline">·</span>
-                <button
-                  type="button"
-                  onClick={() => router.push("/create/describe")}
-                  className="font-bold text-brand-deep hover:underline"
-                >
-                  Or just describe your idea →
-                </button>
-              </span>
-            </div>
+            <SectionHeading
+              className="mb-5 gap-1.5"
+              title="Pick a Studio"
+              actions={
+                <span className="flex flex-wrap items-center gap-2 text-body text-ink-4">
+                  Every asset traces back to your Brand Dossier
+                  <span aria-hidden className="hidden text-ink-4 sm:inline">·</span>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/create/describe")}
+                    className="font-bold text-brand-deep hover:underline"
+                  >
+                    Or Just Describe Your Idea →
+                  </button>
+                </span>
+              }
+            />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
               {CREATION_TILES.map((tile, i) => (
                 <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
@@ -1239,12 +1243,12 @@ export function HomeScreen() {
               {isNewUser ? "New here? Start with an example" : "Pick up where you left off"}
             </span>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.5px", color: "var(--ink)", margin: 0 }}>
-              {isNewUser ? "Try a finished example first" : "Recent projects"}
+              {isNewUser ? "Try a Finished Example First" : "Recent Projects"}
             </h2>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {!isNewUser && <span style={{ fontSize: 13, fontWeight: 750, color: "var(--brand)", cursor: "pointer" }}>All projects →</span>}
+            {!isNewUser && <span style={{ fontSize: 13, fontWeight: 750, color: "var(--brand)", cursor: "pointer" }}>All Projects →</span>}
             <div style={{ display: "inline-flex", padding: 3, borderRadius: 99, background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
               {([true, false] as const).map((val) => (
                 <button
@@ -1261,7 +1265,7 @@ export function HomeScreen() {
                     transition: "background .18s var(--e), color .18s var(--e)",
                   }}
                 >
-                  {val ? "New user" : "Returning user"}
+                  {val ? "New User" : "Returning User"}
                 </button>
               ))}
             </div>

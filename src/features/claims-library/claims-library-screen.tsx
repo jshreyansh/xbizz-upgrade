@@ -7,6 +7,10 @@ import { ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "lucide-re
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 import { TileList } from "@/components/patterns/tile-list";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { RowCard } from "@/components/patterns/row-card";
+import { Stat } from "@/components/patterns/stat";
+import { Button } from "@/components/ui/button";
 import { ClaimRow } from "@/features/claims-library/claim-row";
 import { FilterPickerModal } from "@/features/claims-library/filter-picker-modal";
 import {
@@ -41,7 +45,7 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "approved", label: "Approved" },
   { id: "pending", label: "Pending" },
-  { id: "held out", label: "Held out" },
+  { id: "held out", label: "Held Out" },
 ];
 
 function StatTile({
@@ -58,17 +62,16 @@ function StatTile({
   color: string;
 }) {
   return (
-    <div
-      className="rise-in-stagger flex items-center gap-3.5 rounded-panel border border-hair bg-card p-4 shadow-hair transition-all hover:-translate-y-0.5 hover:shadow-soft"
+    <RowCard
+      className="rise-in-stagger gap-3.5"
+      leading={
+        <span className="grid size-10 place-items-center rounded-chip" style={{ background: tint, color }}>
+          <Icon size={18} />
+        </span>
+      }
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-chip" style={{ background: tint, color }}>
-        <Icon size={18} />
-      </span>
-      <div>
-        <b className="block text-title font-extrabold leading-none tracking-tight text-ink">{value.toLocaleString()}</b>
-        <span className="text-caption text-ink-3">{label}</span>
-      </div>
-    </div>
+      <Stat value={value} label={label} align="start" />
+    </RowCard>
   );
 }
 
@@ -159,14 +162,14 @@ export function ClaimsLibraryScreen() {
                 every other brand's claim that happened to mention it. The
                 source is the same kind of pick: where the evidence lives. */}
             <FilterTrigger
-              label={pickedLabel(pickedProducts, "All products")}
+              label={pickedLabel(pickedProducts, "All Products")}
               active={productIds.length > 0}
               onOpen={() => setPicker("product")}
               onClear={() => setProductIds([])}
               clearLabel="Clear product filter"
             />
             <FilterTrigger
-              label={pickedLabel(allSources.filter((x) => sources.includes(x)), "All sources")}
+              label={pickedLabel(allSources.filter((x) => sources.includes(x)), "All Sources")}
               active={sources.length > 0}
               onOpen={() => setPicker("source")}
               onClear={() => setSources([])}
@@ -209,21 +212,21 @@ export function ClaimsLibraryScreen() {
       )}
 
       {products.length === 0 ? (
-        <EmptyState
+        <LibraryEmpty
           title="No brands yet"
           description="Claims are cited from a brand's dossiers, so there's nothing to show until you create your first brand."
-          actionLabel="Create a brand"
+          actionLabel="Create a Brand"
           onAction={() => router.push("/product-library")}
         />
       ) : allClaims.length === 0 ? (
-        <EmptyState
+        <LibraryEmpty
           title="No claims cited yet"
           description="None of your brands have started a dossier yet, once one does, the claims it cites will show up here."
           actionLabel="Go to Product Library"
           onAction={() => router.push("/product-library")}
         />
       ) : filtered.length === 0 ? (
-        <EmptyState
+        <LibraryEmpty
           title="No claims match"
           description={
             query
@@ -232,7 +235,7 @@ export function ClaimsLibraryScreen() {
               ? "No claim matches both the brands and the sources you picked."
               : "No claims have this status yet."
           }
-          actionLabel={anyFilter ? "Clear filters" : undefined}
+          actionLabel={anyFilter ? "Clear Filters" : undefined}
           onAction={
             anyFilter
               ? () => {
@@ -260,9 +263,9 @@ export function ClaimsLibraryScreen() {
 
       {picker === "product" && (
         <FilterPickerModal
-          title="Filter by product"
+          title="Filter by Product"
           description="Show the claims that belong to the brands you pick."
-          allLabel="All products"
+          allLabel="All Products"
           allSublabel={`Every claim across ${products.length} brands`}
           searchPlaceholder="Search by brand, molecule or therapy area…"
           items={products.map((product) => ({
@@ -293,7 +296,8 @@ export function ClaimsLibraryScreen() {
   );
 }
 
-function EmptyState({
+/** The shelf's empty box: always the brand "start here" disc, with one way on. */
+function LibraryEmpty({
   title,
   description,
   actionLabel,
@@ -305,22 +309,13 @@ function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-panel border border-dashed border-hair-2 py-16 text-center">
-      <span className="grid size-12 place-items-center rounded-full bg-tint text-brand-deep">
-        <PackagePlus size={22} />
-      </span>
-      <div className="space-y-1">
-        <p className="text-body-lg font-bold text-ink-2">{title}</p>
-        <p className="max-w-[42ch] text-body text-ink-4">{description}</p>
-      </div>
-      {actionLabel && onAction && (
-        <button
-          onClick={onAction}
-          className="mt-1 inline-flex items-center gap-1.5 rounded-control bg-brand px-4 py-2 text-body-lg font-bold text-white shadow-brand-lift transition-transform hover:-translate-y-0.5"
-        >
-          {actionLabel}
-        </button>
-      )}
-    </div>
+    <EmptyState
+      size="md"
+      icon={<PackagePlus size={22} />}
+      iconTone="brand"
+      title={title}
+      hint={description}
+      action={actionLabel && onAction ? <Button onClick={onAction}>{actionLabel}</Button> : undefined}
+    />
   );
 }

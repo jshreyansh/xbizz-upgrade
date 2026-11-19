@@ -11,10 +11,10 @@ interface StatCard {
 }
 
 const STATS: StatCard[] = [
-  { label: "Assets shipped", value: "128", delta: "+18% vs last month", trend: "up" },
-  { label: "Avg. time to MLR approval", value: "2.4 days", delta: "-0.6 days", trend: "up" },
-  { label: "Claims verified", value: "94%", delta: "+3 pts", trend: "up" },
-  { label: "Active brand dossiers", value: "6", delta: "No change", trend: "flat" },
+  { label: "Assets Shipped", value: "128", delta: "+18% vs last month", trend: "up" },
+  { label: "Avg. Time to MLR Approval", value: "2.4 days", delta: "-0.6 days", trend: "up" },
+  { label: "Claims Verified", value: "94%", delta: "+3 pts", trend: "up" },
+  { label: "Active Brand Dossiers", value: "6", delta: "No change", trend: "flat" },
 ];
 
 interface StudioRow {
@@ -82,7 +82,7 @@ export function AnalyticsScreen() {
       <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 16, alignItems: "start" }}>
         {/* Studio breakdown */}
         <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r-xl)", padding: "22px 22px 20px", boxShadow: "var(--sh-1)" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px", color: "var(--ink)", margin: "0 0 4px" }}>Output by studio</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px", color: "var(--ink)", margin: "0 0 4px" }}>Output by Studio</h3>
           <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 18px" }}>Share of assets shipped this month.</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -102,7 +102,7 @@ export function AnalyticsScreen() {
 
         {/* Top assets */}
         <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r-xl)", padding: "22px 22px 20px", boxShadow: "var(--sh-1)" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px", color: "var(--ink)", margin: "0 0 4px" }}>Top performing assets</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px", color: "var(--ink)", margin: "0 0 4px" }}>Top Performing Assets</h3>
           <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 16px" }}>Most viewed this month.</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

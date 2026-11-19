@@ -39,11 +39,11 @@ export const FREE_ITEM_PRESETS: Record<
 > = {
   title: { option: "Title", label: "Title", text: "New title", w: 460, size: 30, weight: 850 },
   heading: { option: "Heading", label: "Heading", text: "New heading", w: 380, size: 20, weight: 800 },
-  body: { option: "Body text", label: "Body text", text: "Write your text here.", w: 340, size: 13, weight: 500 },
-  bullets: { option: "Bulleted list", label: "Bulleted list", text: "First point\nSecond point\nThird point", w: 320, size: 13, weight: 500 },
-  numbers: { option: "Numbered list", label: "Numbered list", text: "First step\nSecond step\nThird step", w: 320, size: 13, weight: 500 },
+  body: { option: "Body Text", label: "Body Text", text: "Write your text here.", w: 340, size: 13, weight: 500 },
+  bullets: { option: "Bulleted List", label: "Bulleted List", text: "First point\nSecond point\nThird point", w: 320, size: 13, weight: 500 },
+  numbers: { option: "Numbered List", label: "Numbered List", text: "First step\nSecond step\nThird step", w: 320, size: 13, weight: 500 },
   quote: { option: "Quote", label: "Quote", text: "“A quote from an HCP or KOL.”\n— Name, role", w: 380, size: 16, weight: 600 },
-  callout: { option: "Callout box", label: "Callout box", text: "A point to highlight.", w: 340, size: 13, weight: 600 },
+  callout: { option: "Callout Box", label: "Callout Box", text: "A point to highlight.", w: 340, size: 13, weight: 600 },
   footnote: { option: "Footnote", label: "Footnote", text: "¹ Footnote text.", w: 340, size: 9, weight: 400 },
 };
 

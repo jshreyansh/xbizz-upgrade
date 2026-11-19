@@ -93,7 +93,7 @@ const PRESENTERS = [
   {
     id: "none",
     name: "No Avatar",
-    role: "Voiceover narration & cinematic 3D motion only",
+    role: "Voiceover narration and cinematic 3D motion only",
     image: "",
   },
   {
@@ -388,21 +388,21 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         id: "hcp-launch",
         tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
         prompt: isInfographic
-          ? `Create a high-impact clinical leave-behind for ${prescribers} on ${subjectPhrase}, summarizing the pivotal Phase III result, mechanism of action and licensed indication cut-offs.`
+          ? `Create a high-impact clinical leave-behind for ${prescribers} on ${subjectPhrase}, summarising the pivotal Phase III result, mechanism of action and licensed indication cut-offs.`
           : `Create a concise HCP launch video for ${prescribers} that explains the clinical need, mechanism, and pivotal evidence of ${subjectPhrase}.`,
       },
       {
         id: "moa-efficacy",
-        tag: isInfographic ? "3D MoA Cellular Cascade" : "Mechanism & Efficacy",
+        tag: isInfographic ? "3D MoA Cellular Cascade" : "Mechanism and Efficacy",
         prompt: isInfographic
           ? `Design a 3D mechanism of action visual flow showing receptor binding and the downstream effect of ${subjectPhrase}.`
           : `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety of ${subjectPhrase}.`,
       },
       {
         id: "presenter-briefing",
-        tag: isInfographic ? "Clinical Readout & Cut-Offs" : "Clinical Briefing",
+        tag: isInfographic ? "Clinical Readout and Cut-Offs" : "Clinical Briefing",
         prompt: isInfographic
-          ? `Summarize the pivotal trial endpoints with prescribing cut-offs and mandatory ISI fair balance, on ${subjectPhrase}.`
+          ? `Summarise the pivotal trial endpoints with prescribing cut-offs and mandatory ISI fair balance, on ${subjectPhrase}.`
           : `Generate a presenter-led clinical briefing for ${prescribers} explaining the mechanism of action and fair balance safety profile of ${subjectPhrase}.`,
       },
     ],
@@ -412,7 +412,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const projectKind = isAd ? "ad" : isEmail ? "email" : isInfographic ? "document" : "video";
   const projectName = isEmail
-    ? storedProjectName || `${currentBrandName} · ${EMAIL_PURPOSES[emailPurpose].label} email`
+    ? storedProjectName || `${currentBrandName} · ${EMAIL_PURPOSES[emailPurpose].label} Email`
     : isAd
     ? storedProjectName || `${currentBrandName} · ${AD_KIND_PRESETS[adKind].noun}`
     : sourceType === "dossier"
@@ -675,8 +675,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   isEmail
                     ? "Describe the email: who it's for, the one thing it should say, and what you want the doctor to do next."
                     : isAd
-                    ? `Describe the campaign: who it's for, the message, and where people should land (e.g. "Launch ${currentBrandName} to adults with plaque psoriasis and drive sign-ups to the savings card")...`
-                    : `Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`
+                    ? `Describe the campaign: who it's for, the message, and where people should land (e.g. "Launch ${currentBrandName} to adults with plaque psoriasis and drive sign-ups to the savings card")…`
+                    : `Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")…`
                 }
                 className="w-full resize-none bg-transparent text-subhead leading-relaxed outline-none placeholder:text-ink-4 text-ink font-normal"
               />
@@ -709,7 +709,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     )}
                   >
                     <Library className="size-3.5" />
-                    <span>Approved materials</span>
+                    <span>Approved Materials</span>
                     {emailAttached.length > 0 && (
                       <span className="grid size-4 place-items-center rounded-full bg-brand text-white text-micro font-bold">
                         {emailAttached.length}
@@ -779,7 +779,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   </div>
 
                   <div className="flex items-center gap-1 text-label font-bold text-brand opacity-80 group-hover:opacity-100 shrink-0 ml-2">
-                    <span className="hidden sm:inline">Use prompt</span>
+                    <span className="hidden sm:inline">Use Prompt</span>
                     <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
@@ -800,7 +800,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <Modal
           open
           onClose={() => setEmailAboutOpen(false)}
-          title="About this email"
+          title="About This Email"
           description="Who it's for and who sends it decide what can be personalised."
           size="lg"
           footer={
@@ -947,14 +947,14 @@ function SourceLibraryModal({
         <div className="flex items-center justify-between border-b border-hair p-5">
           <div>
             <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
-            <h3 className="text-title font-semibold">Attach verified evidence</h3>
+            <h3 className="text-title font-semibold">Attach Verified Evidence</h3>
           </div>
           <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="p-4 border-b border-hair">
           <div className="flex items-center gap-2 rounded-control border border-hair bg-canvas px-3 py-2">
             <Search className="size-4 text-ink-3" />
-            <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets..." className="w-full bg-transparent text-body-lg outline-none" />
+            <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets…" className="w-full bg-transparent text-body-lg outline-none" />
           </div>
         </div>
         <div className="flex-1 space-y-2 overflow-y-auto p-4">
@@ -974,7 +974,7 @@ function SourceLibraryModal({
           })}
         </div>
         <div className="flex items-center justify-between border-t border-hair p-4">
-          <Button variant="secondary" size="sm" onClick={onUpload} className="gap-1.5"><Upload className="size-3.5" /> Upload document</Button>
+          <Button variant="secondary" size="sm" onClick={onUpload} className="gap-1.5"><Upload className="size-3.5" /> Upload Document</Button>
           <Button size="sm" onClick={onClose}>Done</Button>
         </div>
       </div>

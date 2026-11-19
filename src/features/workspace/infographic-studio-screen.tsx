@@ -60,7 +60,8 @@ import {
   listSuggestions,
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
-import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, InspectorTabStrip, ReadOnlyChatNote } from "@/components/patterns/inspector-tabs";
+import { APPROVED_CLAIMS } from "@/features/workspace/script-claims";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { stamp, VersionHistoryButton } from "@/features/workspace/version-history";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -129,7 +130,7 @@ function canvasOpenSteps(pageCount: number, blockCount: number): GenerationStep[
     { label: "Fitted the approved copy to the composition", seconds: 0.55 },
     ...perPage,
     { label: "Reserved space for charts and figures", seconds: 0.45 },
-    { label: "Placed the brand mark & fair balance band", seconds: 0.45 },
+    { label: "Placed the brand mark and fair balance band", seconds: 0.45 },
     { label: "Queued art layers for background render", seconds: 0.5 },
   ];
 }
@@ -142,17 +143,17 @@ function proofRenderSteps(pageCount: number, artCount: number): GenerationStep[]
   }
   const perPage: GenerationStep[] = [];
   for (let p = 1; p <= pageCount; p += 1) {
-    perPage.push({ label: `Page ${p}, flattened vectors & type`, seconds: 0.36 });
+    perPage.push({ label: `Page ${p}, flattened vectors and type`, seconds: 0.36 });
     perPage.push({ label: `Page ${p}, proofed colour for print`, seconds: 0.3 });
   }
   return [
     { label: "Validated 214 approved dossier claims", seconds: 0.55 },
     { label: "Checked every figure against its source", seconds: 0.5 },
     ...perArt,
-    { label: "Synthesized publication-grade vectors", seconds: 0.6 },
+    { label: "Synthesised publication-grade vectors", seconds: 0.6 },
     ...perPage,
     { label: "Grounded the ISI fair balance table", seconds: 0.5 },
-    { label: "Embedded fonts & citation footnotes", seconds: 0.45 },
+    { label: "Embedded fonts and citation footnotes", seconds: 0.45 },
     { label: "Wrote the print-ready master", seconds: 0.7 },
   ];
 }
@@ -342,7 +343,7 @@ const PAGE_2_ART: PageArtLayer[] = [
 
 const DEFAULT_PAGE_2: InfographicPageData = {
   id: 2,
-  name: "Page 2: Evidence & Tolerability",
+  name: "Page 2: Evidence and Tolerability",
   art: PAGE_2_ART.map((layer, i) => ({ ...layer, readyAt: artSchedule(PAGE_2_ART.length)[i] })),
   subtitle: "52-Week Durability & Renal Boundary",
   header: {
@@ -385,7 +386,7 @@ const MAX_PAGES = 12;
 function evidencePage(n: number): InfographicPageData {
   return n === 2
     ? DEFAULT_PAGE_2
-    : { ...DEFAULT_PAGE_2, id: n, name: `Page ${n}: Clinical Evidence & Tolerability` };
+    : { ...DEFAULT_PAGE_2, id: n, name: `Page ${n}: Clinical Evidence and Tolerability` };
 }
 
 export function InfographicStudioScreen() {
@@ -654,6 +655,11 @@ export function InfographicStudioScreen() {
   });
 
   const isReview = studioMode === "review";
+  /* Every way into the editor lands on the chat, including Edit from review. */
+  const openEditor = () => {
+    setActiveTab("assistant");
+    setStudioMode("editor");
+  };
   /* How many versions have shipped, not merely whether any have — a boolean
      cannot tell version 1 from version 3. Opened from the library, one exists. */
   const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
@@ -1190,7 +1196,7 @@ export function InfographicStudioScreen() {
             subtitle: "First-in-Class Dual Mechanism Kinase Inhibitor · Once-Daily 200mg Oral Formulation",
           },
         }));
-        reply = "✓ **Quality Blocker Resolved**: Condensed and standardized headline tagline. Chemical and generic drug nomenclature verified.";
+        reply = "✓ **Quality Blocker Resolved**: Condensed and standardised headline tagline. Chemical and generic drug nomenclature verified.";
       } else if (lower.includes("headline") || lower.includes("header") || lower.includes("title")) {
         updateCurrentPage((prev) => ({
           ...prev,
@@ -1253,7 +1259,7 @@ export function InfographicStudioScreen() {
         summary: flags ? "One comparative claim was flagged by SwishX before submission." : "Every claim resolves to an approved source.",
       },
     });
-    showToast(item.status === "in_review" ? `Submitted for review · ${item.stages[item.stageIndex]?.name} is next` : "Creative published · Opened Shared Review View");
+    showToast(item.status === "in_review" ? `Submitted for review · ${item.stages[item.stageIndex]?.name} is next` : "Creative published · Opened the shared review view");
   };
 
   /**
@@ -1561,11 +1567,11 @@ export function InfographicStudioScreen() {
   };
 
   const IMAGE_PICKERS: Record<string, NonNullable<typeof imagePicker>> = {
-    "Brand images library": "brand",
-    "Workspace media library": "media",
+    "Brand Images Library": "brand",
+    "Workspace Media Library": "media",
     Icon: "icon",
-    "QR code": "qr",
-    "Generate image": "generate",
+    "QR Code": "qr",
+    "Generate Image": "generate",
   };
 
   const handleInsert = (menu: InsertMenuId, option: string) => {
@@ -1691,7 +1697,7 @@ export function InfographicStudioScreen() {
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
                   <LogoMark size={12} className="text-brand-deep animate-spin" />
-                  <span>Generating High-Res Creative...</span>
+                  <span>Generating high-res creative…</span>
                 </span>
               )}
               {studioMode === "review" && (
@@ -1750,7 +1756,7 @@ export function InfographicStudioScreen() {
             {studioMode === "review" && <VersionChip versions={assetVersions} variant="button" />}
             {/* A published asset opens here from the library; Edit starts the next draft. */}
             {studioMode === "review" && assetReview.canEdit && (
-              <Button size="sm" variant="secondary" onClick={() => setStudioMode("editor")} className="gap-1.5 px-3.5 font-bold">
+              <Button size="sm" variant="secondary" onClick={openEditor} className="gap-1.5 px-3.5 font-bold">
                 <Pencil className="size-3.5" />
                 Edit
               </Button>
@@ -1869,7 +1875,7 @@ export function InfographicStudioScreen() {
       main={
         applyingTemplate ? (
             <GenerationProgress
-              title={`Applying the ${applyingTemplate.template.name} template...`}
+              title={`Applying the ${applyingTemplate.template.name} template…`}
               subtitle="Redrawing every page in the new template. Claims keep their words and citations; the chat stays open."
               steps={applyingTemplate.steps}
               onDone={() => {
@@ -1884,15 +1890,15 @@ export function InfographicStudioScreen() {
             />
         ) : studioMode === "opening" ? (
             <GenerationProgress
-              title="Opening the canvas editor..."
+              title="Opening the canvas editor…"
               subtitle="Applying the chosen layout and fitting the approved copy into it, before the art starts arriving."
               steps={canvasOpenStepList}
-              onDone={() => setStudioMode("editor")}
+              onDone={openEditor}
             />
         ) : studioMode === "generating" ? (
             <GenerationProgress
-              title="Generating high-resolution creative & proofs..."
-              subtitle="Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links."
+              title="Generating high-resolution creative and proofs…"
+              subtitle="Synthesising publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links."
               steps={proofRenderStepList}
               onDone={handleProofsRendered}
               footer={
@@ -1904,7 +1910,7 @@ export function InfographicStudioScreen() {
         ) : (
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
             {studioMode === "review" && assetReview.item && (
-              <ReviewStatusBanner item={assetReview.item} onEdit={() => setStudioMode("editor")} />
+              <ReviewStatusBanner item={assetReview.item} onEdit={openEditor} />
             )}
             {/* What is still arriving, and what you can already do. The page
                 below is editable throughout — the strip is a status line, not
@@ -1978,7 +1984,7 @@ export function InfographicStudioScreen() {
                   }}
                   className="focus-ring ml-auto shrink-0 cursor-pointer rounded-chip bg-warn px-2.5 py-1 text-label font-bold text-white transition hover:brightness-110"
                 >
-                  Re-verify now
+                  Re-Verify Now
                 </button>
               </div>
             )}
@@ -2358,58 +2364,51 @@ export function InfographicStudioScreen() {
       panel={
         studioMode !== "generating" ? (
           <>
-            {/* Top Tabs Switcher */}
-            <div className="p-3 border-b border-hair bg-canvas shrink-0">
-              {/* The same tab row the video studio has, from the same
-                  component — this was a fourth hand-rolled copy of it.
-                  Comments live here in the editor too, not only in review:
-                  the agent resolves a reviewer's note while you are editing,
-                  and this is where you go to see that. */}
-              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#edeef0]")}>
-                {/* The chat changes the asset, so a viewer without Create doesn't get it. */}
-                {assetReview.canEdit && (
-                <InspectorTabButton
-                  tab="assistant"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={MessageCircle}
-                  badge={<span className="size-1.5 rounded-full bg-ok shrink-0" />}
-                >
-                  Chat
-                </InspectorTabButton>
-                )}
+            {/* The same strip, in the same order, as every studio: Chat ·
+                Claims · Comments. Chat is always there; in review it is
+                read-only. Comments is always there; it turns on once the
+                asset has been published and shared. */}
+            <InspectorTabStrip>
+              <InspectorTabButton
+                tab="assistant"
+                current={activeTab}
+                onClick={setActiveTab}
+                icon={MessageCircle}
+                badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}
+              >
+                Chat
+              </InspectorTabButton>
 
-                {/* No Edit tab: the toolbar edits whatever is selected, and
-                    selecting never moves the panel off the chat. */}
+              {/* No Edit tab: the toolbar edits whatever is selected, and
+                  selecting never moves the panel off the chat. */}
 
-                {(publishedCount > 0 || isReview) && (
-                <InspectorTabButton
-                  tab="comments"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={MessageSquareQuote}
-                  count={commentStats(comments).open}
-                  alwaysCount
-                >
-                  Comments
-                </InspectorTabButton>
-                )}
+              <InspectorTabButton
+                tab="evidence"
+                current={activeTab}
+                onClick={setActiveTab}
+                icon={ShieldCheck}
+                count={APPROVED_CLAIMS.length}
+              >
+                Claims
+              </InspectorTabButton>
 
-                <InspectorTabButton
-                  tab="evidence"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={ShieldCheck}
-                  count={24}
-                >
-                  Claims
-                </InspectorTabButton>
-              </div>
-            </div>
+              <InspectorTabButton
+                tab="comments"
+                current={activeTab}
+                onClick={setActiveTab}
+                icon={MessageSquareQuote}
+                count={commentStats(comments).open}
+                alwaysCount
+                disabledHint={publishedCount > 0 || isReview ? undefined : "Comments turn on once it's published and shared"}
+              >
+                Comments
+              </InspectorTabButton>
+            </InspectorTabStrip>
 
             {/* ── TAB 1: DIRECT CHAT WITH SWISHX (Persisted From Brief Screen) ── */}
             {activeTab === "assistant" && (
               <div className="flex-1 flex flex-col min-h-0">
+                {isReview && <ReadOnlyChatNote />}
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
                   {chatMessages.map((msg, idx) => (
                     <div
@@ -2445,13 +2444,15 @@ export function InfographicStudioScreen() {
                           ) : null;
                         })()}
                         <FormattedMessageText text={msg.text} />
-                        <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />
+                        {!isReview && <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />}
                       </div>
                     </div>
                   ))}
                   <div ref={chatBottomRef} />
                 </div>
 
+                {/* Changes happen in the editor: no composer in review. */}
+                {!isReview && (
                 <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
                   {/* What is still owed, pinned where the second Generate and
                       Publish button used to sit. That button was already in
@@ -2465,11 +2466,9 @@ export function InfographicStudioScreen() {
                     onSubmit={() => handleSendMessage()}
                     canSendEmpty={suggestionQueue.draftCount > 0}
                     placeholder={
-                      studioMode === "review"
-                        ? "Ask SwishX or type 'Add comment on the hero stat that...'..."
-                        : suggestionQueue.draftCount > 0
+                      suggestionQueue.draftCount > 0
                         ? "Add a note, or send as is"
-                        : "Ask SwishX to rephrase, highlight endpoints..."
+                        : "Ask SwishX to rephrase, highlight endpoints…"
                     }
                     attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
                   >
@@ -2498,128 +2497,10 @@ export function InfographicStudioScreen() {
                     />
                   </ChatComposer>
                 </div>
-              </div>
-            )}
-
-            {/* ── TAB 2: THE SELECTED ELEMENT (In Editor Mode) ── */}
-            {/*
-              * Read-only, like the video editor's.
-              *
-              * This tab stopped being a form. The page's copy is shown so you
-              * can see what is there, and changing it goes through the chat —
-              * one route to a change rather than a form and a conversation
-              * that can disagree about which won. What stays editable is
-              * placement and stacking, because those are settings rather than
-              * claims.
-              */}
-            {activeTab === "edit" && studioMode === "editor" && (
-              <div className="flex-1 space-y-3.5 overflow-y-auto p-4">
-                <div className="flex items-center justify-between border-b border-hair pb-2.5">
-                  <div className="min-w-0">
-                    <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
-                      Page inspector
-                    </div>
-                    <h3 className="mt-0.5 truncate text-subhead font-[850] text-ink">
-                      {selectedArt
-                        ? selectedArt.label
-                        : selectedElement
-                          ? `${BLOCK_LABELS[selectedElement.blockId] ?? ""} · ${selectedElement.label}`
-                          : BLOCK_LABELS[selectedBlockId] ?? "Page"}
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("assistant")}
-                    className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                {selectedArt ? (
-                  <div className="space-y-2.5">
-                    <div className="rounded-control border border-hair-2 bg-canvas p-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-label font-bold text-ink-2">
-                          {selectedArt.kind === "graph" ? "Chart layer" : selectedArt.kind === "background" ? "Background layer" : "Image layer"}
-                        </span>
-                        <span className="text-caption text-ink-4">
-                          z{selectedArt.z} · {genElapsed >= selectedArt.readyAt ? "rendered" : "rendering"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-body font-medium leading-relaxed text-ink">{selectedArt.label}</p>
-                      <div className="mt-2 flex justify-end border-t border-hair pt-2">
-                        <button
-                          type="button"
-                          onClick={() => addArtToChat(selectedArt.id)}
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
-                        >
-                          <MessageSquare className="size-3" />
-                          <span>Add to chat</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <p className="text-label leading-snug text-ink-3">
-                      Where it sits and how big it is come from the slot the layout reserved. The art fills
-                      the box, it does not choose one.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3.5">
-                    {Object.values(textElements)
-                      .filter((el) => el.blockId === selectedBlockId)
-                      .map((el) => (
-                        <div key={el.id}>
-                          <div className="mb-1 flex items-center justify-between gap-2">
-                            <span className="text-label font-bold text-ink-2">{el.label}</span>
-                            {el.citation && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-glyph bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
-                                <ShieldCheck className="size-2.5" />
-                                Grounded
-                              </span>
-                            )}
-                          </div>
-                          <div
-                            className={cn(
-                              "rounded-control border bg-canvas p-2.5 transition",
-                              selectedElementId === el.id ? "border-brand ring-2 ring-brand/15" : "border-hair-2"
-                            )}
-                          >
-                            <p className="text-body font-medium leading-relaxed text-ink">{runValue(el.id)}</p>
-                            <div className="mt-2 flex items-center justify-between gap-2 border-t border-hair pt-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const node = document.querySelector(`[data-canvas-text="${el.id}"]`);
-                                  if (node) handleSelectElement(el.id, node.getBoundingClientRect());
-                                }}
-                                className="cursor-pointer text-caption font-bold text-ink-3 transition-colors hover:text-ink"
-                              >
-                                Select on page
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedElementId(el.id);
-                                  setActiveTab("assistant");
-                                  attachToChat({ id: `run-${el.id}`, label: `Page ${activePageId} · ${el.label}`, detail: `"${runValue(el.id)}"` });
-                                  setChatInput((prev) => (prev.trim() ? prev : `Rewrite the ${el.label.toLowerCase()} `));
-                                  showToast(`${el.label} added to the chat`);
-                                }}
-                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
-                              >
-                                <MessageSquare className="size-3" />
-                                <span>Add to chat</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
                 )}
               </div>
             )}
+
 
 
             {/* ── TAB 2: REVIEWER COMMENTS (In Review Mode) ── */}
@@ -2714,7 +2595,7 @@ export function InfographicStudioScreen() {
                 <button
                   type="button"
                   onClick={() => {
-                    showToast("Generated CMYK Print-Ready PDF with 3mm Bleed");
+                    showToast("Generated a CMYK print-ready PDF with 3mm bleed");
                     setExportModalOpen(false);
                   }}
                   className="w-full p-3 rounded-control border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
@@ -2728,14 +2609,14 @@ export function InfographicStudioScreen() {
                 <button
                   type="button"
                   onClick={() => {
-                    showToast("Downloaded Digital RGB Tablet PDF");
+                    showToast("Downloaded the digital RGB tablet PDF");
                     setExportModalOpen(false);
                   }}
                   className="w-full p-3 rounded-control border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
                 >
                   <div>
                     <div className="font-bold text-body-lg text-ink">Digital Screen PDF (RGB · 150 DPI)</div>
-                    <div className="text-label text-ink-3">Optimized for iPad detailing &amp; Veeva CLM presentation</div>
+                    <div className="text-label text-ink-3">Optimised for iPad detailing and Veeva CLM presentation</div>
                   </div>
                   <Download className="size-4 text-brand" />
                 </button>
@@ -2755,7 +2636,7 @@ export function InfographicStudioScreen() {
             submit={
               assetReview.stages.length
                 ? {
-                    label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review",
+                    label: assetReview.item?.status === "changes" ? "Resubmit for Review" : "Submit for Review",
                     route: assetReview.stages.map((st) => st.name),
                   }
                 : undefined
@@ -2898,7 +2779,7 @@ export function InfographicStudioScreen() {
         {(imagePicker === "brand" || imagePicker === "media") && (
           <MediaPickerModal
             icon={imagePicker === "brand" ? Package : FolderOpen}
-            title={imagePicker === "brand" ? `Brand images library · ${brandName}` : "Workspace media library"}
+            title={imagePicker === "brand" ? `Brand Images Library · ${brandName}` : "Workspace Media Library"}
             sub={
               imagePicker === "brand"
                 ? `Images attached to ${brandName} in the Product Library, every variation.`
@@ -2951,11 +2832,11 @@ export function InfographicStudioScreen() {
               setImagePicker(null);
               queueInsert({
                 id: `insert-qr-${url}`,
-                label: "QR code",
+                label: "QR Code",
                 detail: `Links to ${url} · ${pageLabel}, ${insertWhere}`,
                 prompt: `Place this QR code ${insertWhere}. `,
                 reply: `Placing a **QR code** to ${url} ${insertWhere}. I'll add a line under it saying where it goes, so a reader knows before they scan.`,
-                toast: "QR code",
+                toast: "QR Code",
               });
             }}
           />
@@ -2964,12 +2845,12 @@ export function InfographicStudioScreen() {
         {imagePicker === "generate" && (
           <RequestModal
             icon={Sparkles}
-            action="Generate an image"
+            action="Generate an Image"
             subject={pageLabel}
-            label="Describe the image"
+            label="Describe the Image"
             hint={`It goes ${insertWhere}. SwishX keeps it to the brand look and away from anything a claim would need to back up.`}
             placeholder="e.g. A dermatologist examining a patient's forearm, soft daylight"
-            submitLabel="Generate image"
+            submitLabel="Generate Image"
             required
             onClose={() => setImagePicker(null)}
             onSubmit={(note) => {
@@ -3040,7 +2921,7 @@ export function InfographicStudioScreen() {
                   ...pagesList.map((_, i) => ({ label: `Page ${i + 1}, laid out the blocks again`, seconds: 0.6 })),
                   { label: "Moved the approved copy across, citations intact", seconds: 0.6 },
                   { label: "Carried over added text and replaced images", seconds: 0.5 },
-                  { label: "Placed the brand mark & fair balance band", seconds: 0.45 },
+                  { label: "Placed the brand mark and fair balance band", seconds: 0.45 },
                 ],
               });
             }}
@@ -3051,7 +2932,7 @@ export function InfographicStudioScreen() {
           return (
             <RequestModal
               icon={FilePlus2}
-              action="Add a page"
+              action="Add a Page"
               subject={`Page ${next}`}
               label="What should this page be about?"
               hint="SwishX lays it out from the approved claims. You can change anything after."

@@ -1,8 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ListChecks, type LucideIcon } from "lucide-react";
+import { ListChecks } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { BackLink } from "@/components/patterns/back-link";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { SectionHeading } from "@/components/patterns/section-heading";
 import type { LibraryProduct, ProductDetail, DossierTypeName } from "@/features/product-library/product-library-types";
 import { DOSSIER_STATUS_STYLE } from "@/features/product-library/dossier-status";
 import { DOSSIER_TYPE_ICON, ClaimCard } from "@/features/product-library/claim-card";
@@ -38,12 +41,7 @@ export function DossierDetailScreen({
 
   return (
     <div className="page-enter space-y-6">
-      <button
-        onClick={() => router.push(`/product-library/${product.id}`)}
-        className="inline-flex items-center gap-1.5 text-body-lg font-bold text-ink-3 transition-colors hover:text-brand-deep"
-      >
-        <ChevronLeft size={15} /> {product.name}
-      </button>
+      <BackLink href={`/product-library/${product.id}`}>{product.name}</BackLink>
 
       {/* Header */}
       <div className="flex flex-wrap items-center gap-4 rounded-panel border border-hair bg-card p-5 shadow-hair">
@@ -52,7 +50,7 @@ export function DossierDetailScreen({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-title font-extrabold tracking-tight text-ink">{activeType} dossier</h1>
+            <h1 className="text-title font-extrabold tracking-tight text-ink">{activeType} Dossier</h1>
             <span className={cn("rounded-chip px-2.5 py-1 text-caption font-extrabold", s.bg, s.tone)}>{s.label}</span>
           </div>
           <span className="text-body text-ink-3">
@@ -66,7 +64,7 @@ export function DossierDetailScreen({
       {/* All dossiers — the whole point of this being a page rather than an
           expanded row: every other type is one click away from here. */}
       <div className="space-y-2.5">
-        <h2 className="text-caption font-extrabold uppercase tracking-[.05em] text-ink-4">All dossiers</h2>
+        <h2 className="text-caption font-extrabold uppercase tracking-[.05em] text-ink-4">All Dossiers</h2>
         <div className="flex flex-wrap gap-2">
           {detail.dossiers.map((d) => {
             const ds = DOSSIER_STATUS_STYLE[d.status];
@@ -94,12 +92,13 @@ export function DossierDetailScreen({
 
       {/* Sections */}
       <div className="space-y-3">
-        <h2 className="text-subhead font-extrabold tracking-tight text-ink">Sections</h2>
+        <SectionHeading size="subhead" title="Sections" />
         {sections.length === 0 ? (
-          <EmptyBlock
-            icon={ListChecks}
+          <EmptyState
+            size="md"
+            icon={<ListChecks size={20} />}
             title="Not started yet"
-            description="This dossier hasn't been started. Its sections will appear here once it is."
+            hint="This dossier hasn't been started. Its sections will appear here once it is."
           />
         ) : (
           <div className="flex flex-col gap-2">
@@ -123,9 +122,9 @@ export function DossierDetailScreen({
       {/* Claims from this dossier — reuses the same ClaimCard the Claims
           tab and the Claims Library use, filtered to this dossier type. */}
       <div className="space-y-3">
-        <h2 className="text-subhead font-extrabold tracking-tight text-ink">Claims from this dossier</h2>
+        <SectionHeading size="subhead" title="Claims from This Dossier" />
         {claims.length === 0 ? (
-          <EmptyBlock icon={ListChecks} title="No claims cited yet" description="Claims this dossier grounds will show up here once it's underway." />
+          <EmptyState size="md" icon={<ListChecks size={20} />} title="No claims cited yet" hint="Claims this dossier grounds will show up here once it's underway." />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
             {claims.map((c) => (
@@ -134,18 +133,6 @@ export function DossierDetailScreen({
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function EmptyBlock({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-hair-2 py-12 text-center">
-      <span className="grid size-11 place-items-center rounded-full bg-subtle text-ink-4">
-        <Icon size={20} />
-      </span>
-      <p className="text-body-lg font-bold text-ink-2">{title}</p>
-      <p className="max-w-[36ch] text-body text-ink-4">{description}</p>
     </div>
   );
 }

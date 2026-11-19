@@ -1,23 +1,26 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { Chip, type ChipProps } from "@/components/ui/chip";
 import { AssetVideo } from "@/features/workspace/asset-video";
 import type { LibraryAsset } from "@/features/content-library/content-library-data";
 
-export const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; line: string }> = {
-  Draft: { bg: "var(--color-subtle)", fg: "var(--ink-3)", line: "var(--hair-2)" },
-  Published: { bg: "var(--ok-bg)", fg: "var(--ok)", line: "var(--ok-line)" },
-  Approved: { bg: "var(--tint-2)", fg: "var(--brand-deep)", line: "var(--tint-line)" },
-  "In MLR review": { bg: "#fff4e5", fg: "#b45309", line: "#fcd9a4" },
-  "Changes requested": { bg: "var(--warn-bg)", fg: "var(--warn)", line: "var(--warn-line)" },
+/* The library's status tags on the shared Chip tones. "In MLR review" keeps
+   its amber ink so it still reads apart from "Changes requested". */
+const STATUS_CHIP: Record<LibraryAsset["status"], { tone: ChipProps["tone"]; className?: string }> = {
+  Draft: { tone: "neutral", className: "border-hair-2" },
+  Published: { tone: "ok" },
+  Approved: { tone: "brand", className: "bg-tint-2" },
+  "In MLR review": { tone: "warn", className: "text-accent-amber" },
+  "Changes requested": { tone: "warn" },
 };
 
 export function StatusChip({ status }: { status: LibraryAsset["status"] }) {
-  const tone = STATUS_STYLE[status];
+  const { tone, className } = STATUS_CHIP[status];
   return (
-    <span className="rounded-chip px-2 py-0.5 text-caption font-bold" style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.line}` }}>
+    <Chip tone={tone} weight="bold" className={className}>
       {status}
-    </span>
+    </Chip>
   );
 }
 

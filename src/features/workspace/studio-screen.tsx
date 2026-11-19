@@ -28,7 +28,6 @@ import {
   LayoutPanelTop,
   Maximize2,
   ShieldCheck,  MessageCircle,
-  PenLine,
   MessageSquareQuote,
   MessageSquarePlus,
   Mic2,
@@ -72,7 +71,8 @@ import {
   useSuggestionQueue,
   type Suggestion,
 } from "@/features/workspace/suggestion-queue";
-import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, InspectorTabStrip, ReadOnlyChatNote } from "@/components/patterns/inspector-tabs";
+import { Modal } from "@/components/ui/modal";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { stamp, VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
@@ -123,7 +123,7 @@ import { sceneAssets, shotIdsOf } from "@/features/workspace/scene-generation";
 import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
-import { EditorToolbar } from "@/features/workspace/editor-toolbar";
+import { EditorToolbar, ToolButton } from "@/features/workspace/editor-toolbar";
 import { CaptionsMenu, videoSelection } from "@/features/workspace/video-toolbar";
 import { EMPTY_STYLE, textStyleCss, type TextStyle } from "@/features/workspace/canvas-text-toolbar";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -190,7 +190,7 @@ const TAG_DEPENDENTS: Record<string, string[]> = {
 function editorOpenSteps(sceneCount: number): GenerationStep[] {
   const perScene: GenerationStep[] = [];
   for (let i = 1; i <= sceneCount; i += 1) {
-    perScene.push({ label: `Laid out scene ${i} copy & element boxes`, seconds: 0.36 });
+    perScene.push({ label: `Laid out scene ${i} copy and element boxes`, seconds: 0.36 });
     perScene.push({ label: `Timed scene ${i} entrances and exits`, seconds: 0.26 });
   }
   return [
@@ -198,7 +198,7 @@ function editorOpenSteps(sceneCount: number): GenerationStep[] {
     { label: "Resolved frame size and safe areas", seconds: 0.4 },
     ...perScene,
     { label: "Placed the presenter avatar", seconds: 0.45 },
-    { label: "Placed the brand mark & watermark", seconds: 0.4 },
+    { label: "Placed the brand mark and watermark", seconds: 0.4 },
     { label: "Reserved the fair balance band", seconds: 0.4 },
     { label: "Queued art layers for background render", seconds: 0.5 },
     { label: "Queued motion and voiceover jobs", seconds: 0.45 },
@@ -213,13 +213,13 @@ function masterRenderSteps(sceneCount: number, cinematic: boolean): GenerationSt
     perScene.push({ label: `Synced scene ${i} voiceover to frame`, seconds: 0.24 });
   }
   return [
-    { label: "Parsed storyboard scenes & timing", seconds: 0.5 },
+    { label: "Parsed storyboard scenes and timing", seconds: 0.5 },
     { label: "Allocated cloud render workers", seconds: 0.45 },
     { label: `Set output profile, ${cinematic ? "Cinematic 4K" : "HD Motion"}`, seconds: 0.4 },
     ...perScene,
     { label: "Built 3D lighting and camera passes", seconds: 0.6 },
     { label: "Mixed the voiceover bed", seconds: 0.45 },
-    { label: "Burned in subtitles & on-screen copy", seconds: 0.5 },
+    { label: "Burned in subtitles and on-screen copy", seconds: 0.5 },
     { label: "Linked citations to FDA label §5.1", seconds: 0.45 },
     { label: "Verified fair balance across every scene", seconds: 0.5 },
     { label: "Encoded the final master", seconds: 0.8 },
@@ -261,9 +261,12 @@ export function StudioScreen() {
   const [studioMode, setStudioMode] = useState<"scenes" | "opening-editor" | "editor" | "generating" | "review">(
     openedForReview ? "review" : openedForMlr ? "editor" : "scenes"
   );
-  const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">(
+  const [activeTab, setActiveTab] = useState<"assistant" | "comments" | "evidence">(
     openedForReview ? "comments" : "assistant"
   );
+  /* The selected scene's settings, shots and copy: a pop-up from the
+     editor's toolbar, not a tab, so the panel stays Chat · Claims · Comments. */
+  const [sceneConfigOpen, setSceneConfigOpen] = useState(false);
 
   const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(openedForMlr);
   const [preflightOpen, setPreflightOpen] = useState(false);
@@ -283,13 +286,6 @@ export function StudioScreen() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleCopilotPanel]);
-
-  // In Script Stage (studioMode === "scenes"), edit tab should not be available
-  useEffect(() => {
-    if (studioMode === "scenes" && activeTab === "edit") {
-      setActiveTab("assistant");
-    }
-  }, [studioMode, activeTab]);
 
   /**
    * How far each scene has been generated.
@@ -487,8 +483,8 @@ export function StudioScreen() {
       setChatMessages([
         { role: "user", text: `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`, seeded: true },
         { role: "swishx", text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims.`, seeded: true },
-        { role: "user", text: "Confirm plan & build script", seeded: true },
-        { role: "swishx", text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`, seeded: true },
+        { role: "user", text: "Confirm plan and build script", seeded: true },
+        { role: "swishx", text: `Script and storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`, seeded: true },
       ]);
     }
   }, [chatMessages.length, brandName, setChatMessages]);
@@ -1138,30 +1134,30 @@ export function StudioScreen() {
       value: voice,
     },
     { id: "language", icon: Languages, label: "Language", value: language },
-    { id: "music", icon: Music, label: "Background music", value: music },
+    { id: "music", icon: Music, label: "Background Music", value: music },
     {
       id: "treatment",
       icon: Clapperboard,
-      label: "Creative treatment",
+      label: "Creative Treatment",
       value:
         presentationMode === "presenter" ? "Presenter-led" : "Narrated visual story",
     },
     {
       id: "frame",
       icon: RectangleHorizontal,
-      label: "Frame and length",
+      label: "Frame and Length",
       value: `${isPortrait ? "9:16 Portrait" : "16:9 Landscape"} · ${totalDurationSeconds} sec`,
     },
     {
       id: "structure",
       icon: ListOrdered,
-      label: "Story structure",
+      label: "Story Structure",
       value: `${storyStructure ? `${storyStructure} · ` : ""}${sceneList.length} scenes`,
     },
     {
       id: "brand-mark",
       icon: Stamp,
-      label: "Brand mark",
+      label: "Brand Mark",
       value:
         logoMark.position === "none"
           ? "No logo"
@@ -1170,7 +1166,7 @@ export function StudioScreen() {
     {
       id: "quality",
       icon: Gauge,
-      label: "Output quality",
+      label: "Output Quality",
       value: `${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"} · ${totalCredits.toLocaleString()} credits`,
     },
     {
@@ -1200,6 +1196,13 @@ export function StudioScreen() {
     /* Adding to chat changes a panel you may not be looking at, so it says
        it landed. */
     showToast(`${ctx.label} added to the chat`);
+  };
+
+  /* Scene Configurations hands things to the chat: it gets out of the way
+     and the panel opens on Chat, where the chip has just landed. */
+  const closeSceneConfigToChat = () => {
+    setSceneConfigOpen(false);
+    setCopilotPanelOpen(true);
   };
 
   /* A video-wide choice handed to the chat, the way the scene's copy is:
@@ -1523,11 +1526,11 @@ export function StudioScreen() {
     setActiveTab("comments");
     setMasterCurrentTime(0);
     setMasterPlaying(true);
-    showToast("Final Master Video ready for review & comments");
+    showToast("Final master video ready for review and comments");
   };
 
   const handleReturnToScript = () => { setStudioMode("scenes"); setActiveTab("assistant"); };
-  const handleReturnToEditor = () => { setStudioMode("editor"); setActiveTab("edit"); };
+  const handleReturnToEditor = () => { setStudioMode("editor"); setActiveTab("assistant"); };
 
   const handleAddDirectScriptScene = () => {
     const nextNum = sceneList.length + 1;
@@ -1538,7 +1541,7 @@ export function StudioScreen() {
       title: `Scene ${nextNum}: Clinical Message`,
       duration: 10,
       narration: "",
-      visual: "High-clarity clinical anatomical visualization with verified safety parameters.",
+      visual: "High-clarity clinical anatomical visualisation with verified safety parameters.",
       claim: "Dossier §5.1 verified",
       evidenceState: "approved" as const,
       narrativeTag: defaultTag,
@@ -1564,10 +1567,10 @@ export function StudioScreen() {
     const newScene = {
       id: `scene-${Date.now()}`,
       number: targetPos,
-      title: sceneData.title || `Scene ${targetPos}: ${sceneData.category === "intro" ? "Brand Introduction" : sceneData.category === "outro" ? "Clinical Summary & Outro" : sceneData.category === "product" ? "Product Profile" : "Clinical Statement"}`,
+      title: sceneData.title || `Scene ${targetPos}: ${sceneData.category === "intro" ? "Brand Introduction" : sceneData.category === "outro" ? "Clinical Summary and Outro" : sceneData.category === "product" ? "Product Profile" : "Clinical Statement"}`,
       duration: 10,
       narration: sceneData.script || "A balanced clinical statement aligned with verified label claims and dosing protocols.",
-      visual: sceneData.visualText || "High-clarity clinical anatomical visualization with verified safety parameters.",
+      visual: sceneData.visualText || "High-clarity clinical anatomical visualisation with verified safety parameters.",
       claim: "Dossier §5.1 verified",
       evidenceState: "approved" as const,
       narrativeTag: tag,
@@ -1696,7 +1699,7 @@ export function StudioScreen() {
       setPendingSceneIds(targetIds);
       addChatMessage({
         role: "swishx",
-        text: `Rewriting **${targets.map(nameOf).join("**, **")}** against the approved sources...`,
+        text: `Rewriting **${targets.map(nameOf).join("**, **")}** against the approved sources…`,
       });
 
       setTimeout(() => {
@@ -1764,7 +1767,7 @@ export function StudioScreen() {
           prev.map((s) => ({
             ...s,
             visual: `${s.visual} (enhanced with 3D kinematic lighting and high-contrast clinical boundaries)`,
-            negativeVisual: "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering.",
+            negativeVisual: "Overly stylised cartoons, text overlays, harsh shadows, low quality rendering.",
           }))
         );
         addChatMessage({
@@ -1774,7 +1777,7 @@ export function StudioScreen() {
       } else if (rawInput.includes("Keep remaining")) {
         addChatMessage({
           role: "swishx",
-          text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Create video** when ready.`,
+          text: `Understood! Preserving individual scene customisations. You can continue editing in the canvas or click **Create Video** when ready.`,
         });
       } else if (suggestionAnswer === "more") {
         /* Holding. The whole point of asking was to apply a batch once rather
@@ -1847,7 +1850,7 @@ export function StudioScreen() {
           text: `✓ **Quality Blocker Resolved**: Condensed Scene 3 narration script to 135 wpm speech cadence. Removed redundant descriptors. Audio-visual pacing verified.`,
         });
       } else if (isReview) {
-        addChatMessage({ role: "swishx", text: `I've analyzed your question against the **${brandName}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
+        addChatMessage({ role: "swishx", text: `I've analysed your question against the **${brandName}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
       } else {
         addChatMessage({ role: "swishx", text: `Applied direction across Scene ${selectedScene.number}. All visual boundaries and claim groundings have been refreshed.` });
       }
@@ -2042,17 +2045,26 @@ export function StudioScreen() {
          place in the tree and the storyboard ↔ editor cross-fade survives. */
       toolbar={
         <div hidden={!isEditor}>
-          <EditorToolbar
-            selection={videoToolbarSelection}
-            menus={["text", "image"]}
-            onInsert={(menu, option) => {
-              addToChat(
-                { id: `insert-${menu}-${option}`, label: `Insert ${option.toLowerCase()}`, detail: `In scene ${selectedScene.number}` },
-                `Add ${option.toLowerCase()} to scene ${selectedScene.number} `
-              );
-            }}
-            idle={<CaptionsMenu value={videoCaptions} onChange={changeCaptions} />}
-          />
+              <EditorToolbar
+                selection={videoToolbarSelection}
+                menus={["text", "image"]}
+                onInsert={(menu, option) => {
+                  addToChat(
+                    { id: `insert-${menu}-${option}`, label: `Insert ${option.toLowerCase()}`, detail: `In scene ${selectedScene.number}` },
+                    `Add ${option.toLowerCase()} to scene ${selectedScene.number} `
+                  );
+                }}
+                idle={<CaptionsMenu value={videoCaptions} onChange={changeCaptions} />}
+                /* Always there, selection or not: it opens the whole scene, not the part that is selected. */
+                trailing={
+                  <ToolButton
+                    icon={SlidersHorizontal}
+                    label="Scene Configurations"
+                    title={`Settings, shots and copy for scene ${selectedScene.number}`}
+                    onClick={() => setSceneConfigOpen(true)}
+                  />
+                }
+              />
         </div>
       }
       rail={
@@ -2072,15 +2084,15 @@ export function StudioScreen() {
           >
             {isOpeningEditor ? (
               <GenerationProgress
-                title="Opening the video editor..."
+                title="Opening the video editor…"
                 subtitle={`Laying out ${sceneList.length} scenes, their timing and their on-screen copy, before the media starts arriving.`}
                 steps={editorOpenStepList}
                 onDone={handleEditorReady}
               />
             ) : isGenerating ? (
               <GenerationProgress
-                title="Generating high-resolution video master..."
-                subtitle={`Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all ${sceneList.length} scenes.`}
+                title="Generating high-resolution video master…"
+                subtitle={`Synthesising kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all ${sceneList.length} scenes.`}
                 steps={masterRenderStepList}
                 onDone={handleMasterRendered}
                 footer={
@@ -2110,8 +2122,8 @@ export function StudioScreen() {
                       type="button"
                       onClick={() => setAddSceneOpen(true)}
                       className="focus-ring shrink-0 cursor-pointer rounded-glyph p-1 text-brand transition-colors hover:bg-tint"
-                      title="Add a scene"
-                      aria-label="Add a scene"
+                      title="Add a Scene"
+                      aria-label="Add a Scene"
                     >
                       <Plus className="size-4 stroke-[2.5]" />
                     </button>
@@ -2342,7 +2354,7 @@ export function StudioScreen() {
                             : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                         )}
                       >
-                        <LogoMark size={14} className="mr-1.5" /> <span>Create video</span>
+                        <LogoMark size={14} className="mr-1.5" /> <span>Create Video</span>
                       </Button>
                     }
                   />
@@ -2410,12 +2422,12 @@ export function StudioScreen() {
                         <button
                           type="button"
                           onClick={() => { setPreviewMode("scene"); setMasterPlaying(false); }}
-                          aria-label="Back to editing"
+                          aria-label="Back to Editing"
                           className="focus-ring grid size-6 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
                         >
                           <ArrowLeft className="size-3.5" />
                         </button>
-                        <span className="font-extrabold">Full preview</span>
+                        <span className="font-extrabold">Full Preview</span>
                       </>
                     )}
                   </div>
@@ -2432,13 +2444,13 @@ export function StudioScreen() {
                         className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-glyph border border-brand/30 bg-tint px-2.5 py-1 text-caption font-extrabold text-brand-deep shadow-2xs transition hover:border-brand hover:bg-brand hover:text-white"
                       >
                         <Play className="size-3 fill-current" />
-                        Full preview
+                        Full Preview
                       </button>
                     )}
                     <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                       Fit {format}
                     </span>
-                    <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
+                    <Button variant="ghost" size="icon" className="size-7" aria-label="Full Screen">
                       <Expand className="size-3.5" />
                     </Button>
                   </div>
@@ -2500,7 +2512,7 @@ export function StudioScreen() {
                             onClick={() => { setPreviewMode("scene"); setMasterPlaying(false); }}
                             className="ml-auto cursor-pointer rounded-glyph border border-white/20 px-2.5 py-1 text-caption font-bold text-white/80 transition hover:border-white/40 hover:text-white"
                           >
-                            Back to editing
+                            Back to Editing
                           </button>
                         </div>
                       </div>
@@ -2812,7 +2824,7 @@ export function StudioScreen() {
                                   )}
                                 </div>
                                 <div className="text-label font-bold text-white leading-tight">
-                                  {selectedScene.mediaLabel || "Cardiac & Vascular Structure"}
+                                  {selectedScene.mediaLabel || "Cardiac and Vascular Structure"}
                                 </div>
                                 <div className="text-micro text-white/50 mt-1">
                                   FDA Prescribing Brief §4.2
@@ -3168,16 +3180,14 @@ export function StudioScreen() {
                             const at = +(pct * (selectedScene.duration || 10)).toFixed(1);
                             setSceneCurrentTime(at);
                             setScenePlaying(false);
-                            /* Landing on a shot opens the place you can change
-                               it — the other half of a link that only ran one
-                               way, from the Edit tab out to the playhead. */
+                            /* Landing on a shot marks it, so Scene
+                               Configurations opens on the shot under the
+                               playhead — the other half of the link from its
+                               shot cards out to the playhead. */
                             const hit = (selectedScene.shots ?? []).find(
                               (sh) => at >= sh.startAt && at < sh.endAt
                             );
-                            if (hit) {
-                              setHighlightedShotId(hit.id);
-                              setActiveTab("edit");
-                            }
+                            if (hit) setHighlightedShotId(hit.id);
                           }}
                           className="relative flex h-3 flex-1 cursor-pointer items-center overflow-hidden rounded-full bg-white/20"
                         >
@@ -3408,7 +3418,7 @@ export function StudioScreen() {
                         >
                           <div className="flex h-full w-[160px] shrink-0 items-center gap-2 border-r border-hair bg-card px-3 text-caption font-bold">
                             <Stamp className="size-3.5 text-ink-2" />
-                            <span className="truncate">Brand mark</span>
+                            <span className="truncate">Brand Mark</span>
                           </div>
                           <div className="h-full flex-1 p-1">
                             <div className="flex h-full items-center truncate rounded-glyph border border-hair-2 bg-subtle px-2 text-micro font-bold text-ink-3">
@@ -3526,94 +3536,60 @@ export function StudioScreen() {
       }
       panel={
         <>
-          <div className="p-2.5 border-b border-hair bg-subtle">
-            {studioMode === "scenes" ? (
-              /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
-              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
-                <InspectorTabButton
-                  tab="assistant"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={MessageCircle}
-                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0" />}
-                >
-                  Chat
-                </InspectorTabButton>
-                <InspectorTabButton
-                  tab="evidence"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={ShieldCheck}
-                  count={APPROVED_CLAIMS.length}
-                >
-                  Claims
-                </InspectorTabButton>
-              </div>
-            ) : (
-              /* ── CANVAS EDITOR / REVIEW STAGES: Chat, Edit / Comments, Claims ── */
-              /* Comments sit here rather than in the header. A reply from the
-                 agent resolves a reviewer's note, and the place to go and see
-                 that is the same list the note was left in — not a counter in
-                 the top bar that opens a different surface. */
-              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
-                {/* The chat changes the asset, so a viewer without Create doesn't get it. */}
-                {assetReview.canEdit && (
-                <InspectorTabButton
-                  tab="assistant"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={MessageCircle}
-                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0" />}
-                >
-                  Chat
-                </InspectorTabButton>
-                )}
-                {!isReview && (
-                  <InspectorTabButton
-                    tab="edit"
-                    current={activeTab}
-                    onClick={setActiveTab}
-                    icon={PenLine}
-                  >
-                    Edit
-                  </InspectorTabButton>
-                )}
-                {(publishedCount > 0 || isReview) && (
-                <InspectorTabButton
-                  tab="comments"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={MessageSquareQuote}
-                  count={openComments.length}
-                  alwaysCount
-                >
-                  Comments
-                </InspectorTabButton>
-                )}
-                <InspectorTabButton
-                  tab="evidence"
-                  current={activeTab}
-                  onClick={setActiveTab}
-                  icon={ShieldCheck}
-                  count={APPROVED_CLAIMS.length}
-                >
-                  Claims
-                </InspectorTabButton>
-              </div>
-            )}
-          </div>
+          {/* Chat · Claims · Comments, the same three in every stage and in
+              all four studios. Comments sit here rather than in the header:
+              a reply from the agent resolves a reviewer's note, and the place
+              to see that is the list the note was left in. They are for the
+              people the video is shared with, so they turn on at Publish. */}
+          <InspectorTabStrip>
+            <InspectorTabButton
+              tab="assistant"
+              current={activeTab}
+              onClick={setActiveTab}
+              icon={MessageCircle}
+              badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}
+            >
+              Chat
+            </InspectorTabButton>
+            <InspectorTabButton
+              tab="evidence"
+              current={activeTab}
+              onClick={setActiveTab}
+              icon={ShieldCheck}
+              count={APPROVED_CLAIMS.length}
+            >
+              Claims
+            </InspectorTabButton>
+            <InspectorTabButton
+              tab="comments"
+              current={activeTab}
+              onClick={setActiveTab}
+              icon={MessageSquareQuote}
+              count={openComments.length}
+              alwaysCount
+              disabledHint={publishedCount > 0 || isReview ? undefined : "Comments turn on once it's published and shared"}
+            >
+              Comments
+            </InspectorTabButton>
+          </InspectorTabStrip>
 
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {/* ── TAB 1: PERSISTENT SWISHX CHAT ── */}
             {activeTab === "assistant" && (
               <div className="flex-1 flex flex-col min-h-0">
+                {/* On the shared link the chat explains how the video was
+                    made; changing it happens in the editor, behind Edit. */}
+                {isReview ? (
+                  <ReadOnlyChatNote />
+                ) : (
                 <div className="px-4 py-2 border-b border-hair bg-canvas flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-ok animate-pulse" />
+                    <span className="size-2 rounded-full bg-ok" />
                     <span className="text-label font-extrabold text-ink">Direct with SwishX · Online</span>
                   </div>
                   <span className="text-caption text-ink-3 font-semibold">Pharma-Compliant Copilot</span>
                 </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
                   {chatMessages.map((msg, index) => (
@@ -3645,7 +3621,7 @@ export function StudioScreen() {
                           return ref ? <ShotReference {...ref} portrait={isPortrait} brandName={brandName} /> : null;
                         })()}
                         <FormattedMessageText text={msg.text} />
-                        <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />
+                        {!isReview && <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />}
                       </div>
                     </div>
                   ))}
@@ -3653,6 +3629,7 @@ export function StudioScreen() {
                 </div>
 
                 {/* Chat Input Box with Attached Primary Action Bar */}
+                {!isReview && (
                 <div className="p-3 border-t border-hair bg-canvas space-y-2">
                   {/* Attached Primary Action Bar in Script Mode */}
                   {isScenes && (
@@ -3683,7 +3660,7 @@ export function StudioScreen() {
                         )}
                       >
                         <LogoMark size={12} className="mr-1" />
-                        <span>Create video</span>
+                        <span>Create Video</span>
                       </Button>
                     </div>
                   )}
@@ -3704,12 +3681,10 @@ export function StudioScreen() {
                     disabled={isEditor && !structureReady}
                     placeholder={
                       isEditor && !structureReady
-                        ? "Generating your scenes..."
-                        : isReview
-                        ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
+                        ? "Generating your scenes…"
                         : suggestionQueue.draftCount > 0
                         ? "Add a note, or send as is"
-                        : "Direct SwishX to modify scenes, copy, or timing..."
+                        : "Direct SwishX to modify scenes, copy, or timing…"
                     }
                     attachControl={
                       <div className="relative">
@@ -3738,7 +3713,7 @@ export function StudioScreen() {
                             className="w-full flex items-center gap-2 px-2.5 py-1.5 text-body font-medium text-ink hover:bg-tint hover:text-brand-deep rounded-control transition text-left cursor-pointer"
                           >
                             <Paperclip className="size-3.5 text-brand" />
-                            <span>Upload file from computer</span>
+                            <span>Upload File from Computer</span>
                           </button>
 
                           <div className="border-t border-hair my-1" />
@@ -3846,6 +3821,7 @@ export function StudioScreen() {
 
                   </ChatComposer>
                 </div>
+                )}
               </div>
             )}
 
@@ -3882,12 +3858,61 @@ export function StudioScreen() {
                 }}
               />
             )}
-            {activeTab === "edit" && !isReview && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
+            {activeTab === "evidence" && (
+              <ClaimsPanel
+                highlightedClaimId={highlightedClaimId}
+                brandName={brandName}
+                usage={claimUsage(sceneList)}
+              />
+            )}
+          </div>
+        </>
+      }
+      overlay={
+        <>
+        {selectedCanvasElementId && elementMenuAt && !commentsOpen && (
+          <ElementActionBar
+            at={elementMenuAt}
+            elementLabel={ELEMENT_LABELS[selectedCanvasElementId] ?? "Element"}
+            onSuggest={(text) => addSuggestion(selectedCanvasElementId, text)}
+            onDismiss={() => setElementMenuAt(null)}
+          />
+        )}
+
+        {commentsOpen && (
+          <CommentsModal
+            comments={comments}
+            teamUnlocked={teamCommentsUnlocked}
+            onResolve={(id, reason) => closeComment(id, "resolved", reason)}
+            onReject={(id, reason) => closeComment(id, "rejected", reason)}
+            onSendToChat={(id) => {
+              const comment = comments.find((c) => c.id === id);
+              if (comment) sendCommentToAgent(comment);
+            }}
+            onJump={jumpToComment}
+            onClose={() => setCommentsOpen(false)}
+          />
+        )}
+
+        {/* What the Edit tab held, behind the toolbar's Scene Configurations:
+            the video's settings, then the selected scene's copy and shots.
+            Anything sent to the chat from here closes it and opens Chat. */}
+        <Modal
+          open={sceneConfigOpen && isEditor}
+          onClose={() => setSceneConfigOpen(false)}
+          title="Scene Configurations"
+          description={`Scene ${selectedScene.number} · ${selectedScene.title}`}
+          size="md"
+        >
+              <div className="space-y-4">
                 <VideoSettings
                   rows={videoSettingRows}
                   highlightId={selectedCanvasElementId === "logo" ? "brand-mark" : undefined}
-                  onAddToChat={attachVideoSettingToChat}
+                  onAddToChat={(row) => {
+                    closeSceneConfigToChat();
+                    attachVideoSettingToChat(row);
+                  }}
                 />
 
                 {/* The selected scene. Its number lives here, on the scene's
@@ -3933,13 +3958,13 @@ export function StudioScreen() {
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveTab("assistant");
+                              closeSceneConfigToChat();
                               attachElementToChat(field.id);
                             }}
                             className="inline-flex items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
                           >
                             <MessageSquarePlus className="size-3" />
-                            <span>Add to chat</span>
+                            <span>Add to Chat</span>
                           </button>
                         </div>
                       </div>
@@ -3958,7 +3983,8 @@ export function StudioScreen() {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);
                     }}
-                    onAddToChat={(shot) =>
+                    onAddToChat={(shot) => {
+                      closeSceneConfigToChat();
                       addToChat(
                         {
                           id: `shot-${shot.id}`,
@@ -3966,9 +3992,10 @@ export function StudioScreen() {
                           detail: `${shot.startAt.toFixed(1)}s–${shot.endAt.toFixed(1)}s · ${shot.label}`,
                         },
                         `In shot ${shot.index} of scene ${selectedScene.number}, `
-                      )
-                    }
-                    onReplaceMedia={(shot, elementId, kind) =>
+                      );
+                    }}
+                    onReplaceMedia={(shot, elementId, kind) => {
+                      closeSceneConfigToChat();
                       addToChat(
                         {
                           id: `shot-media-${shot.id}-${elementId}`,
@@ -3978,50 +4005,13 @@ export function StudioScreen() {
                         kind === "video"
                           ? `Swap the video clip in shot ${shot.index} for `
                           : `Replace the image in shot ${shot.index} with `
-                      )
-                    }
+                      );
+                    }}
                   />
 
                 </div>
               </div>
-            )}
-
-            {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
-            {activeTab === "evidence" && (
-              <ClaimsPanel
-                highlightedClaimId={highlightedClaimId}
-                brandName={brandName}
-                usage={claimUsage(sceneList)}
-              />
-            )}
-          </div>
-        </>
-      }
-      overlay={
-        <>
-        {selectedCanvasElementId && elementMenuAt && !commentsOpen && (
-          <ElementActionBar
-            at={elementMenuAt}
-            elementLabel={ELEMENT_LABELS[selectedCanvasElementId] ?? "Element"}
-            onSuggest={(text) => addSuggestion(selectedCanvasElementId, text)}
-            onDismiss={() => setElementMenuAt(null)}
-          />
-        )}
-
-        {commentsOpen && (
-          <CommentsModal
-            comments={comments}
-            teamUnlocked={teamCommentsUnlocked}
-            onResolve={(id, reason) => closeComment(id, "resolved", reason)}
-            onReject={(id, reason) => closeComment(id, "rejected", reason)}
-            onSendToChat={(id) => {
-              const comment = comments.find((c) => c.id === id);
-              if (comment) sendCommentToAgent(comment);
-            }}
-            onJump={jumpToComment}
-            onClose={() => setCommentsOpen(false)}
-          />
-        )}
+        </Modal>
 
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
         {addSceneOpen && (() => {
@@ -4030,12 +4020,12 @@ export function StudioScreen() {
           return (
             <RequestModal
               icon={Clapperboard}
-              action="Add a scene"
+              action="Add a Scene"
               subject={`Scene ${at}`}
               label="What should this scene be about?"
               hint={`It goes after scene ${at - 1}. SwishX writes the narration and visuals from the approved claims; you can change anything after.`}
               placeholder="e.g. Long-term safety at week 52, with the adverse event rates"
-              submitLabel={`Add scene ${at}`}
+              submitLabel={`Add Scene ${at}`}
               required
               onClose={() => setAddSceneOpen(false)}
               onSubmit={(note) => {
@@ -4132,7 +4122,7 @@ export function StudioScreen() {
             submit={
               assetReview.stages.length
                 ? {
-                    label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review",
+                    label: assetReview.item?.status === "changes" ? "Resubmit for Review" : "Submit for Review",
                     route: assetReview.stages.map((st) => st.name),
                   }
                 : undefined

@@ -18,7 +18,7 @@ import { ZONE_TYPE_LABEL, type EmailProject, type ZoneType } from "@/features/wo
 
 /** Who the sample email is to, by audience. */
 export const RECIPIENT = {
-  HCP: { name: "Dr. Daniel Okafor", role: "Hematology-oncology · Lakeview Cancer Institute", greeting: "Dear Dr. Okafor,", initials: "DO" },
+  HCP: { name: "Dr. Daniel Okafor", role: "Haematology-oncology · Lakeview Cancer Institute", greeting: "Dear Dr. Okafor,", initials: "DO" },
   PT_Committee: { name: "Maria Alvarez, PharmD", role: "P&T Committee Chair · Lakeview Health System", greeting: "Dear Dr. Alvarez,", initials: "MA" },
   Pharmacy: { name: "Maria Alvarez, PharmD", role: "Director of Pharmacy · Lakeview Health", greeting: "Dear Dr. Alvarez,", initials: "MA" },
   Patient: { name: "Jordan Lee", role: "Patient · enrolled in the support programme", greeting: "Hi Jordan,", initials: "JL" },
@@ -518,11 +518,11 @@ export function EmailCanvas({
                 {p.boxedWarning && (
                   <div className="border-[1.5px] border-ink px-3 py-2 text-caption">
                     <b className="block font-extrabold text-ink">WARNING: SERIOUS INFECTIONS, MORTALITY, MALIGNANCY, MAJOR ADVERSE CARDIOVASCULAR EVENTS AND THROMBOSIS</b>
-                    Serious infections leading to hospitalization or death have occurred. Evaluate and test for latent infection before treatment.
+                    Serious infections leading to hospitalisation or death have occurred. Evaluate and test for latent infection before treatment.
                   </div>
                 )}
                 <p>
-                  <b className="text-ink">Infections:</b> Serious infections that may lead to hospitalization or death have been reported. Monitor patients closely during and after treatment.
+                  <b className="text-ink">Infections:</b> Serious infections that may lead to hospitalisation or death have been reported. Monitor patients closely during and after treatment.
                 </p>
                 <p>
                   <b className="text-ink">Laboratory monitoring:</b> Check blood counts before starting and during treatment.

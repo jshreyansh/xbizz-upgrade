@@ -17,7 +17,7 @@ export function MVHeader({ currentSubStep }: MVHeaderProps) {
   const STEPS = [
     { title: "Format", desc: "Short video or Digital Twin" },
     { title: "Sources", desc: "Brand Dossier or sample" },
-    { title: "Audience & Voice", desc: "Who it speaks to" },
+    { title: "Audience and Voice", desc: "Who it speaks to" },
   ];
 
   return (

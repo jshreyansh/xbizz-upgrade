@@ -73,7 +73,7 @@ export function VideoSettings({
                     className="-my-1 -mr-1 inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph px-1.5 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
                   >
                     <MessageSquarePlus className="size-3" />
-                    <span>Add to chat</span>
+                    <span>Add to Chat</span>
                   </button>
                 </div>
                 {row.avatars && row.avatars.length > 0 && (

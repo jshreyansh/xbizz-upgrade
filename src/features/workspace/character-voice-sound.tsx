@@ -80,7 +80,7 @@ export function AudioChoices({
                 <span className="truncate">{option}</span>
                 {uploadedName === option && (
                   <span className="shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
-                    Your track
+                    Your Track
                   </span>
                 )}
               </button>
@@ -106,7 +106,7 @@ export function AudioChoices({
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-hair-3 p-2.5 text-body font-bold text-ink-3 transition hover:border-brand hover:bg-tint hover:text-brand-deep"
           >
             <Upload className="size-3.5" />
-            {uploadedName ? "Replace with another track" : "Use your own track"}
+            {uploadedName ? "Replace with Another Track" : "Use Your Own Track"}
           </button>
         )}
       </div>
@@ -125,7 +125,7 @@ export function CharacterLibrary({
   onClose,
   onGoToLibrary,
   multiple = false,
-  title = "Choose characters for your video",
+  title = "Choose Characters for Your Video",
 }: {
   /** One name, or several when `multiple`. */
   selected: string | string[];
@@ -288,14 +288,14 @@ export function CastLanes({
             {presenters.slice(0, 2).map((person) => tile(person, presenter === person.name, () => onPresenter(person.name), false))}
             {presenter && !presenters.slice(0, 2).some((p) => p.name === presenter)
               ? tile(presenters.find((p) => p.name === presenter) ?? presenters[0], true, () => setLibrary("presenter"), false)
-              : libraryTile("Choose from library", () => setLibrary("presenter"))}
+              : libraryTile("Choose from Library", () => setLibrary("presenter"))}
           </div>
         </div>
       )}
 
       <div>
         {laneHead(
-          "Characters in the story",
+          "Characters in the Story",
           characters.length ? `Optional · ${characters.length} selected` : "Optional",
           false,
           treatment === "presenter" ? "Anyone else who appears in the scenes. Choose as many as you need." : "Everyone who can appear in the story. Choose as many as you need, or none."
@@ -324,7 +324,7 @@ export function CastLanes({
 
       {library === "presenter" && (
         <CharacterLibrary
-          title="Choose a presenter"
+          title="Choose a Presenter"
           selected={presenter}
           onSelect={(name) => {
             onPresenter(name);
@@ -337,7 +337,7 @@ export function CastLanes({
       {library === "characters" && (
         <CharacterLibrary
           multiple
-          title="Choose characters for the story"
+          title="Choose Characters for the Story"
           selected={characters}
           onSelect={toggleCharacter}
           onClose={() => setLibrary(null)}
@@ -422,7 +422,7 @@ export function VoiceLibrary({
     <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <LibraryModalHeader title="Select narrator voice" onClose={close} />
+        <LibraryModalHeader title="Select Narrator Voice" onClose={close} />
         <div className="max-h-[480px] space-y-4 overflow-y-auto p-4 sm:p-6">
           <button
             type="button"
@@ -433,18 +433,18 @@ export function VoiceLibrary({
               <Mic className="size-4" />
             </span>
             <span className="min-w-0">
-              <span className="block text-body-lg font-bold text-brand-deep">Clone a new voice</span>
+              <span className="block text-body-lg font-bold text-brand-deep">Clone a New Voice</span>
               <span className="block text-body text-ink-3">Record with a teleprompter or upload a clip. Saved to Voices and used here.</span>
             </span>
           </button>
           {team.length > 0 && (
             <div className="space-y-2">
-              <div className="text-caption font-bold uppercase tracking-wider text-ink-3">Your team&apos;s voices</div>
+              <div className="text-caption font-bold uppercase tracking-wider text-ink-3">Your Team&apos;s Voices</div>
               {team.map(row)}
             </div>
           )}
           <div className="space-y-2">
-            <div className="text-caption font-bold uppercase tracking-wider text-ink-3">SwishX voices</div>
+            <div className="text-caption font-bold uppercase tracking-wider text-ink-3">SwishX Voices</div>
             {stock.map(row)}
           </div>
         </div>
@@ -453,7 +453,7 @@ export function VoiceLibrary({
     </div>
     {cloning && (
       <VoiceCloneModal
-        saveLabel="Save and use"
+        saveLabel="Save and Use"
         onCancel={() => setCloning(false)}
         onSave={(voice) => {
           addVoice(voice);
@@ -639,7 +639,7 @@ export function CharacterVoiceSoundFields({
           />
         </DecisionRow>
         <DecisionRow
-          label="Background music"
+          label="Background Music"
           value={music}
           icon={<Music2 className="size-4" />}
           editing={editing === "music"}

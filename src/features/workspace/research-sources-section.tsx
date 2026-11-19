@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { Check, Eye, Pencil, TriangleAlert, Plus, X, FileText, Loader2, Upload } from "lucide-react";
+import { Check, Eye, Pencil, TriangleAlert, Plus, X, FileText, Loader2 } from "lucide-react";
 import { Button, IconButton } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { Portal } from "@/components/ui/portal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DropZone } from "@/components/patterns/drop-zone";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { cn } from "@/lib/cn";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
@@ -197,7 +198,7 @@ export function ResearchSourcesContent({
         />
 
         <StepBand number={2} tone="neutral">
-          Your files for this project <span className="font-semibold text-ink-3">({uploadedDocs.length})</span>
+          Your Files for This Project <span className="font-semibold text-ink-3">({uploadedDocs.length})</span>
         </StepBand>
         <div className="@container space-y-3 p-4">
           <input
@@ -247,7 +248,7 @@ export function ResearchSourcesContent({
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-brand/45 bg-tint/50 px-3 py-3 text-body-lg font-bold text-brand-deep transition-colors hover:border-brand hover:bg-tint"
           >
             <Plus className="size-3.5" />
-            Add files
+            Add Files
           </button>
           {uploadedDocs.length === 0 && (
             <p className="text-center text-label text-ink-3">
@@ -486,7 +487,7 @@ function DossierRow({
             ) : (
               <Button size="sm" onClick={onToggle} className="h-10 gap-1.5 px-4 font-bold">
                 <Plus className="size-3.5" />
-                {line ? "Use sources" : "Use dossier"}
+                {line ? "Use Sources" : "Use Dossier"}
               </Button>
             )}
           </div>
@@ -591,7 +592,7 @@ function AddFilesModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Add files"
+        aria-label="Add Files"
         onClick={onClose}
         className="fixed inset-0 z-[9999] grid place-items-center bg-ink/55 p-4 backdrop-blur-sm"
       >
@@ -601,7 +602,7 @@ function AddFilesModal({
         >
           <div className="flex items-start justify-between gap-3 border-b border-hair px-5 py-4">
             <div>
-              <h2 className="text-subhead font-[850] tracking-tight text-ink">Add files</h2>
+              <h2 className="text-subhead font-[850] tracking-tight text-ink">Add Files</h2>
               <p className="mt-0.5 text-label text-ink-3">
                 Upload something new, or reuse what your team already has for {brandName}.
               </p>
@@ -619,7 +620,7 @@ function AddFilesModal({
           <div className="px-5 pt-3">
             <Segmented className="inline-flex">
               <SegmentedButton active={tab === "workspace"} onClick={() => setTab("workspace")}>
-                From workspace ({docs.length})
+                From Workspace ({docs.length})
               </SegmentedButton>
               <SegmentedButton active={tab === "upload"} onClick={() => setTab("upload")}>
                 Upload
@@ -678,15 +679,13 @@ function AddFilesModal({
                 </p>
               )
             ) : (
-              <button
-                type="button"
-                onClick={onUpload}
-                className="grid w-full cursor-pointer justify-items-center gap-1.5 rounded-panel border border-dashed border-hair-3 px-4 py-8 text-center transition-colors hover:border-brand"
-              >
-                <Upload className="size-5 text-brand" />
-                <span className="text-body-lg font-bold text-ink">Choose files to upload</span>
-                <span className="text-label text-ink-3">A label, a study readout or a brief. PDF, Word, PowerPoint.</span>
-              </button>
+              <DropZone
+                tone="card"
+                className="py-8"
+                title="Choose Files to Upload"
+                hint="A label, a study readout or a brief. PDF, Word, PowerPoint."
+                onChoose={onUpload}
+              />
             )}
           </div>
 

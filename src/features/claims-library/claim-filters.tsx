@@ -121,9 +121,9 @@ export function SourceFilterModal({
 }) {
   return (
     <FilterPickerModal
-      title="Filter by source"
+      title="Filter by Source"
       description="Show the claims whose evidence comes from the sources you pick."
-      allLabel="All sources"
+      allLabel="All Sources"
       allSublabel={`Every claim across ${sources.length} sources`}
       searchPlaceholder="Search sources…"
       items={sources.map((source) => ({

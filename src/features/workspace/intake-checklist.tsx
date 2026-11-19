@@ -16,7 +16,7 @@ export function IntakePlaceholder() {
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-8">
       <div className="w-full max-w-[420px]">
-        <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
+        <h2 className="text-display font-[850] tracking-tight text-ink">Need Your Input</h2>
         <p className="mt-1.5 text-body-lg leading-snug text-ink-3">
           Answer in chat to help us make the best plan for you.
         </p>

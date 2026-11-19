@@ -138,7 +138,7 @@ export function StoryboardSummary({
           than in a settings menu: narration beside the shots, or above them. */}
       <Segmented role="group" aria-label="Scene layout" className="ml-auto bg-card">
         {([
-          { id: "side" as const, label: "Side by side", icon: Columns2, hint: "Narration beside the shots" },
+          { id: "side" as const, label: "Side by Side", icon: Columns2, hint: "Narration beside the shots" },
           { id: "stacked" as const, label: "Stacked", icon: Rows2, hint: "Narration above the shots" },
         ]).map((option) => (
           <SegmentedButton
@@ -632,7 +632,7 @@ export function StoryboardSceneTile({
       <div className="flex min-w-0 flex-col gap-2 py-3.5 pl-4">
         <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
           <Clapperboard className="size-3" />
-          Visual story
+          Visual Story
           <span className="font-semibold normal-case tracking-normal">· {shots.length} shot{shots.length === 1 ? "" : "s"}</span>
         </div>
         <ShotStrip

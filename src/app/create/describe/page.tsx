@@ -10,7 +10,7 @@ export default function DescribeCreatePage() {
   if (!can("create")) {
     return (
       <AppShell pageTitle="Studio">
-        <NoAccess area="The studio" needs="create" instead="Published content is in the Content Library." />
+        <NoAccess area="The Studio" needs="create" instead="Published content is in the Content Library." />
       </AppShell>
     );
   }

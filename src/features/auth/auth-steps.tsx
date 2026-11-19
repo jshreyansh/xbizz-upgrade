@@ -99,7 +99,7 @@ export function OrganisationScreen() {
       </AuthCardHead>
       <div className="grid gap-4">
         <Field label={agency ? "Agency Name" : "Organisation Name"} value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Brightwave Health" : "Meridian Therapeutics"} autoFocus />
-        <Field label="Legal Entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on Invoices" />
+        <Field label="Legal Entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on invoices" />
         <div className="grid gap-1.5">
           <span className="text-label font-semibold text-ink-2">Headquarters Region</span>
           <SelectMenu size="md" ariaLabel="Headquarters Region" value={region} onChange={setRegion} options={REGIONS} />
@@ -307,7 +307,7 @@ export function BlockedScreen() {
         body: <>It was sent to <b className="text-ink">{found.invite.email}</b>, and you signed in as <b className="text-ink">{email}</b>. Sign in with the invited address, or ask for an invite to yours.</>,
         actions: (
           <>
-            <AuthButton onClick={() => { setEmail(found.invite.email); setRoute({ path: "invite", inviteId: found.invite.id }); setAuthView("otp"); }}>Sign in as {found.invite.email.split("@")[0]}</AuthButton>
+            <AuthButton onClick={() => { setEmail(found.invite.email); setRoute({ path: "invite", inviteId: found.invite.id }); setAuthView("otp"); }}>Sign In as {found.invite.email.split("@")[0]}</AuthButton>
             <AuthButton variant="secondary" onClick={() => { useAuthFlow.getState().setInviteId(undefined); setAuthView("signin"); }}>Use a Different Email</AuthButton>
           </>
         ),

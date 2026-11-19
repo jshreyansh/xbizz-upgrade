@@ -65,7 +65,7 @@ export function Step2Sources() {
 
       <div>
         <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-          Choose what it is written from
+          Choose What It Is Written From
         </div>
 
         {/* 2 Big Route Cards */}
@@ -103,7 +103,7 @@ export function Step2Sources() {
               </span>
               <div>
                 <h3 style={{ margin: "0 0 2px", fontSize: 16.5, fontWeight: 800, letterSpacing: "-.4px" }}>
-                  Build my Brand Dossier
+                  Build My Brand Dossier
                 </h3>
                 <span style={{ fontSize: 11.5, color: "var(--ink-4)", fontWeight: 650 }}>
                   Recommended · about 4 minutes
@@ -163,7 +163,7 @@ export function Step2Sources() {
               </span>
               <div>
                 <h3 style={{ margin: "0 0 2px", fontSize: 16.5, fontWeight: 800, letterSpacing: "-.4px" }}>
-                  Try it with a sample dossier
+                  Try It with a Sample Dossier
                 </h3>
                 <span style={{ fontSize: 11.5, color: "var(--brand)", fontWeight: 700 }}>
                   Fastest · see a finished video in ~10 minutes
@@ -193,7 +193,7 @@ export function Step2Sources() {
         {/* Left: What goes in a dossier */}
         <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
           <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-            What actually goes into a Brand Dossier
+            What Actually Goes into a Brand Dossier
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 9 }}>
             {CHECKLIST_ITEMS.map((item) => (
@@ -210,7 +210,7 @@ export function Step2Sources() {
         {/* Right: Existing dossiers picker */}
         <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
           <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 4 }}>
-            Already have one?
+            Already Have One?
           </div>
           <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "var(--ink-3)" }}>
             Pick from the dossiers already verified in this workspace.
@@ -315,7 +315,7 @@ export function Step2Sources() {
             cursor: "pointer",
           }}
         >
-          Next: audience &amp; voice
+          Next: Audience and Voice
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

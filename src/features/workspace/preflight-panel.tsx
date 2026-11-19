@@ -172,7 +172,7 @@ export function PreflightPanel({ checks, onFixAll, className }: PreflightPanelPr
             {/* Short on purpose: two rows directly above already say
                 "Fix with SwishX", so repeating it a third time is noise. */}
             <span className="text-label font-bold">
-              {failing.length === 2 ? "Fix both" : `Fix all ${failing.length}`}
+              {failing.length === 2 ? "Fix Both" : `Fix All ${failing.length}`}
             </span>
           </button>
         </div>

@@ -19,6 +19,10 @@ import { TabNav } from "@/components/patterns/tab-nav";
 import { DataTable } from "@/components/patterns/data-table";
 import { SortableList } from "@/components/patterns/sortable-list";
 import { ScaleRow, SwatchRow } from "./token-table";
+import {
+  CHROME, CopyRules, DeprecatedAliases, MotionDemos, PatternDemos, PrimitiveDemos,
+  PromotedDemos, TypeVariants, ValueTokens,
+} from "./demos";
 
 /**
  * The living reference for the SwishX design system.
@@ -37,7 +41,7 @@ const INK = ["--color-ink", "--color-ink-2", "--color-ink-3", "--color-ink-4"];
 const HAIRLINES = ["--color-hair", "--color-hair-2", "--color-hair-3"];
 const TINTS = ["--color-tint", "--color-tint-2", "--color-tint-strong", "--color-tint-line"];
 const STATUS = ["--color-ok", "--color-ok-bg", "--color-ok-line", "--color-warn", "--color-warn-bg",
-  "--color-warn-line", "--color-danger", "--color-danger-bg", "--color-danger-deep", "--color-live"];
+  "--color-warn-line", "--color-danger", "--color-danger-bg", "--color-danger-line", "--color-danger-deep", "--color-live"];
 const INFO = ["--color-info", "--color-info-strong", "--color-info-bg", "--color-info-line"];
 const ON_DARK = ["--color-ok-on-dark", "--color-warn-on-dark", "--color-info-on-dark"];
 const ACCENTS = ["--color-accent-blue", "--color-accent-violet", "--color-accent-amber", "--color-lime", "--color-lime-bg", "--color-lime-line", "--color-lime-ink"];
@@ -54,7 +58,7 @@ const DEMO_ROWS: DemoRow[] = [
 
 const RADII = ["--radius-glyph", "--radius-chip", "--radius-control", "--radius-panel", "--radius-card"];
 const SHADOWS = ["--shadow-hair", "--shadow-soft", "--shadow-float", "--shadow-modal",
-  "--shadow-brand-soft", "--shadow-brand-lift", "--shadow-panel-left", "--shadow-on-dark"];
+  "--shadow-inner-xs", "--shadow-brand-soft", "--shadow-brand-lift", "--shadow-panel-left", "--shadow-on-dark"];
 const EASINGS = ["--ease-swish", "--ease-spring", "--ease-entrance", "--ease-exit"];
 const WIDTHS = ["--container-narrow", "--container-measure", "--container-wide", "--container-page"];
 
@@ -131,10 +135,18 @@ export default function DesignSystemPage() {
               <div><Label size="micro" className="mb-2 block">Info</Label><SwatchRow names={INFO} label={short} utility={(n) => `bg-${short(n)}`} /></div>
               <div><Label size="micro" className="mb-2 block">On dark</Label><SwatchRow names={ON_DARK} label={short} utility={(n) => `text-${short(n)}`} /></div>
               <div><Label size="micro" className="mb-2 block">Accents</Label><SwatchRow names={ACCENTS} label={short} utility={(n) => `text-${short(n)}`} /></div>
+              <div>
+                <Label size="micro" className="mb-2 block">Chrome</Label>
+                <Text size="caption" tone="muted" className="mb-2 block">
+                  scroll-thumb is the scrollbar everywhere. rail is the recessed ground of an inspector tab strip,
+                  paired with shadow-inner-xs.
+                </Text>
+                <SwatchRow names={CHROME} label={short} utility={(n) => `bg-${short(n)}`} />
+              </div>
             </Stack>
           </Section>
 
-          <Section id="type" n="02" title="Type scale"
+          <Section id="type" n="02" title="Type Scale"
             note="Eleven steps replacing 818 hand-typed sizes across 30 distinct values. Figtree throughout. Size only, line height stays an explicit leading-* choice, because the app already used those consistently.">
             <ScaleRow names={TYPE} />
             <Stack gap={2} className="mt-6">
@@ -150,10 +162,11 @@ export default function DesignSystemPage() {
                 ))}
               </Row>
             </Stack>
+            <div className="mt-6"><TypeVariants /></div>
           </Section>
 
-          <Section id="shape" n="03" title="Shape, elevation, motion"
-            note="Five radii, named for what they wrap rather than by t-shirt size, so the name says where it belongs. This is the WHOLE scale, Tailwind's own rounded-lg/xl/2xl and arbitrary rounded-[Npx] are not used, because they gave ten spellings inside a 10px band with two of them pixel-identical. The pill shape was retired for the same reason: it was a fifth radius that never matched anything else. rounded-full survives only where an element is SQUARE and must read as a circle. An avatar, a status dot, an icon button. Elevation has four neutral steps plus four purposeful ones.">
+          <Section id="shape" n="03" title="Shape, Elevation and Motion"
+            note="Five radii, named for what they wrap rather than by t-shirt size, so the name says where it belongs. This is the WHOLE scale, Tailwind's own rounded-lg/xl/2xl and arbitrary rounded-[Npx] are not used, because they gave ten spellings inside a 10px band with two of them pixel-identical. The pill shape was retired for the same reason: it was a fifth radius that never matched anything else, so neither Button's shape nor Surface's radius offers it. rounded-full survives only where an element is SQUARE and must read as a circle. An avatar, a status dot, an icon button. Elevation has four neutral steps, one inset (inner-xs, under an inspector tab strip) and four purposeful ones.">
             <Stack gap={6}>
               <div>
                 <Label size="micro" className="mb-2 block">Radii</Label>
@@ -191,13 +204,13 @@ export default function DesignSystemPage() {
                 </Text>
                 <div className="grid gap-2.5 sm:grid-cols-3">
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="shimmer flex flex-col gap-2 rounded-control border border-hair bg-card p-3 shadow-2xs">
+                    <div key={i} className="shimmer flex flex-col gap-2 rounded-control border border-hair bg-card p-3 shadow-hair">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="h-3.5 w-16 rounded-chip bg-black/8" />
-                        <div className="h-3.5 w-14 rounded-chip bg-black/6" />
+                        <div className="h-3.5 w-16 rounded-chip bg-hair-2" />
+                        <div className="h-3.5 w-14 rounded-chip bg-hair" />
                       </div>
-                      <div className="h-3.5 w-full rounded-chip bg-black/8" />
-                      <div className="mt-1 h-6.5 w-full rounded-chip bg-black/5" />
+                      <div className="h-3.5 w-full rounded-chip bg-hair-2" />
+                      <div className="mt-1 h-6.5 w-full rounded-chip bg-hair" />
                     </div>
                   ))}
                 </div>
@@ -205,7 +218,12 @@ export default function DesignSystemPage() {
             </Stack>
           </Section>
 
-          <Section id="primitives" n="04" title="Primitives"
+          <Section id="motion" n="04" title="Motion and Utility Classes"
+            note="Plain classes in globals.css rather than tokens, because each is a whole behaviour: a keyframe, its timing and its reduced-motion fallback. Use these; do not write a new keyframe for an entrance.">
+            <MotionDemos />
+          </Section>
+
+          <Section id="primitives" n="05" title="Primitives"
             note="Layer 1. These own every visual decision and expose it as a prop. A file in features/ should never need to know a colour, a font size, a radius or a shadow, if it does, a primitive is missing a prop.">
             <Stack gap={6}>
               <Spec label="Button, variant">
@@ -238,12 +256,12 @@ export default function DesignSystemPage() {
               </Spec>
 
               <Spec label="Chip, tone (derived from all 84 real call sites)">
-                {(["default", "brand", "ok", "warn", "danger"] as const).map((t) => (
+                {(["default", "neutral", "brand", "ok", "warn", "danger"] as const).map((t) => (
                   <Chip key={t} tone={t}>{t}</Chip>
                 ))}
               </Spec>
               <Spec label="Chip, selected">
-                {(["default", "brand", "ok", "warn", "danger"] as const).map((t) => (
+                {(["default", "neutral", "brand", "ok", "warn", "danger"] as const).map((t) => (
                   <Chip key={t} tone={t} selected onClick={() => {}}>{t}</Chip>
                 ))}
               </Spec>
@@ -279,13 +297,15 @@ export default function DesignSystemPage() {
               </div>
 
               <Spec label="Modal. One shell for 13 hand-built dialogs; owns escape, focus trap, scroll lock and the scroll boundary">
-                <Button variant="secondary" onClick={() => setModalOpen(true)}>Open modal</Button>
+                <Button variant="secondary" onClick={() => setModalOpen(true)}>Open Modal</Button>
               </Spec>
+
+              <div className="mt-2 border-t border-hair pt-6"><PrimitiveDemos /></div>
             </Stack>
           </Section>
 
-          <Section id="patterns" n="05" title="Patterns"
-            note="Layer 2, composites of primitives that still know nothing about the product. Only one of six planned patterns survived being counted: the others were either non-existent, already covered by a primitive, or not actually one shape.">
+          <Section id="patterns" n="06" title="Patterns"
+            note="Layer 2, composites of primitives that still know nothing about the product. Each one is here because it was counted at three or more call sites first; check this list before writing a card, a header, a list or a picker.">
             <Stack gap={3}>
               <Label size="micro">ChipMultiSelect. The interaction the popover removal converged on</Label>
               <ChipMultiSelect
@@ -358,8 +378,9 @@ export default function DesignSystemPage() {
               <Label size="micro">Sheet. A panel with nowhere to dock</Label>
               <Text size="caption" tone="muted">
                 <code className="px-1">Panel</code> in a fixed position: scrim, edge, escape to
-                close, and no second scroll container. This is what the inspector becomes at
-                tablet portrait. No production call site yet. It exists for the tablet tier.
+                close, and no second scroll container. Used by Settings (Team, Compliance,
+                Integrations, Billing) for detail that opens over a list, and it is what the
+                inspector becomes at tablet portrait.
               </Text>
               <div>
                 <Button size="sm" variant="secondary" onClick={() => setSheetOpen(true)}>
@@ -386,8 +407,7 @@ export default function DesignSystemPage() {
             <Stack gap={2} className="mt-6">
               <Label size="micro">TabNav, segmented, for different things rather than filtered views</Label>
               <Text size="caption" tone="muted">
-                The first tab component in the repo; nothing rendered <code className="px-1">role=&quot;tablist&quot;</code>
-                before settings needed one. Segmented rather than underlined on purpose: an underline
+                Segmented rather than underlined on purpose: an underline
                 says &ldquo;same list, filtered&rdquo;, a segment says &ldquo;somewhere else&rdquo;.
                 Concentric by construction &mdash; an 18px shell with a 4px gutter around 14px tabs,
                 which is the radius scale&apos;s own step. It scrolls rather than wraps, because nine
@@ -400,7 +420,7 @@ export default function DesignSystemPage() {
                 items={[
                   { id: "one", label: "Workspace" },
                   { id: "two", label: "Team", badge: 10 },
-                  { id: "three", label: "Billing & usage" },
+                  { id: "three", label: "Billing and Usage" },
                   { id: "four", label: "Integrations" },
                 ]}
               />
@@ -433,6 +453,24 @@ export default function DesignSystemPage() {
             </Stack>
 
             <Stack gap={2} className="mt-6">
+              <Label size="micro">Which tabs, when</Label>
+              <Text size="caption" tone="muted">Five tab systems, each for a different job. Pick by what the tabs switch between.</Text>
+              {[
+                ["TabNav", "different sections of one page", "Settings: Workspace, Team, Billing and Usage"],
+                ["Segmented", "two to four views of the same thing, often a toggle", "Grid or List; Mine or Team"],
+                ["FilterTabs", "the same list, filtered, usually with counts", "All, Approved, Pending, Held Out"],
+                ["DetailHeader tabs", "the ways of looking at one object, joined to its identity card", "Product: Dossier, Claims, Images"],
+                ["InspectorTabs", "the studio's right panel, where width is scarce", "Chat, Claims, Comments"],
+              ].map(([name, when, eg]) => (
+                <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control border border-hair bg-subtle px-3 py-2">
+                  <Text size="caption" weight="bold" className="w-32 shrink-0 font-mono">{name}</Text>
+                  <Text size="caption" tone="muted">{when}</Text>
+                  <Text size="micro" tone="subtle" className="ml-auto">{eg}</Text>
+                </div>
+              ))}
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
               <Label size="micro">SortableList, where the order carries the meaning</Label>
               <Text size="caption" tone="muted">
                 Two uses: brand-kit typefaces, where position IS the role, and approval stages, where
@@ -453,12 +491,20 @@ export default function DesignSystemPage() {
                 )}
               />
             </Stack>
+
+            <div className="mt-6 border-t border-hair pt-6"><PatternDemos /></div>
           </Section>
 
-          <Section id="layout" n="06" title="Layout"
+          <Section id="promoted" n="07" title="Promoted from Feature Code"
+            note="Each of these was written out three or more times in src/features before it was moved here. The feature copies have not been switched over yet; when you touch one of those screens, swap the copy for the pattern.">
+            <PromotedDemos />
+          </Section>
+
+          <Section id="layout" n="08" title="Layout"
             note="ScreenHeader replaced five byte-identical copies. The content widths are for new work, existing max-w values were deliberately left alone, because unlike font sizes those are mostly intentional per context rather than drift.">
             <Stack gap={4}>
               <SwatchRow names={WIDTHS} label={short} utility={(n) => `max-w-(${n})`} />
+              <ValueTokens names={[{ name: "--screen-header-h", use: "ScreenHeader's height, so the chrome is one decision" }]} />
               <div className="flex flex-col gap-2">
                 {WIDTHS.map((n) => (
                   <div key={n} className="flex items-center gap-3">
@@ -478,8 +524,8 @@ export default function DesignSystemPage() {
                   change how a region is presented without any screen knowing.
                 </Text>
                 {[
-                  ["SplitLayout", "header + main + panel", "plan · creative plan"],
-                  ["WorkbenchLayout", "header + rail + main + panel", "script/editor · creative studio"],
+                  ["SplitLayout", "header + main + panel", "the four plan screens: directions, ads-directions, email-directions, infographic-directions"],
+                  ["WorkbenchLayout", "header + rail + main + panel", "the four studios: video (studio-screen), ads, email, infographic"],
                 ].map(([name, shape, used]) => (
                   <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control border border-hair bg-subtle px-3 py-2">
                     <Text size="caption" weight="bold">{name}</Text>
@@ -513,7 +559,12 @@ export default function DesignSystemPage() {
             </Stack>
           </Section>
 
-          <Section id="rules" n="07" title="The rules that keep it consistent"
+          <Section id="copy" n="09" title="Copy"
+            note="One rule across the whole product, onboarding included. The full text is DESIGN.md section 11.">
+            <CopyRules />
+          </Section>
+
+          <Section id="rules" n="10" title="The Rules That Keep It Consistent"
             note="Enforced, not aspirational. The first four are ESLint errors in feature code because each is at zero violations; the rest are tracked by npm run lint:tokens.">
             <Stack gap={2}>
               {[
@@ -525,7 +576,7 @@ export default function DesignSystemPage() {
                 ["never", "a raw hex in className", "unless it is illustration: a gradient or a mock fixture"],
                 ["allowed", "a genuine one-off", "<Text px={42} />, or a className override. It merges last and wins"],
                 ["rule", "the third copy stops being a one-off", "move it to patterns/. Two is a coincidence, three is a pattern"],
-                ["rule", "no component ships without a count", "one shape repeating ~8+ times across 2+ files"],
+                ["rule", "no component ships without a count", "the third time you write the same thing, it stops being a one-off"],
               ].map(([kind, what, why], i) => (
                 <Row key={i} gap={3} align="start" className="border-b border-hair py-2 last:border-0">
                   <Chip size="xs" tone={kind === "never" ? "danger" : kind === "allowed" ? "ok" : "default"} className="mt-0.5 w-16 justify-center">
@@ -539,13 +590,18 @@ export default function DesignSystemPage() {
               ))}
             </Stack>
           </Section>
+
+          <Section id="aliases" n="11" title="Deprecated Aliases"
+            note="The :root variables below predate the token utilities and still resolve, so old inline styles keep working. Do not use them in new code; write the utility on the right.">
+            <DeprecatedAliases />
+          </Section>
         </Stack>
       </Container>
 
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Modal shell"
+        title="Modal Shell"
         description="Escape, click-outside, scroll lock, initial focus and a Tab focus trap are all built in."
         footer={
           <>

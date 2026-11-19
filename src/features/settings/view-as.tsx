@@ -95,7 +95,7 @@ export function NoAccess({ area, needs, instead }: { area: string; needs: Permis
   return (
     <div className="mx-auto mt-24 max-w-md px-4 text-center">
       <ShieldCheck className="mx-auto mb-3 size-7 text-ink-4" />
-      <Text as="h1" size="title" weight="bold" className="block">{area} isn&apos;t part of your role</Text>
+      <Text as="h1" size="title" weight="bold" className="block">{area} Isn&apos;t Part of Your Role</Text>
       <Text size="body" tone="muted" className="mt-2 block">
         It needs {label}. {me?.name ?? "This person"} is {me?.role ?? "in a role"} without it.{instead ? ` ${instead}` : ""} An admin can change that in Settings → Team.
       </Text>

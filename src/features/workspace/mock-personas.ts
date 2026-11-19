@@ -153,7 +153,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   },
   {
     type: "video",
-    title: "Nirvexa, access & value",
+    title: "Nirvexa, access and value",
     engine: "Video",
     duration: "1:30",
     audience: "Payers · UK",

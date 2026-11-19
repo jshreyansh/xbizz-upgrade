@@ -47,10 +47,10 @@ export type ContextField = "brand" | "audience" | "topics" | "frame" | "adType" 
 const FIELD_TITLES: Record<ContextField, { title: string; hint: string }> = {
   brand: { title: "Brand", hint: "What the asset is grounded in. Claims are checked against this dossier." },
   audience: { title: "Audience", hint: "Who this is for. It decides the language, the claims and the topics offered." },
-  topics: { title: "Focus topics", hint: "The story pillars. One to three, more than that and none of them land." },
-  frame: { title: "Frame size", hint: "The shape the asset is composed for." },
+  topics: { title: "Focus Topics", hint: "The story pillars. One to three, more than that and none of them land." },
+  frame: { title: "Frame Size", hint: "The shape the asset is composed for." },
   adType: { title: "Branding", hint: "Decides what every ad must include. The FDA's three kinds of drug ad." },
-  placements: { title: "Runs on", hint: "Where the ads will run. Each placement sets the format and size." },
+  placements: { title: "Runs On", hint: "Where the ads will run. Each placement sets the format and size." },
 };
 
 /* Video and Docs ask about topics and frame; an ad asks what kind of ad it
@@ -146,7 +146,7 @@ export function ProjectContextModal({
           <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-5 py-3.5">
             <div className="min-w-0">
               <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                Project context
+                Project Context
               </div>
               <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
                 {FIELD_TITLES[field].title}

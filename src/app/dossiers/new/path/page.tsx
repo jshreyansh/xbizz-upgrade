@@ -47,7 +47,7 @@ export default function NewDossierPathPage() {
     <AppShell pageTitle="New Brand Dossier">
       <DossierFlowShell
         step={2}
-        stepLabel="Choose a path"
+        stepLabel="Choose a Path"
         backHref="/dossiers/new"
         chat={
           <DossierAssistantPanel

@@ -219,14 +219,14 @@ export function ImageCropModal({
               }}
             >
               <RotateCcw className="size-3.5" />
-              Fit to frame
+              Fit to Frame
             </Button>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
               <Button size="sm" onClick={apply} disabled={!natural}>
-                Use this crop
+                Use This Crop
               </Button>
             </div>
           </div>

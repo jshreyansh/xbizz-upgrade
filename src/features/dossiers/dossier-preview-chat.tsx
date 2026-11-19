@@ -26,7 +26,7 @@ interface DossierPreviewChatProps {
   finishLabel?: string;
 }
 
-export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = "Looks good, finish" }: DossierPreviewChatProps) {
+export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = "Looks Good, Finish" }: DossierPreviewChatProps) {
   function findSectionMatch(lower: string) {
     return dossier.sections.find((s) =>
       s.title
@@ -231,7 +231,7 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
             onSend={send}
             onAttachFile={handleAttachFile}
             placeholder='e.g. "fix the safety section wording"'
-            subtitle="Fix, approve & attach by prompt"
+            subtitle="Fix, approve and attach by prompt"
             quickReplies={["What can you do here?"]}
           />
         </div>

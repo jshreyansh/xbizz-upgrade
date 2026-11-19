@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { useParams } from "next/navigation";
+import { BackLink } from "@/components/patterns/back-link";
 import { AppShell } from "@/features/workspace/app-shell";
 // The summary screen this route used to render. Kept, not deleted: it is one
 // import swap away if the master-document reader turns out to be too much
@@ -20,7 +20,6 @@ import { DOSSIER_TYPES, type DossierTypeName } from "@/features/product-library/
 // client-side navigation, the same fine print as the parent page.
 export default function DossierDetailClient() {
   const { id, type } = useParams<{ id: string; type: string }>();
-  const router = useRouter();
   const setNavCollapsed = useWorkspaceStore((s) => s.setNavCollapsed);
 
   /**
@@ -54,28 +53,20 @@ export default function DossierDetailClient() {
     return (
       <AppShell pageTitle="Product Library">
         <div className="page-enter flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
-          <p className="text-title font-bold text-ink">Dossier not found</p>
+          <p className="text-title font-bold text-ink">Dossier Not Found</p>
           <p className="max-w-[40ch] text-body-lg text-ink-3">It may have been removed, or the link is out of date.</p>
-          <button
-            onClick={() => router.push(product ? `/product-library/${product.id}` : "/product-library")}
-            className="inline-flex items-center gap-1.5 text-body-lg font-bold text-brand hover:text-brand-deep transition-colors"
-          >
-            <ChevronLeft size={15} /> {product ? `Back to ${product.name}` : "Back to Product Library"}
-          </button>
+          <BackLink href={product ? `/product-library/${product.id}` : "/product-library"}>
+            {product ? `Back to ${product.name}` : "Back to Product Library"}
+          </BackLink>
         </div>
       </AppShell>
     );
   }
 
   return (
-    <AppShell pageTitle={`${activeType} dossier, ${product.name}`}>
+    <AppShell pageTitle={`${activeType} Dossier, ${product.name}`}>
       <div className="page-enter space-y-6">
-        <button
-          onClick={() => router.push(`/product-library/${product.id}`)}
-          className="inline-flex cursor-pointer items-center gap-1.5 text-body-lg font-bold text-ink-3 transition-colors hover:text-ink"
-        >
-          <ChevronLeft size={15} /> {product.name}
-        </button>
+        <BackLink href={`/product-library/${product.id}`}>{product.name}</BackLink>
         <DossierReader dossier={dossier} />
       </div>
     </AppShell>

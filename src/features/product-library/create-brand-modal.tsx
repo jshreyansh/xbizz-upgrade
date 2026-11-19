@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X, Check, ArrowRight, Upload, Link2, PenLine, FileText, ImagePlus, Layers, Tag, Atom, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Chip } from "@/components/ui/chip";
+import { DropZone } from "@/components/patterns/drop-zone";
 import { INITIAL_DISEASE_OPTIONS } from "@/features/workspace/brand-modal-data";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
@@ -76,7 +78,6 @@ export function CreateBrandModal({
   const router = useRouter();
   const addProduct = useProductLibraryStore((s) => s.addProduct);
   const products = useProductLibraryStore((s) => s.products);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Portalled to document.body below: an ancestor further up the tree has an
@@ -116,12 +117,6 @@ export function CreateBrandModal({
 
   function toggleTag(tag: string) {
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  }
-
-  function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files ?? []);
-    if (picked.length) setFiles((prev) => [...prev, ...picked]);
-    e.target.value = "";
   }
 
   function removeFile(index: number) {
@@ -206,7 +201,7 @@ export function CreateBrandModal({
         {/* Header */}
         <div className="relative flex shrink-0 items-center justify-between border-b border-hair px-7 py-5">
           <div>
-            <span className="block text-display font-extrabold tracking-tight text-ink">Create a new brand</span>
+            <span className="block text-display font-extrabold tracking-tight text-ink">Create a New Brand</span>
             <span className="text-body-lg text-ink-3">Everything in one place, fill in what you know, skip the rest.</span>
           </div>
           <button
@@ -223,10 +218,10 @@ export function CreateBrandModal({
           <div className="min-h-0 flex-1 space-y-10 overflow-y-auto px-7 py-8">
             {/* Identity */}
             <div className="space-y-4">
-              <SectionHeading eyebrow="01 · Identity" title="Name the brand" hint="Enter the brand name and its generic name or molecule." />
+              <SectionHeading eyebrow="01 · Identity" title="Name the Brand" hint="Enter the brand name and its generic name or molecule." />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-label font-bold text-ink-2">Brand name</label>
+                  <label className="text-label font-bold text-ink-2">Brand Name</label>
                   <div className="relative">
                     <Tag size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
                     <input
@@ -239,7 +234,7 @@ export function CreateBrandModal({
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-label font-bold text-ink-2">Generic / molecule name</label>
+                  <label className="text-label font-bold text-ink-2">Generic / Molecule Name</label>
                   <div className="relative">
                     <Atom size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
                     <input
@@ -254,7 +249,7 @@ export function CreateBrandModal({
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <label className="text-label font-bold text-ink-2">Tagline</label>
-                  <span className="rounded-chip bg-subtle px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+                  <Chip tone="neutral" size="xs" weight="bold" className="uppercase tracking-[.03em]">Optional</Chip>
                 </div>
                 <input
                   value={tagline}
@@ -267,7 +262,7 @@ export function CreateBrandModal({
 
             {/* Presentation + reference image */}
             <div className="space-y-4">
-              <SectionHeading eyebrow="02 · Presentation" title="What does it look like?" hint="Choose a dosage form to visualize your brand." />
+              <SectionHeading eyebrow="02 · Presentation" title="What does it look like?" hint="Choose a dosage form to visualise your brand." />
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
                 <div className="grid grid-cols-5 gap-2.5">
                   {TYPE_OPTIONS.map((opt) => {
@@ -301,8 +296,8 @@ export function CreateBrandModal({
                 {/* Reference image upload */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-label font-bold text-ink-2">Reference image</span>
-                    <span className="rounded-chip bg-subtle px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+                    <span className="text-label font-bold text-ink-2">Reference Image</span>
+                    <Chip tone="neutral" size="xs" weight="bold" className="uppercase tracking-[.03em]">Optional</Chip>
                   </div>
                   <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelected} />
                   {referenceImageUrl ? (
@@ -325,7 +320,7 @@ export function CreateBrandModal({
                       style={{ height: 96 }}
                     >
                       <ImagePlus size={16} />
-                      <span className="text-caption font-bold">Upload a photo</span>
+                      <span className="text-caption font-bold">Upload a Photo</span>
                       <span className="text-micro text-ink-4">or drag and drop</span>
                     </button>
                   )}
@@ -336,7 +331,7 @@ export function CreateBrandModal({
 
             {/* Color theme */}
             <div className="space-y-3">
-              <SectionHeading eyebrow="03 · Color theme" title="Pick an accent" hint="Choose a primary accent color for your brand identity." />
+              <SectionHeading eyebrow="03 · Colour Theme" title="Pick an Accent" hint="Choose a primary accent colour for your brand identity." />
               <div className="flex gap-3">
                 {GRADIENT_THEMES.map((t) => (
                   <button
@@ -359,7 +354,7 @@ export function CreateBrandModal({
             {/* Therapy areas */}
             <div className="space-y-3">
               <SectionHeading
-                eyebrow="04 · Therapy area"
+                eyebrow="04 · Therapy Area"
                 title="What does it treat?"
                 hint="This is what the studio's brand search matches on, alongside the name and molecule."
               />
@@ -412,8 +407,8 @@ export function CreateBrandModal({
             {/* Sources */}
             <div className="space-y-3 pb-2">
               <div className="flex items-center gap-2">
-                <SectionHeading eyebrow="06 · Sources" title="Add anything you already have" />
-                <span className="rounded-chip bg-subtle px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+                <SectionHeading eyebrow="06 · Sources" title="Add Anything You Already Have" />
+                <Chip tone="neutral" size="xs" weight="bold" className="uppercase tracking-[.03em]">Optional</Chip>
               </div>
               <p className="text-body text-ink-3">
                 I already write from trusted public sources, so you can skip this, but files, links, or a few typed lines make the brand far more yours.
@@ -438,21 +433,21 @@ export function CreateBrandModal({
                 })}
               </div>
 
-              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-1.5 rounded-panel border border-dashed border-tint-line bg-tint-2 py-6 text-center transition-colors hover:border-brand hover:bg-tint"
-              >
-                <span
-                  className="grid size-9 place-items-center rounded-full text-white"
-                  style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))", boxShadow: "0 8px 16px -8px rgba(253,72,22,.5)" }}
-                >
-                  <Upload size={16} />
-                </span>
-                <span className="text-body-lg font-bold text-ink">Drop files here, or browse</span>
-                <span className="text-caption text-ink-4">PDF, PPT, DOC, XLS, images, as many as you like.</span>
-              </button>
+              <DropZone
+                tone="tint"
+                multiple
+                onFiles={(picked) => setFiles((prev) => [...prev, ...picked])}
+                icon={
+                  <span
+                    className="grid size-9 place-items-center rounded-full text-white"
+                    style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))", boxShadow: "0 8px 16px -8px rgba(253,72,22,.5)" }}
+                  >
+                    <Upload size={16} />
+                  </span>
+                }
+                title="Drop files here, or browse"
+                hint="PDF, PPT, DOC, XLS, images, as many as you like."
+              />
 
               {files.length > 0 && (
                 <div className="space-y-1.5">
@@ -478,7 +473,7 @@ export function CreateBrandModal({
                     sourceMode === "link" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
                   )}
                 >
-                  <Link2 size={13} /> Paste a link instead
+                  <Link2 size={13} /> Paste a Link Instead
                 </button>
                 <button
                   type="button"
@@ -488,7 +483,7 @@ export function CreateBrandModal({
                     sourceMode === "text" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
                   )}
                 >
-                  <PenLine size={13} /> Type it out
+                  <PenLine size={13} /> Type It Out
                 </button>
               </div>
 
@@ -522,7 +517,7 @@ export function CreateBrandModal({
                     >
                       <FileText size={12} />
                     </span>
-                    <span className="text-label font-bold text-ink-2">Notes for this brand</span>
+                    <span className="text-label font-bold text-ink-2">Notes for This Brand</span>
                   </div>
                   <textarea
                     autoFocus
@@ -540,7 +535,7 @@ export function CreateBrandModal({
           {/* Live preview rail — always visible, updates as the form is filled in */}
           <div className="relative flex w-full shrink-0 flex-col border-t border-hair bg-subtle/60 px-7 py-7 lg:w-[360px] lg:border-l lg:border-t-0">
             <span className="mb-4 inline-flex items-center gap-1.5 text-label font-extrabold uppercase tracking-[.08em] text-ink-4">
-              <Layers size={12} /> Live preview
+              <Layers size={12} /> Live Preview
             </span>
 
             <div className="overflow-hidden rounded-card border border-hair bg-card shadow-soft">
@@ -611,7 +606,7 @@ export function CreateBrandModal({
               className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-control px-4 py-3 text-body-lg font-bold text-white transition-all enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
               style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 14px 28px -14px rgba(253,72,22,.9)" }}
             >
-              Create brand <ArrowRight size={15} />
+              Create Brand <ArrowRight size={15} />
             </button>
             {!canCreate && <span className="mt-2 text-center text-caption text-ink-4">Name and generic name are needed to continue.</span>}
           </div>

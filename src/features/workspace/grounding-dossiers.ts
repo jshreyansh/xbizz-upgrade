@@ -46,7 +46,7 @@ return [
     ],
     keyClaims: [
       {
-        category: "Efficacy & Primary Endpoints",
+        category: "Efficacy and Primary Endpoints",
         claim: "Achieved primary endpoint response in 68.4% of patients at Week 16 vs 14.2% placebo (p < 0.001).",
         citation: "FDA Approved Label §14.1 · CLARITY-CV Pivotal Readout",
       },
@@ -56,7 +56,7 @@ return [
         citation: "FDA Prescribing Information §12.1 Clinical Pharmacology",
       },
       {
-        category: "Dosing & Administration",
+        category: "Dosing and Administration",
         claim: "Once-daily oral administration (50mg tablet) with or without food.",
         citation: "FDA Approved Label §2.1 Dosage & Administration",
       },

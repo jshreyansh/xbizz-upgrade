@@ -35,7 +35,7 @@ export function DossierWizard({
   const [activeDossier, setActiveDossier] = useState<BrandDossier>(initialDossier || NEW_DOSSIER_TEMPLATE);
   const [selectedSections, setSelectedSections] = useState<string[]>(PHARMA_SECTIONS.map((s) => s.id));
   const [writerProgress, setWriterProgress] = useState(0);
-  const [currentWritingSection, setCurrentWritingSection] = useState("Indications & Target Specificity");
+  const [currentWritingSection, setCurrentWritingSection] = useState("Indications and Target Specificity");
   const [approvals, setApprovals] = useState<DossierApproval[]>(PENDING_APPROVALS);
   const [changesNote, setChangesNote] = useState("");
   const [showChangesForm, setShowChangesForm] = useState(false);
@@ -152,8 +152,8 @@ export function DossierWizard({
           }
           const next = prev + 12;
           if (next > 30 && next < 60) setCurrentWritingSection("Pivotal Phase III Exacerbation Analysis");
-          else if (next >= 60 && next < 85) setCurrentWritingSection("Safety Profile & Adverse Event Adjudication");
-          else if (next >= 85) setCurrentWritingSection("Commercial Claims & Citation Cross-referencing");
+          else if (next >= 60 && next < 85) setCurrentWritingSection("Safety Profile and Adverse Event Adjudication");
+          else if (next >= 85) setCurrentWritingSection("Commercial Claims and Citation Cross-Referencing");
           return next;
         });
       }, 400);
@@ -241,7 +241,7 @@ export function DossierWizard({
                 Step 1 of 5
               </div>
               <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
-                Create a new Brand Dossier
+                Create a New Brand Dossier
               </h2>
               <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
                 Pick a brand and a document type, I’ll ground every section in the sources you approve next.
@@ -311,7 +311,7 @@ export function DossierWizard({
                   }}
                 >
                   <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M12 5v14M5 12h14" /></svg>
-                  Add a new brand
+                  Add a New Brand
                 </button>
               </div>
 
@@ -319,7 +319,7 @@ export function DossierWizard({
                 <div style={{ padding: "16px 20px 20px", borderTop: "1px solid var(--hair)", background: "var(--surface-subtle)" }} className="space-y-3">
                   <div>
                     <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                      Brand name
+                      Brand Name
                     </label>
                     <input
                       value={activeDossier.brandName}
@@ -330,7 +330,7 @@ export function DossierWizard({
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                      Generic / molecular name
+                      Generic / Molecular Name
                     </label>
                     <input
                       value={activeDossier.genericName}
@@ -341,7 +341,7 @@ export function DossierWizard({
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                      Primary indication
+                      Primary Indication
                     </label>
                     <textarea
                       rows={2}
@@ -353,7 +353,7 @@ export function DossierWizard({
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                      Regulatory anchor
+                      Regulatory Anchor
                     </label>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                       {[
@@ -385,7 +385,7 @@ export function DossierWizard({
             {/* 2 · Document type */}
             <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 20 }} className="space-y-2">
               <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 4 }}>
-                2 · Document type, what am I building?
+                2 · Document type: what am I building?
               </div>
               {DOCUMENT_TYPES.map((dt) => (
                 <button
@@ -438,14 +438,14 @@ export function DossierWizard({
                 transition: ".2s var(--e)",
               }}
             >
-              {canContinueFromBrand ? "Continue with your Medical Writer →" : isNewBrand ? "Name the brand to continue" : "Pick a brand to continue"}
+              {canContinueFromBrand ? "Continue with Your Medical Writer →" : isNewBrand ? "Name the brand to continue" : "Pick a brand to continue"}
             </button>
           </div>
 
           {/* RIGHT — what the Medical Writer is starting from */}
           <div className="space-y-3">
             <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
-              What I’m starting from
+              What I’m Starting From
             </div>
             <div style={{ background: "var(--tint-2)", border: "1px solid var(--tint-line)", borderRadius: "var(--r-l)", padding: 16, display: "flex", gap: 12 }}>
               <span style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(140deg,#ff7a3d,#c9310a)", flexShrink: 0, display: "grid", placeItems: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>MW</span>
@@ -498,7 +498,7 @@ export function DossierWizard({
               Step 2 of 5
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
-              Approved Sources &amp; Clinical Allow-list
+              Approved Sources and Clinical Allow-List
             </h2>
             <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
               The Medical Writer and MLR Reviewer will only ground sentences in what’s verified here.
@@ -510,7 +510,7 @@ export function DossierWizard({
             <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden" }}>
               <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--hair)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <b style={{ fontSize: 14.5, fontWeight: 800 }}>Upload progress</b>
+                  <b style={{ fontSize: 14.5, fontWeight: 800 }}>Upload Progress</b>
                   <span
                     style={{
                       fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 99,
@@ -638,7 +638,7 @@ export function DossierWizard({
           {/* ── Supporting documents (optional, not required by law) ── */}
           <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 20 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-              <b style={{ fontSize: 14.5, fontWeight: 800 }}>Supporting documents</b>
+              <b style={{ fontSize: 14.5, fontWeight: 800 }}>Supporting Documents</b>
               <span style={{ fontSize: 11, fontWeight: 750, color: "var(--ink-4)" }}>Optional</span>
             </div>
             <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "var(--ink-3)" }}>
@@ -762,7 +762,7 @@ export function DossierWizard({
               boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
             }}
           >
-            ⚡ Approve Plan &amp; Start Writing ({selectedSections.length} sections) →
+            ⚡ Approve Plan and Start Writing ({selectedSections.length} sections) →
           </button>
         </div>
       )}
@@ -800,7 +800,7 @@ export function DossierWizard({
               Step 5 of 5
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 8px" }}>
-              Team review before {activeDossier.brandName} goes live
+              Team Review Before {activeDossier.brandName} Goes Live
             </h2>
             <p style={{ fontSize: 14.5, color: "var(--ink-3)", margin: "0 auto", maxWidth: "48ch" }}>
               Nothing built from this dossier ships until every reviewer below signs off.
@@ -874,19 +874,19 @@ export function DossierWizard({
                   transition: ".2s var(--e)",
                 }}
               >
-                {teamReady ? "✓ Approve & Publish Dossier →" : "Waiting on the team to finish reviewing…"}
+                {teamReady ? "✓ Approve and Publish Dossier →" : "Waiting on the team to finish reviewing…"}
               </button>
               <button
                 onClick={() => setShowChangesForm(true)}
                 style={{ width: "100%", padding: "12px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 13.5, background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-3)" }}
               >
-                Request changes instead
+                Request Changes Instead
               </button>
             </div>
           ) : (
             <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: 18 }} className="space-y-3">
               <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
-                What needs to change?
+                What Needs to Change?
               </label>
               <textarea
                 rows={3}
@@ -907,7 +907,7 @@ export function DossierWizard({
                   disabled={!changesNote.trim()}
                   style={{ flex: 2, padding: "12px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 13.5, background: changesNote.trim() ? "var(--ink)" : "var(--hair-2)", color: changesNote.trim() ? "#fff" : "var(--ink-4)", border: "none" }}
                 >
-                  Send back to Content Plan
+                  Send Back to Content Plan
                 </button>
               </div>
             </div>

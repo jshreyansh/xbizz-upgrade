@@ -192,7 +192,7 @@ export function ShotCards({
                 className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
               >
                 <MessageSquarePlus className="size-3" />
-                <span>Add to chat</span>
+                <span>Add to Chat</span>
               </button>
             </div>
 
@@ -284,7 +284,7 @@ export function ShotCards({
                               className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph px-1.5 py-1 text-micro font-bold text-brand transition-colors hover:bg-tint"
                             >
                               <MessageSquarePlus className="size-2.5" />
-                              Add to chat
+                              Add to Chat
                             </button>
                           )}
                         </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { LibraryProduct } from "@/features/product-library/product-library-types";
 import { BrandKitEditor } from "@/features/settings/brand-kit-editor";
+import { SectionHeading } from "@/components/patterns/section-heading";
 import { SaveBar } from "@/features/settings/settings-parts";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import type { BrandKit, LogoSlot } from "@/features/settings/settings-types";
@@ -16,8 +17,8 @@ export const PRODUCT_SLOT_COPY: Partial<
   Record<LogoSlot, { label?: string; hint?: string; priority?: "primary" | "optional" }>
 > = {
   "lockup-light": { label: "Logo", hint: "Every asset: documents, leave-behinds, video", priority: "primary" },
-  favicon: { label: "Favicon / logomark", hint: "Corners, watermarks, shared links", priority: "optional" },
-  animated: { label: "Animated brand logo", hint: "Intro and outro stings in video", priority: "optional" },
+  favicon: { label: "Favicon / Logomark", hint: "Corners, watermarks, shared links", priority: "optional" },
+  animated: { label: "Animated Brand Logo", hint: "Intro and outro stings in video", priority: "optional" },
 };
 
 /** Two typefaces and two colours: what one brand needs, without a system's worth of roles. */
@@ -57,14 +58,16 @@ export function ProductBrandKit({ product, readOnly = false }: { product: Librar
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-title font-extrabold tracking-tight text-ink">Product Brand Kit</h2>
-        <p className="text-body text-ink-3">
-          The logos, typefaces and colours every {product.name} asset is built from. Anything left empty
-          uses the workspace brand kit.
-          {readOnly && " View only: changing it comes with Brand kit: Manage."}
-        </p>
-      </div>
+      <SectionHeading
+        title="Product Brand Kit"
+        description={
+          <>
+            The logos, typefaces and colours every {product.name} asset is built from. Anything left empty
+            uses the workspace brand kit.
+            {readOnly && " View only: changing it comes with Brand Kit: Manage."}
+          </>
+        }
+      />
 
       <BrandKitEditor
         kit={kit}

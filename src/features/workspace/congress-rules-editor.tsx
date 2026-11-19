@@ -410,7 +410,7 @@ function SizesEditor({ value, onChange }: { value: PosterSize[]; onChange: (v: P
       ))}
       <div className="flex flex-wrap items-center gap-2">
         <Select<string>
-          label="Apply a preset"
+          label="Apply a Preset"
           value=""
           options={[{ value: "", label: "Apply a preset…" }, ...SIZE_PRESETS.map((p) => ({ value: p.label, label: p.label }))]}
           onChange={(label) => {
@@ -425,7 +425,7 @@ function SizesEditor({ value, onChange }: { value: PosterSize[]; onChange: (v: P
           onClick={() => onChange([...value, { width: 0, height: 0, unit: value[0]?.unit ?? "in", limit: "exact" }])}
         >
           <Plus className="size-3.5" />
-          Add another allowed size
+          Add Another Allowed Size
         </Button>
       </div>
     </div>
@@ -444,7 +444,7 @@ function DeliverablesEditor({ value, onChange }: { value: Deliverables; onChange
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <span className="text-label font-semibold text-ink-3">Printed poster</span>
+        <span className="text-label font-semibold text-ink-3">Printed Poster</span>
         <Choice<Use>
           value={printUse}
           labels={USE_LABELS}
@@ -452,7 +452,7 @@ function DeliverablesEditor({ value, onChange }: { value: Deliverables; onChange
         />
       </div>
       <div className="space-y-1.5">
-        <span className="text-label font-semibold text-ink-3">Digital poster or copy (PDF for screens and the online gallery)</span>
+        <span className="text-label font-semibold text-ink-3">Digital Poster or Copy (PDF for screens and the online gallery)</span>
         <Choice<Use>
           value={digitalUse}
           labels={USE_LABELS}
@@ -471,7 +471,7 @@ function DeliverablesEditor({ value, onChange }: { value: Deliverables; onChange
         />
         {digital && (
           <div className="space-y-2 rounded-control border border-hair px-2.5 py-2">
-            <span className="block text-label font-semibold text-ink-3">Poster file</span>
+            <span className="block text-label font-semibold text-ink-3">Poster File</span>
             <div className="flex flex-wrap gap-1.5">
               {FILE_TYPE_OPTIONS.map((t) => {
                 const on = digital.fileTypes.includes(t);
@@ -540,7 +540,7 @@ function FontSizesEditor({ value, onChange }: { value: FontSizes; onChange: (v: 
         </div>
       ))}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="w-20 text-label font-semibold text-ink-3">Readable from</span>
+        <span className="w-20 text-label font-semibold text-ink-3">Readable From</span>
         <NumberBox
           label="Readable from"
           value={value.readableFrom?.value ?? null}
@@ -620,7 +620,7 @@ function QrEditor({ value, onChange }: { value: QrRules; onChange: (v: QrRules) 
       {value.allowed !== "no" && (
         <>
           <div className="space-y-1">
-            <span className="text-label font-semibold text-ink-3">May link to</span>
+            <span className="text-label font-semibold text-ink-3">May Link to</span>
             <Choice<QrRules["links"]> value={value.links} labels={QR_LINK_LABELS} onChange={(links) => onChange({ ...value, links })} />
           </div>
           <span className="inline-flex items-center gap-1.5 text-label text-ink-3">
@@ -633,7 +633,7 @@ function QrEditor({ value, onChange }: { value: QrRules; onChange: (v: QrRules) 
             <Input
               multiline
               rows={3}
-              label="Disclaimer, word for word"
+              label="Disclaimer, Word for Word"
               value={value.disclaimer}
               onChange={(e) => onChange({ ...value, disclaimer: e.target.value })}
             />
@@ -657,10 +657,10 @@ function RequiredItemsEditor({ value, onChange }: { value: RequiredItem[]; onCha
             <Input size="sm" aria-label="Placement" placeholder="e.g. Top-right corner" value={item.placement} onChange={(e) => update(i, { placement: e.target.value })} />
           </div>
           <Select<RequiredItem["issuedBy"]>
-            label="Who supplies it"
+            label="Who Supplies It"
             value={item.issuedBy}
             options={[
-              { value: "congress", label: "Issued by the congress" },
+              { value: "congress", label: "Issued by the Congress" },
               { value: "you", label: "Yours" },
             ]}
             onChange={(issuedBy) => update(i, { issuedBy })}
@@ -677,7 +677,7 @@ function RequiredItemsEditor({ value, onChange }: { value: RequiredItem[]; onCha
         onClick={() => onChange([...value, { id: `item-${Date.now()}`, label: "", placement: "", issuedBy: "congress" }])}
       >
         <Plus className="size-3.5" />
-        Add a required item
+        Add a Required Item
       </Button>
     </div>
   );
@@ -687,11 +687,11 @@ function ContentEditor({ value, onChange }: { value: ContentRules; onChange: (v:
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div className="space-y-1">
-        <span className="text-label font-semibold text-ink-3">Poster sections, in order</span>
+        <span className="text-label font-semibold text-ink-3">Poster Sections, in Order</span>
         <ListEditor items={value.poster} onChange={(poster) => onChange({ ...value, poster })} placeholder="Add a section" />
       </div>
       <div className="space-y-1">
-        <span className="text-label font-semibold text-ink-3">Trials in Progress sections</span>
+        <span className="text-label font-semibold text-ink-3">Trials in Progress Sections</span>
         <ListEditor items={value.tip} onChange={(tip) => onChange({ ...value, tip })} placeholder="Add a section" />
         <Check2 checked={value.noResultsInTip} onChange={(noResultsInTip) => onChange({ ...value, noResultsInTip })}>
           No results data in Trials in Progress
@@ -895,7 +895,7 @@ export function CongressRulesModal({
   };
 
   const pending = congress && !isUsable(congress);
-  const title = congress ? `${congressLabel(congress)} rules` : "Add congress guidelines";
+  const title = congress ? `${congressLabel(congress)} Rules` : "Add Congress Guidelines";
   const subtitle =
     stage === "submitted"
       ? null
@@ -946,7 +946,7 @@ export function CongressRulesModal({
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-label font-bold text-brand hover:underline"
                     >
-                      Congress guidelines
+                      Congress Guidelines
                       <ExternalLink className="size-3" />
                     </a>
                   )}
@@ -964,7 +964,7 @@ export function CongressRulesModal({
             {stage === "input" && (
               <>
                 <Input
-                  label="Congress name"
+                  label="Congress Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="AAD Annual Meeting 2026"
@@ -978,7 +978,7 @@ export function CongressRulesModal({
                       <>
                         <span className="min-w-0 flex-1">{congressLabel(duplicate)} is already in your workspace, verified.</span>
                         <Button size="sm" variant="secondary" onClick={() => (onUseExisting ?? onSaved)(duplicate)}>
-                          Use it
+                          Use It
                         </Button>
                       </>
                     ) : (
@@ -991,7 +991,7 @@ export function CongressRulesModal({
                 )}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <span className="block text-label font-semibold text-ink-3">Author guidelines</span>
+                    <span className="block text-label font-semibold text-ink-3">Author Guidelines</span>
                     <input
                       ref={fileRef}
                       type="file"
@@ -1017,7 +1017,7 @@ export function CongressRulesModal({
                         className="grid w-full cursor-pointer justify-items-center gap-1 rounded-control border border-dashed border-hair-3 px-3 py-5 text-center transition-colors hover:border-brand"
                       >
                         <Upload className="size-4.5 text-brand" />
-                        <span className="text-body font-bold text-ink">Upload guidelines</span>
+                        <span className="text-body font-bold text-ink">Upload Guidelines</span>
                         <span className="text-caption text-ink-3">PDF or Word, from the congress site</span>
                       </button>
                     )}
@@ -1025,7 +1025,7 @@ export function CongressRulesModal({
                   <Input
                     multiline
                     rows={5}
-                    label="Or type what you know"
+                    label="Or Type What You Know"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Portrait A0. Body text 24 pt or more. Generic names only, no company logos, no QR codes."
@@ -1064,7 +1064,7 @@ export function CongressRulesModal({
                   <Clock className="size-5" />
                 </span>
                 <h3 className="text-title font-[850] tracking-tight text-ink">
-                  {congress ? "Correction sent to SwishX" : "Sent to SwishX for verification"}
+                  {congress ? "Correction Sent to SwishX" : "Sent to SwishX for Verification"}
                 </h3>
                 <p className="max-w-[460px] text-balance text-body text-ink-2">
                   {congress
@@ -1137,7 +1137,7 @@ export function CongressRulesModal({
                                   <SourceChip source={rule.source} />
                                   {rule.source.kind === "default" && !isEditing && !readOnly && (
                                     <Button size="sm" variant="secondary" className="h-7 px-2 text-label" onClick={() => confirm(k)}>
-                                      Looks right
+                                      Looks Right
                                     </Button>
                                   )}
                                   {!readOnly && (
@@ -1162,7 +1162,7 @@ export function CongressRulesModal({
                                         }}
                                         className="cursor-pointer text-label font-bold text-ink-3 hover:text-ink"
                                       >
-                                        Mark as not stated
+                                        Mark as Not Stated
                                       </button>
                                       <Button size="sm" onClick={() => setEditing(null)}>
                                         Done
@@ -1206,7 +1206,7 @@ export function CongressRulesModal({
               </span>
               {stage === "input" ? (
                 <Button size="sm" disabled={!canRead} onClick={() => setStage("reading")}>
-                  Read guidelines
+                  Read Guidelines
                 </Button>
               ) : stage === "submitted" ? (
                 <Button size="sm" onClick={onClose}>
@@ -1220,12 +1220,12 @@ export function CongressRulesModal({
                 ) : (
                   <Button size="sm" variant="secondary" className="gap-1.5" onClick={startCorrection}>
                     <Pencil className="size-3.5" />
-                    Suggest a correction
+                    Suggest a Correction
                   </Button>
                 )
               ) : (
                 <Button size="sm" disabled={hasErrors || unchanged} onClick={send}>
-                  {congress ? "Send correction for verification" : "Send for verification"}
+                  {congress ? "Send Correction for Verification" : "Send for Verification"}
                 </Button>
               )}
             </div>

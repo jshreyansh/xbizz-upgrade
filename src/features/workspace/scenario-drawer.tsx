@@ -30,7 +30,7 @@ export function ScenarioDrawer({
   onSelect,
   onReset,
   onClose,
-  title = "Sample briefs",
+  title = "Sample Briefs",
 }: {
   currentScenarioId: string;
   assetType?: AssetType;
@@ -50,7 +50,7 @@ export function ScenarioDrawer({
       <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-canvas shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair px-5 py-4">
           <div>
-            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Use-case library</div>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Use-Case Library</div>
             <h3 className="text-title font-semibold">{title}</h3>
           </div>
           <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg cursor-pointer" aria-label="Close">
@@ -95,7 +95,7 @@ export function ScenarioDrawer({
         </div>
 
         <div className="border-t border-hair p-4">
-          <Button variant="secondary" size="sm" onClick={onReset} className="w-full">Reset to default case</Button>
+          <Button variant="secondary" size="sm" onClick={onReset} className="w-full">Reset to Default Case</Button>
         </div>
       </div>
     </div>

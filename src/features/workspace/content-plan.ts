@@ -126,7 +126,7 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
     ...(brief.includes("introduc") || brief.includes("launch") ? ["Product introduction"] : []),
     ...(brief.includes("mechanism") || brief.includes("how it works") ? ["Mechanism"] : []),
     ...(brief.includes("evidence") || brief.includes("study") || brief.includes("endpoint") || brief.includes("clinical") ? ["Pivotal evidence"] : []),
-    ...(brief.includes("dos") || brief.includes("safety") || brief.includes("fair balance") ? ["Dosing & safety"] : []),
+    ...(brief.includes("dos") || brief.includes("safety") || brief.includes("fair balance") ? ["Dosing and safety"] : []),
     ...(brief.includes("patient") || brief.includes("burden") ? ["Patient impact"] : []),
   ]);
   if (topics.length === 0) topics.push(inputs.audience === "Patient" ? "Patient impact" : "Product introduction");

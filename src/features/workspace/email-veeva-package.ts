@@ -233,8 +233,8 @@ ${footer ? "  <tr><td>{{emailTemplateFragment}}</td></tr>\n" : ""}  <tr><td styl
   const footerHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #f9fafb; border-top: 3px solid ${VIOLET};">
   <tr><td style="padding: 18px 28px; ${FONT} font-size: 12px; line-height: 1.5; color: #374151;">
     ${p.professional && p.wording ? `<b>INDICATION</b><br>${esc(p.wording)}<br><br>` : ""}<b>IMPORTANT SAFETY INFORMATION</b><br>
-    ${p.boxedWarning ? "<b>WARNING: SERIOUS INFECTIONS, MORTALITY, MALIGNANCY, MAJOR ADVERSE CARDIOVASCULAR EVENTS AND THROMBOSIS.</b> Serious infections leading to hospitalization or death have occurred.<br>" : ""}
-    Serious infections that may lead to hospitalization or death have been reported. Check blood counts before starting and during treatment.<br>
+    ${p.boxedWarning ? "<b>WARNING: SERIOUS INFECTIONS, MORTALITY, MALIGNANCY, MAJOR ADVERSE CARDIOVASCULAR EVENTS AND THROMBOSIS.</b> Serious infections leading to hospitalisation or death have occurred.<br>" : ""}
+    Serious infections that may lead to hospitalisation or death have been reported. Check blood counts before starting and during treatment.<br>
     Please see <a href="{{PILink}}" style="color: ${VIOLET};">full Prescribing Information</a>${p.boxedWarning ? ", including Boxed Warning," : ""} and <a href="{{ISILink}}" style="color: ${VIOLET};">Important Safety Information</a>.
   </td></tr>
 </table>

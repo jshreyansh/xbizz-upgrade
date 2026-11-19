@@ -244,7 +244,7 @@ export function ButtonsAndLinks({
               <div className={CARD_HEAD}>
                 <IconTile icon={main ? MousePointerClick : MousePointer2} tone={main ? "brand" : "plain"} />
                 <div className="min-w-0 flex-1">
-                  <b className="block truncate text-body font-bold text-ink">{main ? "Main button" : `Extra button ${i}`}</b>
+                  <b className="block truncate text-body font-bold text-ink">{main ? "Main Button" : `Extra Button ${i}`}</b>
                   <span className="block truncate text-label text-ink-3">{main ? "The one thing you want the doctor to do" : "Sits under the main button"}</span>
                 </div>
                 <LinkStatus url={cta.url} missingText="Add the page it opens" />
@@ -253,7 +253,7 @@ export function ButtonsAndLinks({
               <div className="grid gap-3 p-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                 <Field
                   size="sm"
-                  label="Button text"
+                  label="Button Text"
                   value={cta.label}
                   placeholder={main ? mainPlaceholder : "e.g. See the full study"}
                   maxLength={35}
@@ -262,7 +262,7 @@ export function ButtonsAndLinks({
                 />
                 <Field
                   size="sm"
-                  label="Page it opens"
+                  label="Page It Opens"
                   type="url"
                   value={cta.url}
                   placeholder="https://"
@@ -275,12 +275,12 @@ export function ButtonsAndLinks({
             </div>
           );
         })}
-        <AddRow icon={Plus} label="Add another button" onClick={onAddCta} />
+        <AddRow icon={Plus} label="Add Another Button" onClick={onAddCta} />
       </section>
 
       {/* Links to sources */}
       <section className="space-y-3 border-t border-hair pt-6">
-        <SectionHead icon={Link2} title="Links to sources" count={backlinks.length}>
+        <SectionHead icon={Link2} title="Links to Sources" count={backlinks.length}>
           Studies, trial entries or support pages the email points to. On the Email Plan you choose which block each one sits under.
         </SectionHead>
         {backlinks.map((bl) => {
@@ -291,7 +291,7 @@ export function ButtonsAndLinks({
               <div className={CARD_HEAD}>
                 <IconTile icon={kind.icon} tone="plain" />
                 <div className="min-w-0 flex-1">
-                  <b className="block truncate text-body font-bold text-ink">{bl.title || "New link"}</b>
+                  <b className="block truncate text-body font-bold text-ink">{bl.title || "New Link"}</b>
                   <span className="block truncate text-label text-ink-3">
                     {kind.label}
                     {bl.context ? ` · ${bl.context}` : ""}
@@ -303,7 +303,7 @@ export function ButtonsAndLinks({
               <div className="grid gap-3 p-4 sm:grid-cols-2">
                 <Field
                   size="sm"
-                  label="Link text"
+                  label="Link Text"
                   value={bl.title}
                   placeholder="e.g. AFFIRM-3 study publication"
                   onChange={(e) => onUpdateLink(bl.id, { title: e.target.value })}
@@ -311,16 +311,16 @@ export function ButtonsAndLinks({
                 />
                 <Field
                   size="sm"
-                  label="What it is"
+                  label="What It Is"
                   value={bl.context}
                   placeholder="e.g. Phase III trial methods and primary endpoint, NEJM"
                   onChange={(e) => onUpdateLink(bl.id, { context: e.target.value })}
-                  hint="For reviewers. Optional"
+                  hint="Optional. For reviewers."
                 />
                 <div className="sm:col-span-2">
                   <Field
                     size="sm"
-                    label="Web address"
+                    label="Web Address"
                     type="url"
                     value={bl.url}
                     placeholder="https://"
@@ -333,7 +333,7 @@ export function ButtonsAndLinks({
             </div>
           );
         })}
-        <AddRow icon={Link2} label="Add a link" onClick={onAddLink} />
+        <AddRow icon={Link2} label="Add a Link" onClick={onAddLink} />
       </section>
     </div>
   );

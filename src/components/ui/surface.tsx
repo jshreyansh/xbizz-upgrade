@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
 
 export type SurfaceTone = "card" | "canvas" | "subtle" | "tint" | "ok" | "warn" | "danger" | "transparent";
 export type SurfaceElevation = "none" | "hair" | "soft" | "float" | "modal";
-export type SurfaceRadius = "none" | "chip" | "control" | "panel" | "card" | "pill";
+export type SurfaceRadius = "none" | "chip" | "control" | "panel" | "card";
 export type SurfacePadding = "none" | "xs" | "sm" | "md" | "lg" | "xl";
 
 const tones: Record<SurfaceTone, string> = {
@@ -36,7 +36,7 @@ const borders: Record<SurfaceTone, string> = {
   tint: "border-tint-line",
   ok: "border-ok-line",
   warn: "border-warn-line",
-  danger: "border-danger",
+  danger: "border-danger-line",
   transparent: "border-hair",
 };
 
@@ -54,7 +54,6 @@ const radii: Record<SurfaceRadius, string> = {
   control: "rounded-control",
   panel: "rounded-panel",
   card: "rounded-card",
-  pill: "rounded-full",
 };
 
 const paddings: Record<SurfacePadding, string> = {

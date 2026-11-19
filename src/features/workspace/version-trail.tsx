@@ -137,7 +137,7 @@ function VersionTrailModal({
       >
         <header className="flex items-start justify-between gap-3 border-b border-hair px-4 py-3">
           <div className="min-w-0">
-            <h2 className="text-body-lg font-[850] tracking-tight text-ink">Version history</h2>
+            <h2 className="text-body-lg font-[850] tracking-tight text-ink">Version History</h2>
             <p className="text-label text-ink-3">What each version settled.</p>
           </div>
           <button

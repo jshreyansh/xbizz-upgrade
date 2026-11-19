@@ -48,7 +48,7 @@ export default function NewDossierUploadPage() {
         setTimeout(() => startVerification(), 700);
         return "On it, verifying now.";
       }
-      return "Attach your file first, click the 📎 icon and I'll take it from there.";
+      return "Attach your file first. Click the 📎 icon and I'll take it from there.";
     }
     if (/(upload|attach|document|file)/.test(lower)) {
       return "Click the 📎 icon below and I'll attach it and get it ready to verify.";
@@ -111,7 +111,7 @@ export default function NewDossierUploadPage() {
       >
         {phase === "input" && (
           <>
-            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Upload {brandName}&rsquo;s dossier</h1>
+            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Upload {brandName}&rsquo;s Dossier</h1>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 14px" }}>
               We&rsquo;ll verify and validate it against the {anchor} anchor.
             </p>
@@ -122,7 +122,7 @@ export default function NewDossierUploadPage() {
               </div>
             )}
 
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier file</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier File</label>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -142,7 +142,7 @@ export default function NewDossierUploadPage() {
             >
               {fileName ? <FileText size={22} color="var(--brand-deep)" /> : <Upload size={22} color="var(--ink-4)" />}
               <span style={{ fontSize: 13, fontWeight: 650, color: fileName ? "var(--brand-deep)" : "var(--ink-3)" }}>
-                {fileName ?? "Click to browse, PDF, DOCX, or PPTX"}
+                {fileName ?? "Click to browse: PDF, DOCX or PPTX"}
               </span>
             </button>
             <input ref={fileInputRef} type="file" onChange={handleFilePicked} style={{ display: "none" }} accept=".pdf,.doc,.docx,.ppt,.pptx" />
@@ -164,15 +164,15 @@ export default function NewDossierUploadPage() {
                 boxShadow: !canUpload ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
               }}
             >
-              Verify &amp; validate
+              Verify and Validate
             </button>
           </>
         )}
 
         {phase === "processing" && (
           <ProcessingChecklist
-            title="Verifying & validating"
-            items={["Scanning document structure", "Extracting brand & indication", "Matching regulatory anchor", "Cross-referencing citations"]}
+            title="Verifying and validating"
+            items={["Scanning document structure", "Extracting brand and indication", "Matching regulatory anchor", "Cross-referencing citations"]}
             onDone={() => setPhase("preview")}
           />
         )}
@@ -182,13 +182,13 @@ export default function NewDossierUploadPage() {
             dossier={dossier}
             onChange={(updater) => setDossier((prev) => (prev ? updater(prev) : prev))}
             onFinish={() => setPhase("success")}
-            finishLabel="Confirm & finish"
+            finishLabel="Confirm and Finish"
           />
         )}
 
         {phase === "success" && dossier && (
           <SuccessScreen
-            headline="Dossier verified & validated"
+            headline="Dossier Verified and Validated"
             subtitle={`${dossier.brandName} passed all checks and is ready to use.`}
             dossier={dossier}
             onClose={() => finish(false)}

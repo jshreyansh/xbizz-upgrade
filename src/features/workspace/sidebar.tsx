@@ -681,7 +681,7 @@ export function Sidebar() {
                       className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-left text-body font-semibold text-brand hover:bg-tint"
                     >
                       <span className="grid size-6 shrink-0 place-items-center rounded-glyph border border-dashed border-tint-line">+</span>
-                      Create workspace
+                      Create Workspace
                     </button>
                   )}
                 </div>
@@ -693,13 +693,13 @@ export function Sidebar() {
                     onClick={() => router.push("/settings")}
                     className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left"
                   >
-                    Profile &amp; Settings
+                    Profile and Settings
                   </button>
                   <button
                     onClick={handleSignOut}
                     className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-semibold text-danger hover:bg-danger-bg text-left"
                   >
-                    Sign out
+                    Sign Out
                   </button>
                 </div>
               </div>

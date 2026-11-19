@@ -11,6 +11,7 @@ import { playVoicePreview, stopVoicePreview, useVoicesStore } from "@/features/c
 import { VoiceTile } from "@/features/content-library/voice-tile";
 import { VoiceCloneModal } from "@/features/content-library/voice-clone-modal";
 import { VoiceEditModal } from "@/features/content-library/voice-edit-modal";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 /* The team's own, SwishX's, and the team's put away. Stock voices are never archived. */
 type Shelf = "team" | "swishx" | "archived";
@@ -85,8 +86,8 @@ export function VoicesScreen() {
           activeId={shelf}
           onSelect={(id) => setShelf(id as Shelf)}
           items={[
-            { id: "team", label: "Team voices", count: counts.team },
-            { id: "swishx", label: "SwishX voices", count: counts.swishx },
+            { id: "team", label: "Team Voices", count: counts.team },
+            { id: "swishx", label: "SwishX Voices", count: counts.swishx },
             { id: "archived", label: "Archived", count: counts.archived },
           ]}
         />
@@ -101,7 +102,7 @@ export function VoicesScreen() {
               value: language,
               defaultValue: "all",
               onChange: setLanguage,
-              options: [{ id: "all", label: "Any language" }, ...VOICE_LANGUAGES.map((l) => ({ id: l.id, label: l.label }))],
+              options: [{ id: "all", label: "Any Language" }, ...VOICE_LANGUAGES.map((l) => ({ id: l.id, label: l.label }))],
             },
             {
               id: "gender",
@@ -110,7 +111,7 @@ export function VoicesScreen() {
               defaultValue: "all",
               onChange: (v) => setGender(v as VoiceGender | "all"),
               options: [
-                { id: "all", label: "Any voice" },
+                { id: "all", label: "Any Voice" },
                 { id: "Female", label: "Female" },
                 { id: "Male", label: "Male" },
                 { id: "Neutral", label: "Neutral" },
@@ -124,7 +125,7 @@ export function VoicesScreen() {
         {shelf === "team" && canCreate && (
           <CreateTile
             icon={<Mic className="size-5" />}
-            title="Clone a new voice"
+            title="Clone a New Voice"
             subtitle="Record 10 to 30 seconds with a teleprompter, or upload a clip. Tagged with its language, with consent kept on file."
             onSelect={() => setCloning(true)}
           />
@@ -150,12 +151,12 @@ export function VoicesScreen() {
         ))}
 
         {visible.length === 0 && (filtered || shelf !== "team") && (
-          <div className="col-span-full rounded-panel border border-dashed border-hair-2 py-16 text-center">
-            <p className="text-body-lg font-bold text-ink-2">{filtered ? "No voices match" : "Nothing archived"}</p>
-            <p className="mt-1 text-body text-ink-4">
-              {filtered ? "Try another language, voice or search." : "Voices you archive are kept here rather than deleted. Projects already using one keep it."}
-            </p>
-          </div>
+          <EmptyState
+            size="md"
+            className="col-span-full"
+            title={filtered ? "No voices match" : "Nothing archived"}
+            hint={filtered ? "Try another language, voice or search." : "Voices you archive are kept here rather than deleted. Projects already using one keep it."}
+          />
         )}
       </div>
 

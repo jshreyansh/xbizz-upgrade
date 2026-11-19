@@ -21,15 +21,15 @@ export function SectionWorkspace() {
     <Stack gap={4}>
       {/* Plan sits first and read-only: orientation, not a second billing surface. */}
       <SettingsCard
-        title="Active plan"
-        description="Read-only here. Every billing action lives in Billing & usage."
+        title="Active Plan"
+        description="Read-only here. Every billing action lives in Billing and Usage."
         actions={
           <Link
             href="/settings/billing"
             className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-card px-3 py-1.5 transition-colors hover:border-brand"
           >
             <CreditCard className="size-3.5 text-brand" />
-            <span className="text-label font-bold text-ink">Manage billing</span>
+            <span className="text-label font-bold text-ink">Manage Billing</span>
           </Link>
         }
       >
@@ -42,7 +42,7 @@ export function SectionWorkspace() {
             </div>
           </div>
           <div>
-            <Text size="caption" tone="subtle" className="block uppercase tracking-wider">Credit balance</Text>
+            <Text size="caption" tone="subtle" className="block uppercase tracking-wider">Credit Balance</Text>
             <Text size="subhead" weight="bold" className="mt-0.5 block tabular-nums">
               {s.creditBalance.toLocaleString()}
             </Text>
@@ -59,7 +59,7 @@ export function SectionWorkspace() {
         description="These details appear on generated content and on your invoices."
       >
         <div>
-          <SettingRow label="Workspace name" htmlFor="ws-name">
+          <SettingRow label="Workspace Name" htmlFor="ws-name">
             <Field
               id="ws-name"
               value={s.workspaceName}
@@ -135,7 +135,7 @@ export function SectionWorkspace() {
       </SettingsCard>
 
       <SettingsCard
-        title="Therapy areas"
+        title="Therapy Areas"
         description="Constrains what the studio can ground content against."
       >
         <ChipMultiSelect

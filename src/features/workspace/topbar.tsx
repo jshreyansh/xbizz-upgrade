@@ -104,7 +104,7 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
             style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "6px 13px", borderRadius: 99, border: "1px solid var(--hair-2)", background: "#fff", color: "var(--ink-2)", fontSize: 12.5, fontWeight: 700 }}
           >
             <Play size={11} fill="var(--brand)" color="var(--brand)" />
-            Watch demo
+            Watch Demo
           </button>
 
           {[

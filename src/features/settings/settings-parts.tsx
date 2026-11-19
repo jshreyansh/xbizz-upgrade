@@ -7,6 +7,7 @@ import { Check } from "lucide-react";
 import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { cn } from "@/lib/cn";
 
 /**
@@ -198,7 +199,7 @@ export function SaveBar({ dirty, onSave, onDiscard }: { dirty: boolean; onSave: 
           >
             <span className="text-label font-bold">Discard</span>
           </button>
-          <Button size="sm" onClick={onSave}>Save changes</Button>
+          <Button size="sm" onClick={onSave}>Save Changes</Button>
         </>
       }
     />
@@ -308,14 +309,9 @@ export function AccessSummary({ perms }: { perms: readonly PermissionId[] }) {
                 {current.hint && !none ? current.hint : area.trailing}
               </Text>
             </div>
-            <span
-              className={cn(
-                "shrink-0 rounded-chip border px-2.5 py-0.5 text-label font-bold",
-                none ? "border-hair bg-subtle text-ink-4" : "border-hair-2 bg-card text-ink"
-              )}
-            >
+            <Chip size="md" weight="bold" tone={none ? "neutral" : "default"} className={none ? "text-ink-4" : "text-ink"}>
               {current.label}
-            </span>
+            </Chip>
           </div>
         );
       })}

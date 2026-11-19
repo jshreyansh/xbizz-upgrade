@@ -11,7 +11,7 @@
 import type { BrandDossier, DocumentType, DossierApproval, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
 export const DOCUMENT_TYPES: { type: DocumentType; label: string; description: string }[] = [
-  { type: "commercial", label: "Commercial dossier", description: "Sales-enablement dossier for HCPs. The default." },
+  { type: "commercial", label: "Commercial Dossier", description: "Sales-enablement dossier for HCPs. The default." },
   { type: "patient-medication", label: "Patient Medication Information", description: "Regulated patient leaflet. Its own mandated sections." },
   { type: "hcp-scientific", label: "HCP Scientific", description: "Non-promotional prescriber reference." },
 ];
@@ -25,24 +25,24 @@ export const PENDING_APPROVALS: DossierApproval[] = [
 
 
 export const PHARMA_SECTIONS = [
-  { id: "s1", name: "1. Executive Summary & Clinical Need", cat: "Clinical", defaultOn: true },
-  { id: "s2", name: "2. Mechanism of Action & Target Selectivity", cat: "Clinical", defaultOn: true },
+  { id: "s1", name: "1. Executive Summary and Clinical Need", cat: "Clinical", defaultOn: true },
+  { id: "s2", name: "2. Mechanism of Action and Target Selectivity", cat: "Clinical", defaultOn: true },
   { id: "s3", name: "3. Pivotal Phase III Efficacy Readouts", cat: "Clinical", defaultOn: true },
-  { id: "s4", name: "4. Primary Composite & Key Secondary Endpoints", cat: "Clinical", defaultOn: true },
-  { id: "s5", name: "5. Safety Profile & Adverse Event Adjudication", cat: "Safety", defaultOn: true },
-  { id: "s6", name: "6. Warnings, Precautions & Boxed Warnings", cat: "Safety", defaultOn: true },
-  { id: "s7", name: "7. Contraindications & Drug-Drug Interactions", cat: "Safety", defaultOn: true },
-  { id: "s8", name: "8. Dosage, Administration & Titration", cat: "Regulatory", defaultOn: true },
-  { id: "s9", name: "9. Special Populations (Renal / Hepatic / Pediatric)", cat: "Regulatory", defaultOn: true },
-  { id: "s10", name: "10. Clinical Pharmacology & Pharmacokinetics", cat: "Clinical", defaultOn: true },
-  { id: "s11", name: "11. HEOR Budget Impact & QALY Economic Model", cat: "Commercial", defaultOn: true },
-  { id: "s12", name: "12. Hospital Readmission & ER Avoidance Model", cat: "Commercial", defaultOn: true },
-  { id: "s13", name: "13. Patient Archetypes & Treatment Journey", cat: "Commercial", defaultOn: true },
-  { id: "s14", name: "14. HCP Core Message Pillars & Objection Handling", cat: "Commercial", defaultOn: true },
-  { id: "s15", name: "15. Congress Presentation & Symposium Abstract", cat: "Commercial", defaultOn: true },
-  { id: "s16", name: "16. Field Medical FAQ & Scientific Responses", cat: "Commercial", defaultOn: true },
-  { id: "s17", name: "17. Patient Counseling & Adherence Support", cat: "Commercial", defaultOn: true },
-  { id: "s18", name: "18. Core Visual Identity & ISI Layout Rules", cat: "Commercial", defaultOn: true },
+  { id: "s4", name: "4. Primary Composite and Key Secondary Endpoints", cat: "Clinical", defaultOn: true },
+  { id: "s5", name: "5. Safety Profile and Adverse Event Adjudication", cat: "Safety", defaultOn: true },
+  { id: "s6", name: "6. Warnings, Precautions and Boxed Warnings", cat: "Safety", defaultOn: true },
+  { id: "s7", name: "7. Contraindications and Drug-Drug Interactions", cat: "Safety", defaultOn: true },
+  { id: "s8", name: "8. Dosage, Administration and Titration", cat: "Regulatory", defaultOn: true },
+  { id: "s9", name: "9. Special Populations (Renal / Hepatic / Paediatric)", cat: "Regulatory", defaultOn: true },
+  { id: "s10", name: "10. Clinical Pharmacology and Pharmacokinetics", cat: "Clinical", defaultOn: true },
+  { id: "s11", name: "11. HEOR Budget Impact and QALY Economic Model", cat: "Commercial", defaultOn: true },
+  { id: "s12", name: "12. Hospital Readmission and ER Avoidance Model", cat: "Commercial", defaultOn: true },
+  { id: "s13", name: "13. Patient Archetypes and Treatment Journey", cat: "Commercial", defaultOn: true },
+  { id: "s14", name: "14. HCP Core Message Pillars and Objection Handling", cat: "Commercial", defaultOn: true },
+  { id: "s15", name: "15. Congress Presentation and Symposium Abstract", cat: "Commercial", defaultOn: true },
+  { id: "s16", name: "16. Field Medical FAQ and Scientific Responses", cat: "Commercial", defaultOn: true },
+  { id: "s17", name: "17. Patient Counselling and Adherence Support", cat: "Commercial", defaultOn: true },
+  { id: "s18", name: "18. Core Visual Identity and ISI Layout Rules", cat: "Commercial", defaultOn: true },
 ];
 
 /** What promotional-review law requires before a dossier can be drafted.
@@ -83,7 +83,7 @@ export const REQUIRED_SOURCES: RequiredSource[] = [
   {
     type: "heor",
     badge: "HEOR",
-    label: () => "Health Economics & Outcomes Data",
+    label: () => "Health Economics and Outcomes Data",
     detail: "Needed only if the dossier will support value or budget-impact claims.",
     tier: "recommended",
   },

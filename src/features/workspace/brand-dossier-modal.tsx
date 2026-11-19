@@ -1,6 +1,7 @@
 "use client";
 
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { useState, useMemo, useEffect } from "react";
 import { conditionPhrase } from "@/features/workspace/ad-subject";
@@ -25,7 +26,6 @@ import {
   Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { useEmailStore } from "@/features/workspace/email-store";
 import { EmailAboutFields } from "@/features/workspace/email-about-fields";
 import { EMAIL_AUDIENCES, EMAIL_PURPOSES, approvedPieces, emailSamplePrompts, suggestedPiece, type EmailAudience } from "@/features/workspace/email-options";
@@ -82,6 +82,7 @@ import type {
   BrandItem,
   DossierItem,
 } from "@/features/workspace/brand-modal-data";
+import { Chip } from "@/components/ui/chip";
 
 /**
  * Audience comes first, then what the asset is about: Products (a drug or a
@@ -165,21 +166,18 @@ function SelectedBrandTile({ brand, onChange, children }: { brand: BrandItem; on
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         <div className="flex items-center gap-2">
           <span className="truncate text-body-lg font-extrabold text-ink">{brand.name}</span>
-          <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
+          <Chip tone="ok" weight="bold">
             Verified
-          </span>
+          </Chip>
         </div>
         <span className="truncate text-label italic text-ink-3">{brand.genericName}</span>
         {/* With details below, the therapy area is a row of its own there. */}
         {!children && brand.therapyAreas.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1">
             {brand.therapyAreas.map((area) => (
-              <span
-                key={area}
-                className="rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-caption font-semibold text-ink-3"
-              >
+              <Chip key={area} tone="neutral" className="border-hair-2">
                 {area}
-              </span>
+              </Chip>
             ))}
           </div>
         )}
@@ -293,8 +291,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   // 2. Grounding: Products or Therapy
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
-  /* Under Products: drugs, devices or both. */
-  const [productKind, setProductKind] = useState<"all" | "drug" | "device">("all");
   const [brandSearch, setBrandSearch] = useState("");
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
@@ -350,7 +346,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     if (open) {
       setStage("audience");
       setSourceMode("brand");
-      setProductKind("all");
       setProjectNameLocal("");
       setNameEdited(false);
       setEditingName(false);
@@ -420,9 +415,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const filteredBrands = useMemo(
     () =>
       (brandSearch.trim() ? filterBrands(brandCatalogue, brandSearch) : brandCatalogue)
-        .filter((b) => b.hasDossier)
-        .filter((b) => productKind === "all" || (productKind === "device") === (b.type === "Device")),
-    [brandCatalogue, brandSearch, productKind]
+        .filter((b) => b.hasDossier),
+    [brandCatalogue, brandSearch]
   );
 
   /* Disease dossiers from the Therapy Library: picked like an area, but grounded in the dossier itself. */
@@ -488,7 +482,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       const keepsTileName = adPreset.id !== "scratch" && adType === adPreset.adType;
       return `${groundingLabel} · ${keepsTileName ? adPreset.noun : `${audienceTitle} Ads`}`;
     }
-    if (isEmail) return `${groundingLabel} · ${EMAIL_PURPOSES[emailPurpose].label} email`;
+    if (isEmail) return `${groundingLabel} · ${EMAIL_PURPOSES[emailPurpose].label} Email`;
     return `${groundingLabel} · ${audienceTitle} ${studioNoun}`;
   })();
 
@@ -590,7 +584,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     const trimmed = customDiseaseInput.trim();
     if (!trimmed) return;
     const newId = `custom-${Date.now()}`;
-    const newEntry = { id: newId, label: trimmed, desc: "Custom Specified Area" };
+    const newEntry = { id: newId, label: trimmed, desc: "Custom area" };
     setCustomDiseases((prev) => [...prev, newEntry]);
     setSelectedDiseaseIds((prev) => [...prev, newId]);
     setCustomDiseaseInput("");
@@ -736,7 +730,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   /* The indication and therapy area rows, under whichever product or
      condition was picked. Plain JSX rather than a component: they read this
      render's state directly. */
-  const indicationLabel = isAd && adSubjectKind === "device" ? "Intended use" : "Indication";
+  const indicationLabel = isAd && adSubjectKind === "device" ? "Intended Use" : "Indication";
   const subjectRows = (
     <>
       <SubjectRow
@@ -786,11 +780,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         )}
       </SubjectRow>
       <SubjectRow
-        label="Therapy area"
+        label="Therapy Area"
         note={
           pickedAreas.length > 0 && pickedAreas.length < areaOptions.length ? (
             <button type="button" onClick={() => setAreaPick({ key: "", areas: [] })} className="cursor-pointer font-semibold hover:text-ink-2">
-              Reset to all
+              Reset to All
             </button>
           ) : undefined
         }
@@ -807,9 +801,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         ) : (
           <div className="flex flex-wrap items-center gap-1.5 sm:pt-0.5">
             {therapyAreas.map((area) => (
-              <span key={area} className="rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-label font-bold text-ink-2">
+              <Chip key={area} tone="neutral" size="md" weight="bold" className="border-hair-2 px-2 text-ink-2">
                 {area}
-              </span>
+              </Chip>
             ))}
           </div>
         )}
@@ -834,8 +828,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const scopeSummaryRow = (
     <SubjectRow
-      label={isAd && adSubjectKind === "device" ? "Intended Use & Areas" : "Indications & Therapy Areas"}
-      note={isCustomizedScope ? "Customized" : "Approved label"}
+      label={isAd && adSubjectKind === "device" ? "Intended Use and Areas" : "Indications and Therapy Areas"}
+      note={isCustomizedScope ? "Customised" : "Approved label"}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-control border border-hair-2 bg-subtle/50 p-2.5 sm:px-3.5 sm:py-2.5">
         <div className="min-w-0 flex-1">
@@ -851,12 +845,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   : `All ${areaOptions.length} therapy areas`}
             </b>
             {!isCustomizedScope ? (
-              <span className="rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-ok">
+              <Chip tone="ok" size="xs" weight="bold" className="uppercase tracking-wider">
                 Default
-              </span>
+              </Chip>
             ) : (
               <span className="rounded-chip border border-accent-blue/30 bg-accent-blue/10 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-accent-blue">
-                Customized
+                Customised
               </span>
             )}
           </div>
@@ -877,7 +871,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               }}
               className="cursor-pointer text-caption font-semibold text-ink-3 hover:text-ink hover:underline"
             >
-              Reset to all
+              Reset to All
             </button>
           )}
           {canCustomizeScope && (
@@ -887,7 +881,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-3 py-1 text-label font-bold text-brand shadow-2xs hover:border-brand/40 hover:bg-tint hover:text-brand-deep transition"
             >
               <Edit3 className="size-3" />
-              <span>Customize</span>
+              <span>Customise</span>
             </button>
           )}
         </div>
@@ -900,7 +894,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       <div className="flex items-center justify-between bg-tint/40 px-3.5 py-2.5 border-b border-hair">
         <div className="flex items-center gap-2">
           <span className="text-caption font-bold text-brand-deep">
-            Customizing {indicationLabel === "Intended use" ? "intended use" : "indications"} &amp; therapy areas
+            Customising {indicationLabel === "Intended Use" ? "intended use" : "indications"} and therapy areas
           </span>
           {isCustomizedScope && (
             <span className="text-micro font-medium text-ink-3">
@@ -918,7 +912,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               }}
               className="cursor-pointer text-caption font-semibold text-ink-3 hover:text-ink hover:underline"
             >
-              Reset to all
+              Reset to All
             </button>
           )}
           {!needsIndication && (
@@ -1150,7 +1144,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           onClick={() => setSelectedSpecialities([])}
                           className="text-caption font-semibold text-ink-4 hover:text-ink-2 cursor-pointer"
                         >
-                          Clear all
+                          Clear All
                         </button>
                       )}
                     </div>
@@ -1186,7 +1180,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  What&apos;s It About?
+                  What&apos;s it about?
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1209,7 +1203,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {(stage === "details" || stage === "adtype") && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    What&apos;s It About?
+                    What&apos;s it about?
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -1315,7 +1309,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           <PickSearch
                             value={subjectQuery}
                             onChange={setSubjectQuery}
-                            placeholder={adSubjectKind === "device" ? "Search medical devices (e.g. Glucora, Cardiyn)..." : "Search diseases and conditions (e.g. Asthma, Heart Failure)..."}
+                            placeholder={adSubjectKind === "device" ? "Search medical devices (e.g. Glucora, Cardiyn)…" : "Search diseases and conditions (e.g. asthma, heart failure)…"}
                             autoFocus
                           />
                           {!subjectQuery.trim() && adSubjectKind === "disease" && libraryDiseases.length > 0 ? (
@@ -1328,19 +1322,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                   thumb={<span className="grid size-10 shrink-0 place-items-center rounded-chip bg-tint text-brand"><Stethoscope className="size-4.5" /></span>}
                                   title={d.disease}
                                   detail={`Therapy Library · v${d.version} · ${d.sources} sources`}
-                                  chip={<PickChip tone="ok">Dossier Ready</PickChip>}
+                                  chip={<PickChip tone="ok">Dossier ready</PickChip>}
                                 />
                               ))}
                             </PickList>
                           ) : !subjectQuery.trim() ? (
-                            <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
-                              <p className="text-body font-bold text-ink-2">{adSubjectKind === "device" ? "Start typing to find a device" : "Start typing to find a condition"}</p>
-                              <p className="mt-0.5 text-label text-ink-4">
-                                {adSubjectKind === "device"
+                            <EmptyState
+                              tone="card"
+                              className="py-6"
+                              title={adSubjectKind === "device" ? "Start typing to find a device" : "Start typing to find a condition"}
+                              hint={
+                                adSubjectKind === "device"
                                   ? "Search your medical devices by name, type or therapy area."
-                                  : "Search the CDC's list of diseases and conditions."}
-                              </p>
-                            </div>
+                                  : "Search the CDC's list of diseases and conditions."
+                              }
+                            />
                           ) : (
                             <PickList>
                               {adSubjectKind === "device"
@@ -1405,21 +1401,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           below is the answer, and leaving a half-filled search
                           box above it read as if nothing had been picked. */}
                       {!selectedBrand && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="min-w-[220px] flex-1">
-                            <PickSearch
-                              value={brandSearch}
-                              onChange={setBrandSearch}
-                              placeholder={productKind === "device" ? "Search devices (e.g. Glucora, Cardiyn)..." : productKind === "drug" ? "Search drugs or molecules (e.g. Velmora, Onkavia)..." : "Search drugs, devices or molecules..."}
-                              autoFocus
-                            />
-                          </div>
-                          <Segmented aria-label="Drugs or devices">
-                            {([["all", "All"], ["drug", "Drugs"], ["device", "Devices"]] as const).map(([k, label]) => (
-                              <SegmentedButton key={k} active={productKind === k} onClick={() => setProductKind(k)}>{label}</SegmentedButton>
-                            ))}
-                          </Segmented>
-                        </div>
+                        <PickSearch
+                          value={brandSearch}
+                          onChange={setBrandSearch}
+                          placeholder="Search drugs, devices or molecules…"
+                          autoFocus
+                        />
                       )}
 
                       {selectedBrand ? (
@@ -1436,7 +1423,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                   onClick={() => setSelectedVariations([])}
                                   className="cursor-pointer font-semibold hover:text-ink-2"
                                 >
-                                  Reset to all
+                                  Reset to All
                                 </button>
                               ) : undefined
                             }
@@ -1484,7 +1471,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                job — it is not finished until the dossier is
                                verified, and that is not a step to bury inside
                                starting a project. */
-                            <PickEmpty title={brandSearch.trim() ? <>No verified {productKind === "device" ? "device" : productKind === "drug" ? "drug" : "product"} matching &quot;{brandSearch}&quot;</> : <>No verified {productKind === "device" ? "devices" : "drugs"} yet</>}>
+                            <PickEmpty title={brandSearch.trim() ? <>No verified product matching &quot;{brandSearch}&quot;</> : <>No verified products yet</>}>
                               Only products with a verified dossier can ground an asset. Add or verify one in the
                               Product Library, and it will appear here.
                             </PickEmpty>
@@ -1521,7 +1508,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           type="text"
                           value={diseaseSearch}
                           onChange={(e) => setDiseaseSearch(e.target.value)}
-                          placeholder="Search diseases or therapy areas (e.g. Asthma, Oncology)..."
+                          placeholder="Search diseases or therapy areas (e.g. asthma, oncology)…"
                           className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                           autoFocus
                         />
@@ -1566,7 +1553,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         customValue={customDiseaseInput}
                         onCustomChange={setCustomDiseaseInput}
                         onCustomSubmit={handleAddCustomDisease}
-                        customPlaceholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
+                        customPlaceholder="Type a custom therapy or disease area (e.g. rare diseases, ophthalmology)…"
                         addLabel="Add Area"
                       />
 
@@ -1576,7 +1563,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             {selectedDiseaseIds.length} selected
                           </span>
                           <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
-                            <span>Confirm &amp; Next</span>
+                            <span>Confirm and Next</span>
                             <ChevronRight className="size-3.5" />
                           </Button>
                         </div>
@@ -1665,7 +1652,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <span className="flex flex-wrap items-center gap-2">
                               <span className="text-body font-bold text-ink">{option.label}</span>
                               {usual && (
-                                <span className="rounded-chip border border-hair-2 bg-subtle px-1.5 py-0.5 text-micro font-bold text-ink-3">Usual for this starting point</span>
+                                <Chip tone="neutral" size="xs" weight="bold" className="border-hair-2 px-1.5">Usual for this starting point</Chip>
                               )}
                             </span>
                             <span className="mt-0.5 block text-label text-ink-3">
@@ -1685,7 +1672,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         Help-seeking ads are about one condition. Choose one of {adSubjectName}&apos;s indications in step 2.
                       </p>
                       <Button size="sm" variant="secondary" onClick={() => setStage("grounding")} className="h-7 shrink-0 text-label font-bold">
-                        Choose indication
+                        Choose Indication
                       </Button>
                     </div>
                   )}
@@ -1779,9 +1766,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       </p>
                     </div>
                   </div>
-                  <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line shrink-0">
+                  <Chip tone="brand" size="md" weight="bold">
                     {selectedTopics.length} Selected
-                  </span>
+                  </Chip>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">

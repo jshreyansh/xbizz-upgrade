@@ -34,7 +34,7 @@ const PAGE_ROLES = [
   { label: "Cover", kind: "hero" as const },
   { label: "Evidence", kind: "chart" as const },
   { label: "Mechanism", kind: "diagram" as const },
-  { label: "Safety & ISI", kind: "dense" as const },
+  { label: "Safety and ISI", kind: "dense" as const },
 ];
 
 function aspectOf(shape: string) {

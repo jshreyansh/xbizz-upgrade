@@ -6,6 +6,7 @@ import { Check, ChevronDown, FileText, Image as ImageIcon, Mail, Megaphone, Vide
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
+import { Chip } from "@/components/ui/chip";
 import { AccountTypeConfirm, AccountTypePicker } from "@/features/auth/account-type-screen";
 import { emailProblem, routeEmail, TRY_EMAILS, useAuthFlow } from "@/features/auth/auth-flow";
 import { AuthButton, AuthCardHead, AuthStage } from "@/features/auth/auth-stage";
@@ -222,7 +223,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
           aria-expanded={tryOpen}
           className="flex w-full cursor-pointer items-center gap-1.5 text-micro font-extrabold uppercase tracking-wider text-ink-4"
         >
-          Try a path
+          Try a Path
           <span className="rounded-glyph bg-warn-bg px-1.5 py-px normal-case tracking-normal text-warn">Prototype</span>
           <ChevronDown className={cn("ml-auto size-3.5 transition-transform", tryOpen && "rotate-180")} />
         </button>
@@ -232,18 +233,15 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
           <div key={group} className="flex flex-wrap items-center gap-1.5">
           {group !== "Either" && <span className="w-full text-micro font-bold text-ink-4">{group === "Agency" ? "Agency · Brightwave Health" : "Life sciences · Velmora"}</span>}
           {TRY_EMAILS.filter((t) => t.group === group).map((t) => (
-            <button
+            <Chip
               key={t.email}
-              type="button"
               title={t.email}
+              selected={email === t.email}
               onClick={() => { setDraft(t.email); setError(undefined); setMode(t.label === "New company" ? "signup" : "signin"); }}
-              className={cn(
-                "cursor-pointer rounded-chip border px-2 py-0.5 text-caption font-semibold transition-colors",
-                email === t.email ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-ink-4 hover:text-ink"
-              )}
+              className={email === t.email ? undefined : "text-ink-3 hover:border-ink-4 hover:text-ink"}
             >
               {t.label}
-            </button>
+            </Chip>
           ))}
           </div>
           ))}

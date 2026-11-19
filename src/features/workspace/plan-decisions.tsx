@@ -28,7 +28,7 @@ export const HCP_SPECIALITIES = INITIAL_HCP_SPECIALITIES;
 
 /** "Any specialty", one, or "Dermatologist +2". */
 export function specialityLabel(picked: string[]) {
-  if (picked.length === 0) return "Any specialty";
+  if (picked.length === 0) return "Any speciality";
   return picked.length === 1 ? picked[0] : `${picked[0]} +${picked.length - 1}`;
 }
 
@@ -377,7 +377,7 @@ export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" | "em
             onClick={() => setLogoMark({ source: "brand-kit", name: "Meridian Therapeutics · primary mark" })}
             className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
           >
-            Use brand kit
+            Use Brand Kit
           </button>
         )}
         <input

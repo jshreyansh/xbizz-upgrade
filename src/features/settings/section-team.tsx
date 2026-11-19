@@ -86,7 +86,7 @@ export function SectionTeam() {
       key: "status", header: "Status",
       cell: (m: Member) => <Chip tone={STATUS_TONE[m.status]} size="xs">{m.status === "deactivated" ? "Deactivated" : m.status === "invited" ? "Invited" : "Active"}</Chip>,
     },
-    { key: "last", header: "Last active", secondary: true, cell: (m: Member) => <Text size="caption" tone="muted">{m.lastActive}</Text> },
+    { key: "last", header: "Last Active", secondary: true, cell: (m: Member) => <Text size="caption" tone="muted">{m.lastActive}</Text> },
     ] : []),
   ];
 
@@ -106,11 +106,11 @@ export function SectionTeam() {
 
       <SettingsCard
         title="Members"
-        description={canManage ? "Field-force reps are members with the Field Force role, filter to see just them." : `Who's in ${s.workspaceName}, and what they do.`}
+        description={canManage ? "Field-force reps are members with the Field Force role. Filter to see just them." : `Who's in ${s.workspaceName}, and what they do.`}
         actions={canManage && (
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={() => setRolesOpen(true)}>
-              <Shield className="size-3.5" /> Role configuration
+              <Shield className="size-3.5" /> Role Configuration
             </Button>
             <Button size="sm" onClick={() => setInviteOpen(true)}>
               <UserPlus className="size-3.5" /> Invite
@@ -146,7 +146,7 @@ export function SectionTeam() {
       </SettingsCard>
 
       {canManage && s.invites.length > 0 && (
-        <SettingsCard title="Pending invites" description="Sent, not yet accepted.">
+        <SettingsCard title="Pending Invites" description="Sent, not yet accepted.">
           <Stack gap={2}>
             {s.invites.map((i) => (
               <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
@@ -163,7 +163,7 @@ export function SectionTeam() {
                 <div className="flex shrink-0 items-center gap-2">
                   {/* Prototype: what the invitee sees when they open the email's link. */}
                   <Button size="sm" variant="ghost" onClick={() => { useWorkspaceStore.getState().setAuthView("invite"); router.push(`/signin?invite=${i.id}`); }}>
-                    Open invite link
+                    Open Invite Link
                   </Button>
                   <ResendButton onResend={() => s.resendInvite(i.id)} />
                   <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(i.id)}>Revoke</Button>
@@ -245,7 +245,7 @@ export function SectionTeam() {
                     className="flex items-center gap-1 text-brand transition-colors hover:underline cursor-pointer"
                   >
                     <RotateCcw className="size-3" />
-                    <span className="text-label font-bold">Reset to role default</span>
+                    <span className="text-label font-bold">Reset to Role Default</span>
                   </button>
                 )}
               </div>
@@ -369,7 +369,7 @@ function InviteRequestRow({ invite }: { invite: PendingInvite }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(invite.id)}>Revoke</Button>
-        <Button size="sm" onClick={() => s.resendInvite(invite.id)}>Resend invite</Button>
+        <Button size="sm" onClick={() => s.resendInvite(invite.id)}>Resend Invite</Button>
       </div>
     </div>
   );

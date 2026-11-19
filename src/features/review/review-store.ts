@@ -209,7 +209,7 @@ const SAMPLES: ReviewItem[] = [
     spec: "A5 · 1 page",
     version: "Version 2",
     ownerId: "m1",
-    preview: { gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)", badge: "Dosing & Administration", metric: "200 mg once daily", metricLabel: "No titration required" },
+    preview: { gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)", badge: "Dosing and Administration", metric: "200 mg once daily", metricLabel: "No titration required" },
     stages: [MAYA_CHAIN[0], BRAND_SIGNOFF],
     stageIndex: 1,
     status: "in_review",

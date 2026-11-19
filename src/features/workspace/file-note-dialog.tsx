@@ -198,7 +198,7 @@ export function FileNoteDialog({
               onClick={() => onConfirm(notes, picked)}
               className="cursor-pointer text-label font-bold disabled:opacity-40"
             >
-              {files.some((f) => f.note !== undefined) ? "Save note" : "Attach"}
+              {files.some((f) => f.note !== undefined) ? "Save Note" : "Attach"}
             </Button>
           </div>
         </div>

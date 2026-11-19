@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Clapperboard, FileText, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 /**
  * Files attached to a message, wherever a message is written.
@@ -252,13 +253,14 @@ export function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachmen
             ) : (
               /* A document with nothing behind it yet. Saying so beats an empty
                  frame that looks like a viewer that failed. */
-              <div className="grid min-h-[280px] w-full place-items-center gap-2 rounded-control border border-dashed border-hair-2 bg-card px-6 py-16 text-center">
-                <FileText className="size-7 text-ink-4" />
-                <p className="text-body-lg font-bold text-ink-2">{file.name}</p>
-                <p className="max-w-[44ch] text-body text-ink-4">
-                  No file is attached to this record yet, so there is nothing to display.
-                </p>
-              </div>
+              <EmptyState
+                size="md"
+                tone="card"
+                icon={<FileText className="size-5" />}
+                title={file.name}
+                hint="No file is attached to this record yet, so there is nothing to display."
+                className="min-h-[280px] w-full justify-center rounded-control px-6 py-16"
+              />
             )}
           </div>
         </div>

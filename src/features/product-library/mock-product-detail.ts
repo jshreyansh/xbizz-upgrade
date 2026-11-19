@@ -21,13 +21,13 @@ import type {
  *  rather than "Section 1, Section 2, …". */
 const SECTION_TEMPLATES: Record<DossierTypeName, string[]> = {
   Regulatory: [
-    "Indication & Approved Use",
-    "Dosing & Administration",
-    "Contraindications & Warnings",
-    "Labeling Compliance",
+    "Indication and Approved Use",
+    "Dosing and Administration",
+    "Contraindications and Warnings",
+    "Labelling Compliance",
     "Regulatory Approvals by Market",
     "Post-Marketing Commitments",
-    "Variation & Renewal Filings",
+    "Variation and Renewal Filings",
   ],
   Clinical: [
     "Pivotal Trial Design",
@@ -49,29 +49,29 @@ const SECTION_TEMPLATES: Record<DossierTypeName, string[]> = {
   ],
   Commercial: [
     "Value Proposition",
-    "Payer & Formulary Positioning",
+    "Payer and Formulary Positioning",
     "Competitive Landscape",
-    "Pricing & Access Strategy",
+    "Pricing and Access Strategy",
     "Field Performance Data",
     "Market Share Trends",
     "Launch Readiness",
   ],
   Patient: [
     "Quality-of-Life Outcomes",
-    "Adherence & Persistence Data",
-    "Patient Support Program",
+    "Adherence and Persistence Data",
+    "Patient Support Programme",
     "Patient-Reported Experience",
     "Caregiver Materials",
-    "Access & Affordability Support",
+    "Access and Affordability Support",
     "Patient Education Assets",
   ],
   HCP: [
     "Mechanism of Action",
     "Prescribing Rationale",
     "Dosing Convenience",
-    "Counseling Guidance",
+    "Counselling Guidance",
     "Peer-to-Peer Insights",
-    "Formulary & Access Notes",
+    "Formulary and Access Notes",
   ],
 };
 

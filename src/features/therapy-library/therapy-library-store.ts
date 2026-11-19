@@ -39,6 +39,8 @@ export interface TherapyImage {
   /** Illustration stand-in for seeded images, which have no file. */
   gradient?: string;
   note?: string;
+  /** The disease dossier it belongs to. Without one it belongs to the whole area, and every disease in it can use it. */
+  dossierId?: string;
 }
 
 /** What a dossier made by SwishX covers. Uploaded ones are read into the same sections. */
@@ -77,6 +79,7 @@ const SEED_IMAGES: Record<string, TherapyImage[]> = {
   oncology: [
     { id: "ti-onc-1", name: "awareness-hero.jpg", gradient: "linear-gradient(135deg,#f6d5e1,#c9a7f0)", note: "Campaign hero" },
     { id: "ti-onc-2", name: "patient-portrait.jpg", gradient: "linear-gradient(135deg,#ffe3c4,#f3a683)", note: "Patient, consented" },
+    { id: "ti-onc-3", name: "lung-screening.jpg", gradient: "linear-gradient(135deg,#d6e9ff,#8fb8f0)", note: "Screening campaign", dossierId: "td-lung-cancer" },
   ],
 };
 

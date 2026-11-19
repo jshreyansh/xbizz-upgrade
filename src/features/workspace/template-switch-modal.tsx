@@ -45,7 +45,7 @@ export function TemplateSwitchModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={picked ? `Apply the ${picked.name} template` : "Templates"}
+        aria-label={picked ? `Apply the ${picked.name} Template` : "Templates"}
         onClick={onClose}
         className="fixed inset-0 z-[9999] grid place-items-center bg-ink/75 p-4 backdrop-blur-sm sm:p-6"
       >
@@ -60,7 +60,7 @@ export function TemplateSwitchModal({
             <LayoutTemplate className="mt-0.5 size-4 shrink-0 text-brand" />
             <div className="min-w-0 flex-1">
               <p className="text-body-lg font-[850] text-ink">
-                {picked ? `Apply the ${picked.name} template?` : "Templates"}
+                {picked ? `Apply the ${picked.name} Template?` : "Templates"}
               </p>
               <p className="text-label text-ink-3">
                 {picked
@@ -169,7 +169,7 @@ export function TemplateSwitchModal({
                 }}
               >
                 <ArrowLeft className="size-3.5" />
-                All templates
+                All Templates
               </Button>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="secondary" onClick={onClose}>
@@ -177,7 +177,7 @@ export function TemplateSwitchModal({
                 </Button>
                 <Button size="sm" className="gap-1.5 font-bold" onClick={() => onApply(picked, note.trim())}>
                   <LayoutTemplate className="size-3.5" />
-                  Apply template
+                  Apply Template
                 </Button>
               </div>
             </div>

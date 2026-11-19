@@ -58,12 +58,12 @@ export function CharacterRefineModal({
   const OUTCOMES: Array<{ id: Outcome; title: string; detail: string }> = [
     {
       id: "replace",
-      title: "New version",
+      title: "New Version",
       detail: "Regenerate and replace all four views. This character keeps its place.",
     },
     {
       id: "fork",
-      title: "New character",
+      title: "New Character",
       detail: "Keep this version and add the refined one alongside it.",
     },
   ];
@@ -122,7 +122,7 @@ export function CharacterRefineModal({
 
             <div className="space-y-1.5">
               <label className="block text-label font-bold text-ink-2">
-                What happens to this character?
+                What Happens to This Character?
               </label>
               <div className="grid gap-2">
                 {OUTCOMES.map((option) => {
@@ -163,7 +163,7 @@ export function CharacterRefineModal({
 
             {outcome === "fork" && (
               <div className="space-y-1.5 animate-in fade-in duration-150">
-                <label className="block text-label font-bold text-ink-2">New character name</label>
+                <label className="block text-label font-bold text-ink-2">New Character Name</label>
                 <input
                   value={forkName}
                   onChange={(e) => setForkName(e.target.value)}
@@ -189,7 +189,7 @@ export function CharacterRefineModal({
               className="cursor-pointer gap-1.5 text-label font-bold disabled:opacity-40"
             >
               <LogoMark size={13} />
-              {outcome === "fork" ? "Generate new version" : "Regenerate character"}
+              {outcome === "fork" ? "Generate New Version" : "Regenerate Character"}
             </Button>
           </div>
         )}

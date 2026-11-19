@@ -143,3 +143,34 @@ Decision policy:
 - **Production machinery:** automate and keep out of the default marketer experience.
 
 The second screen should normally contain no more than three unresolved decisions. More than three indicates inadequate intake or missing organizational context and should trigger focused clarification rather than a longer plan form.
+
+## 11. Copy and capitalisation
+
+One rule across the whole product, onboarding included.
+
+**Title Case** — every word capitalised except short joining words (a, an, the, and, or, of, in, on, to, for, with, by, at, as) unless they come first:
+
+- Page titles and section headings
+- Buttons and links that act ("Upload New Version", "See the Oncology Kit")
+- Tabs, segmented options and menu items
+- Field labels and column headers
+- Modal titles
+
+**Sentence case** — only the first word and proper nouns capitalised:
+
+- Descriptions under titles, help text, hints and empty-state explanations
+- Placeholders ("Search diseases or therapy areas…")
+- Toasts, status lines and inline messages
+- Chat messages and sample prompts
+- Tooltips
+- A label or heading written as a question: "Who is it for?", "Whose voice is this?" (a question reads as a sentence)
+
+**Always**
+
+- UK spelling: organisation, colour, recognise, programme, licence (noun).
+- "and", never "&", in interface text. Brand or product names keep their own spelling.
+- Proper nouns and terms of art keep their casing: SwishX, MLR, HCP, FDA, Veeva, PubMed, CDC.
+- Uppercase is a style (an eyebrow or chip with `uppercase` tracking), never typed copy.
+- An ellipsis is one character (…) and only on placeholders or work in progress ("Reading your file…").
+- No full stop on a label, button, tab or single-line heading; full stops on sentences in descriptions.
+- Name things the marketer recognises (comment, version, review, claim), not how the system is built.

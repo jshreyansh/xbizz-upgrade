@@ -19,6 +19,7 @@ import {
   type AdTemplate,
   type AdTemplateLayout,
 } from "@/features/workspace/ad-templates";
+import { Chip } from "@/components/ui/chip";
 
 /**
  * Choosing the templates for the still ads — the Ads version of the Docs
@@ -123,14 +124,14 @@ export function AdsTemplateStep({
   const blocked = mode === "references" && !hasReferences;
 
   const modes: Array<{ id: LookMode; title: string; blurb: string; icon: React.ReactNode }> = [
-    { id: "fresh", title: "Let SwishX design it", blurb: "A fresh design from the brand kit and your key message.", icon: <LogoMark size={16} /> },
+    { id: "fresh", title: "Let SwishX Design It", blurb: "A fresh design from the brand kit and your key message.", icon: <LogoMark size={16} /> },
     {
       id: "references",
-      title: "Follow my references",
+      title: "Follow My References",
       blurb: hasReferences ? `Composed after the ${references.length === 1 ? "reference" : `${references.length} references`} you added.` : "Add the look you're after; SwishX composes from it.",
       icon: <Upload className="size-4" />,
     },
-    { id: "template", title: "Choose from templates", blurb: "Pick where the picture, words, packshot and safety sit.", icon: <LayoutTemplate className="size-4" /> },
+    { id: "template", title: "Choose From Templates", blurb: "Pick where the picture, words, packshot and safety sit.", icon: <LayoutTemplate className="size-4" /> },
   ];
 
   const description =
@@ -154,7 +155,7 @@ export function AdsTemplateStep({
   return (
     <>
       <div className="shrink-0">
-        <h2 className="text-display font-[850] tracking-tight text-ink">Choose templates</h2>
+        <h2 className="text-display font-[850] tracking-tight text-ink">Choose Templates</h2>
         <p className="mt-0.5 text-body text-ink-3">How the {kindsLabel} ads should look. Previews use your own words.</p>
       </div>
 
@@ -187,7 +188,7 @@ export function AdsTemplateStep({
                 <span className="min-w-0">
                   <span className="flex items-center gap-1.5 text-body font-[850] text-ink">
                     {m.title}
-                    {soon && <span className="rounded-chip border border-hair-2 bg-subtle px-1.5 py-0.5 text-micro font-bold text-ink-3">Coming soon</span>}
+                    {soon && <Chip tone="neutral" size="xs" weight="bold" className="border-hair-2 px-1.5">Coming soon</Chip>}
                     {on && <Check className="size-3.5 text-brand" />}
                   </span>
                   <span className="mt-0.5 block text-label leading-snug text-ink-3">{m.blurb}</span>
@@ -206,7 +207,7 @@ export function AdsTemplateStep({
             </p>
             <MediaAttachmentGrid
               items={references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl, kind: "image" as const }))}
-              uploadLabel={references.length === 0 ? "Upload a reference" : "Add another"}
+              uploadLabel={references.length === 0 ? "Upload a Reference" : "Add Another"}
               uploadHint="PNG, JPG, MP4, PDF, PPTX · a PDF or deck works for carousels, a page per card"
               onUpload={onAddReference}
               onRemove={onRemoveReference}
@@ -216,7 +217,7 @@ export function AdsTemplateStep({
               if (reusable.length === 0) return null;
               return (
                 <div>
-                  <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                  <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested From Platform</span>
                   <AssetStrip>
                     {reusable.map((asset) => (
                       <MediaAssetTile
@@ -248,13 +249,13 @@ export function AdsTemplateStep({
       <div className={cn("space-y-8 pb-24 transition-opacity", !templatesOn && "pointer-events-none select-none opacity-40")} aria-disabled={!templatesOn}>
         {!templatesOn && (
           <p className="text-label font-semibold text-ink-3">
-            {mode === "fresh" ? "Not needed: SwishX designs the look fresh." : "Not needed: SwishX composes from your references."} Pick “Choose from templates” to use one.
+            {mode === "fresh" ? "Not needed: SwishX designs the look fresh." : "Not needed: SwishX composes from your references."} Pick “Choose From Templates” to use one.
           </p>
         )}
         {hasImage && (
           <section className="space-y-3">
             <div>
-              <h3 className="text-subhead font-[850] tracking-tight text-ink">Image ad template</h3>
+              <h3 className="text-subhead font-[850] tracking-tight text-ink">Image Ad Template</h3>
               <p className="text-label text-ink-3">One template for every image size and banner{sizes ? `: ${sizes}` : ""}.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -274,7 +275,7 @@ export function AdsTemplateStep({
             </div>
             {imageList.length > 5 && (
               <button type="button" onClick={() => setShowAll(!showAll)} className="cursor-pointer text-label font-bold text-brand hover:underline">
-                {showAll ? "Show fewer templates" : `Show ${imageList.length - 5} more templates`}
+                {showAll ? "Show Fewer Templates" : `Show ${imageList.length - 5} More Templates`}
               </button>
             )}
           </section>
@@ -284,13 +285,13 @@ export function AdsTemplateStep({
           <section className="space-y-3">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h3 className="text-subhead font-[850] tracking-tight text-ink">Carousel template</h3>
+                <h3 className="text-subhead font-[850] tracking-tight text-ink">Carousel Template</h3>
                 <p className="text-label text-ink-3">The cards for {carouselFor || "the feed"}, in the order planned on the storyboard.</p>
               </div>
               {hasImage && (
                 <label className="flex cursor-pointer items-center gap-2.5 rounded-control border border-hair-2 bg-card px-3 py-2">
-                  <Toggle checked={matches} onChange={setMatches} label="Carousel matches the image ad" />
-                  <span className="text-label font-bold text-ink-2">Carousel matches the image ad</span>
+                  <Toggle checked={matches} onChange={setMatches} label="Carousel Matches the Image Ad" />
+                  <span className="text-label font-bold text-ink-2">Carousel Matches the Image Ad</span>
                 </label>
               )}
             </div>
@@ -324,7 +325,7 @@ export function AdsTemplateStep({
         {hasDocument && (
           <section className="space-y-3">
             <div>
-              <h3 className="text-subhead font-[850] tracking-tight text-ink">Document template</h3>
+              <h3 className="text-subhead font-[850] tracking-tight text-ink">Document Template</h3>
               <p className="text-label text-ink-3">
                 The pages for {documentFor || "LinkedIn"}, in the order planned on the storyboard{adType === "product-claim" ? ". The safety and reference pages stay plain text in every template" : ""}.
               </p>

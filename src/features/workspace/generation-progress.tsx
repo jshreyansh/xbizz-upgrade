@@ -150,7 +150,7 @@ export function GenerationProgress({
             className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-label font-bold text-ink-3 transition hover:bg-black/5 hover:text-brand"
           >
             <ListTree className="size-3.5" />
-            <span>Work log</span>
+            <span>Work Log</span>
             {doneCount > 0 && (
               <span className="rounded-glyph bg-black/6 px-1.5 text-caption font-bold tabular-nums text-ink-3">
                 {doneCount}
@@ -165,7 +165,7 @@ export function GenerationProgress({
               title="Demo only, jumps the wait so the team can see the next screen"
               className="cursor-pointer rounded-glyph px-2 py-1 text-caption font-bold text-ink-4 transition hover:bg-black/5 hover:text-ink-2"
             >
-              Skip ahead ›
+              Skip Ahead ›
             </button>
           )}
         </div>
@@ -267,7 +267,7 @@ function WorkLogModal({
       className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-[2px] sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-label="Work log"
+      aria-label="Work Log"
       onClick={onClose}
     >
       <div
@@ -276,7 +276,7 @@ function WorkLogModal({
       >
         <header className="flex items-start justify-between gap-3 border-b border-hair px-4 py-3">
           <div className="min-w-0">
-            <h2 className="truncate text-body-lg font-[850] tracking-tight text-ink">Work log</h2>
+            <h2 className="truncate text-body-lg font-[850] tracking-tight text-ink">Work Log</h2>
             <p className="truncate text-label text-ink-3">{title}</p>
           </div>
           <button

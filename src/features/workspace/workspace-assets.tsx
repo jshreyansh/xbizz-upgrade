@@ -227,8 +227,8 @@ export function AddToProjectButton({
   onClick,
   label,
   added = false,
-  idleText = "Add to project",
-  addedText = "Added to project",
+  idleText = "Add to Project",
+  addedText = "Added to Project",
 }: {
   onClick: () => void;
   label: string;

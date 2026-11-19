@@ -30,14 +30,14 @@ export interface SettingsSection {
 
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "organisation",   label: "Organisation",        blurb: "The company above its workspaces: domains, admins, and every workspace.", orgAdminOnly: true },
-  { id: "workspace",      label: "Workspace profile",   blurb: "This workspace: its name, markets and therapy areas.", adminOnly: true },
-  { id: "brand-kit",      label: "Workspace brand kit", blurb: "The logos, typefaces and colours every asset in this workspace is built from.", anyOf: ["brand"] },
-  { id: "profile",        label: "User profile",        blurb: "Your own details, sign-in, and what reaches you." },
+  { id: "workspace",      label: "Workspace Profile",   blurb: "This workspace: its name, markets and therapy areas.", adminOnly: true },
+  { id: "brand-kit",      label: "Workspace Brand Kit", blurb: "The logos, typefaces and colours every asset in this workspace is built from.", anyOf: ["brand"] },
+  { id: "profile",        label: "User Profile",        blurb: "Your own details, sign-in, and what reaches you." },
   { id: "team",           label: "Team",                blurb: "Who is in this workspace, what they are, and what they can do." },
-  { id: "compliance",     label: "Compliance & MLR",    blurb: "The stages work passes through between draft and approved.", anyOf: ["chains"] },
+  { id: "compliance",     label: "Compliance and MLR",  blurb: "The stages work passes through between draft and approved.", anyOf: ["chains"] },
   { id: "integrations",   label: "Integrations",        blurb: "Connected systems for review and distribution.", anyOf: ["integrations"] },
   { id: "appearance",     label: "Appearance",          blurb: "Theme and language, for your account." },
-  { id: "billing",        label: "Billing & usage",     blurb: "Plan, credits, and what has been spent.", anyOf: ["billingView"] },
+  { id: "billing",        label: "Billing and Usage",   blurb: "Plan, credits, and what has been spent.", anyOf: ["billingView"] },
   { id: "pronunciations", label: "Pronunciations",      blurb: "How names are spoken in generated narration.", anyOf: ["pron"] },
 ];
 

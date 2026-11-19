@@ -55,21 +55,21 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
       open={open}
       onClose={onClose}
       size="md"
-      title="Create a workspace"
+      title="Create a Workspace"
       description={`A new brand or market inside ${s.orgName}. It gets its own team, roles, Product and Claims libraries, and credits.`}
       footer={
         <div className="flex items-center justify-between gap-3">
           <Text size="caption" tone="subtle">You&apos;ll be its workspace admin and switch into it.</Text>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
-            <Button size="sm" onClick={create} disabled={!valid}>Create workspace</Button>
+            <Button size="sm" onClick={create} disabled={!valid}>Create Workspace</Button>
           </div>
         </div>
       }
     >
       <Stack gap={5}>
         <Field
-          label="Workspace name"
+          label="Workspace Name"
           placeholder="e.g. Velmora EU, Dermora Launch"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -94,7 +94,7 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
         </div>
 
         <div className="grid gap-2">
-          <Text size="label" weight="bold" tone="muted">Therapy areas</Text>
+          <Text size="label" weight="bold" tone="muted">Therapy Areas</Text>
           <ChipMultiSelect
             options={THERAPY_AREAS.map((t) => ({ id: t, label: t }))}
             selected={therapies}
@@ -112,21 +112,21 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
               value={roles}
               onChange={(v) => setRoles(v as "copy" | "default")}
               options={[
-                { value: "copy", label: `Copy from ${s.workspaceName}`, hint: `${s.roles.length} roles, as they are now` },
-                { value: "default", label: "Default set", hint: `${DEFAULT_ROLES.length} roles SwishX starts with` },
+                { value: "copy", label: `Copy From ${s.workspaceName}`, hint: `${s.roles.length} roles, as they are now` },
+                { value: "default", label: "Default Set", hint: `${DEFAULT_ROLES.length} roles SwishX starts with` },
               ]}
             />
           </div>
           <div className="grid gap-1.5">
-            <Text size="label" weight="bold" tone="muted">Brand kit</Text>
+            <Text size="label" weight="bold" tone="muted">Brand Kit</Text>
             <SelectMenu
               size="md"
               ariaLabel="Brand kit"
               value={kit}
               onChange={(v) => setKit(v as "copy" | "empty")}
               options={[
-                { value: "copy", label: `Copy from ${s.workspaceName}`, hint: "Logos, typefaces and colours" },
-                { value: "empty", label: "Start empty", hint: "Set it up in the new workspace" },
+                { value: "copy", label: `Copy From ${s.workspaceName}`, hint: "Logos, typefaces and colours" },
+                { value: "empty", label: "Start Empty", hint: "Set it up in the new workspace" },
               ]}
             />
           </div>
@@ -136,7 +136,7 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
         </div>
 
         <div className="grid gap-2">
-          <Text size="label" weight="bold" tone="muted">Invite people (optional)</Text>
+          <Text size="label" weight="bold" tone="muted">Invite People (Optional)</Text>
           <EmailChips emails={emails} draft={draft} onEmails={setEmails} onDraft={setDraft} />
           <div className="grid items-center gap-2 sm:grid-cols-[auto_minmax(0,14rem)_1fr]">
             <Text size="label" tone="muted">Join as</Text>

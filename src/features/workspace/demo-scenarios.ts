@@ -54,7 +54,7 @@ export interface DemoScenario {
 export const demoScenarios: DemoScenario[] = [
   {
     id: "hcp-launch",
-    label: "HCP launch video",
+    label: "HCP Launch Video",
     category: "Happy paths",
     description: "A complete, source-grounded launch request.",
     expected: "Narrated visual story · 16:9 · 60 sec · Product → Proof",
@@ -63,7 +63,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "patient-education",
-    label: "Patient education video",
+    label: "Patient Education Video",
     category: "Happy paths",
     description: "Patient-friendly education \u2014 the audience that may ground on a therapy area instead of a brand.",
     expected: "Friendly voice · 16:9 · 45 sec · patient-impact emphasis",
@@ -72,7 +72,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "presenter-social",
-    label: "Doctor presenter",
+    label: "Doctor Presenter",
     category: "Dynamic branches",
     description: "Explicitly requests a doctor on screen.",
     expected: "Presenter, voice and setting become required · LinkedIn 1:1 · 30 sec",
@@ -81,16 +81,16 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "visual-only",
-    label: "Short social video",
+    label: "Short Social Video",
     category: "Dynamic branches",
     description: "A narrated social cut that leans on on-screen copy, with a quiet music bed.",
-    expected: "Narrated visual story · on-screen copy prioritized · 9:16",
+    expected: "Narrated visual story · on-screen copy prioritised · 9:16",
     assertions: { presentationMode: "narrated", format: "9:16", length: "30 sec" },
     inputs: { assetType: "video", brief: "Create a short social video introducing DERMORA. Lead with on-screen copy and keep the narration light.", audience: "HCP", market: "United States", intendedUse: "Instagram", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
   },
   {
     id: "own-script",
-    label: "Supplied script",
+    label: "Supplied Script",
     category: "Dynamic branches",
     description: "The user wants SwishX to preserve an existing script.",
     expected: "Structure follows supplied script · no rewrite by default",
@@ -99,7 +99,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "weak-request",
-    label: "Vague request",
+    label: "Vague Request",
     category: "Blocked",
     description: "Tests inline clarification before the plan.",
     expected: "Remain on Screen 1 and request the communication job",
@@ -108,7 +108,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "no-context",
-    label: "Nothing to work from",
+    label: "Nothing to Work From",
     category: "Blocked",
     description: "A real request, but no dossier on our side and nothing attached.",
     expected: "Refused on the plan screen \u00b7 asks for context before any script",
@@ -117,7 +117,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "unusable-sources",
-    label: "Attachments with nothing usable",
+    label: "Attachments with Nothing Usable",
     category: "Blocked",
     description: "Files were attached, but none of them hold anything a script can be grounded in.",
     expected: "Confirm refused \u00b7 offending files flagged inline \u00b7 chat asks for context or better files",
@@ -126,7 +126,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "market-conflict",
-    label: "US and India conflict",
+    label: "US and India Conflict",
     category: "Source and market",
     description: "Two market dossiers are attached to an India request.",
     expected: "Source authority becomes an explicit decision",
@@ -135,7 +135,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "mechanism-infographic",
-    label: "Mechanism infographic",
+    label: "Mechanism Infographic",
     category: "Happy paths",
     description: "The image flow\u2019s happy path \u2014 a congress infographic explaining a pathway.",
     expected: "Process hierarchy · landscape · detailed · no voice or music",
@@ -144,7 +144,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "stat-leavebehind",
-    label: "Efficacy leave-behind",
+    label: "Efficacy Leave-Behind",
     category: "Happy paths",
     description: "One number carries the page. The commonest thing a field team asks for.",
     expected: "Stat hero · A4 print · 1 page · headline endpoint leads",
@@ -153,7 +153,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "patient-explainer-sheet",
-    label: "Patient explainer sheet",
+    label: "Patient Explainer Sheet",
     category: "Dynamic branches",
     description: "A patient audience. The one that may ground on a therapy area rather than a brand, and needs plainer language and larger type.",
     expected: "Burden of disease · 3:4 tablet · plain language · no comparator claims",
@@ -162,7 +162,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "field-detail-aid",
-    label: "Three-page detail aid",
+    label: "Three-Page Detail Aid",
     category: "Dynamic branches",
     description: "Page count becomes the question. The axis the video flow does not have.",
     expected: "Trial summary · 16:9 · 3 pages · one job per page",
@@ -171,7 +171,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "copy-overflow",
-    label: "Copy will not fit",
+    label: "Copy Will Not Fit",
     category: "Blocked",
     description: "The approved safety copy is longer than the chosen archetype has room for.",
     expected: "Refuses to continue. A clipped safety block is a regulatory failure, not a layout preference",
@@ -180,7 +180,7 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "image-market-conflict",
-    label: "Two markets, one poster",
+    label: "Two Markets, One Poster",
     category: "Source and market",
     description: "Sources from two markets whose labels do not agree, on an asset that will be printed.",
     expected: "Asks which market governs before the layout is fixed",

@@ -62,7 +62,7 @@ export default function NewDossierProductPage() {
     const lower = text.toLowerCase();
 
     if (isQuestion(text)) {
-      return "This step sets up the dossier's identity: which product it's for, its category (Patient/HCP/Payer/Commercial related), and who reads it. Tell me those three things, or fill them in below, either way I'll keep them in sync.";
+      return "This step sets up the dossier's identity: which product it's for, its category (Patient/HCP/Payer/Commercial related), and who reads it. Tell me those three things, or fill them in below. Either way, I'll keep them in sync.";
     }
 
     const notes: string[] = [];
@@ -144,11 +144,11 @@ export default function NewDossierProductPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <span style={{ width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", background: "var(--tint)", color: "var(--brand-deep)" }}>
           </span>
-          <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>New brand dossier</h1>
+          <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>New Brand Dossier</h1>
         </div>
         <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 22px" }}>
           {isFirstTime
-            ? "This becomes the single source of truth every studio reads from, let's set it up together."
+            ? "This becomes the single source of truth every studio reads from. Let's set it up together."
             : "Which product is this for?"}
         </p>
 
@@ -167,7 +167,7 @@ export default function NewDossierProductPage() {
           />
         </div>
 
-        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier category</label>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier Category</label>
         <div style={{ marginBottom: 22 }}>
           <SelectMenu
             size="md"
@@ -179,7 +179,7 @@ export default function NewDossierProductPage() {
           />
         </div>
 
-        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Target audience</label>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Target Audience</label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
           {TARGET_AUDIENCES.map((a) => {
             const selected = audiences.includes(a);
@@ -204,7 +204,7 @@ export default function NewDossierProductPage() {
           })}
         </div>
 
-        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Supporting documents (optional)</label>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Supporting Documents (Optional)</label>
         <button
           type="button"
           onClick={() => supportingFilesRef.current?.click()}
@@ -225,8 +225,8 @@ export default function NewDossierProductPage() {
           <Upload size={18} color={supportingFiles.length ? "var(--brand-deep)" : "var(--ink-4)"} />
           <span style={{ fontSize: 12.5, fontWeight: 650, color: supportingFiles.length ? "var(--brand-deep)" : "var(--ink-3)" }}>
             {supportingFiles.length
-              ? `${supportingFiles.length} file${supportingFiles.length > 1 ? "s" : ""} attached, click to add more`
-              : "Any label, deck, or reference doc, we'll bring it into the dossier flow"}
+              ? `${supportingFiles.length} file${supportingFiles.length > 1 ? "s" : ""} attached. Click to add more`
+              : "Any label, deck or reference doc. We'll bring it into the dossier flow."}
           </span>
         </button>
         <input ref={supportingFilesRef} type="file" multiple onChange={handleSupportingFilesPicked} style={{ display: "none" }} />

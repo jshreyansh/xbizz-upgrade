@@ -48,7 +48,7 @@ export function SectionOrganisation() {
         description={agency ? "The agency every workspace belongs to. Shown on invoices for all of them." : "The company every workspace belongs to. Shown on invoices for all of them."}
       >
         <div>
-          <SettingRow label={agency ? "Agency name" : "Organisation name"} htmlFor="org-name">
+          <SettingRow label={agency ? "Agency Name" : "Organisation Name"} htmlFor="org-name">
             <Field
               id="org-name"
               value={s.orgName}
@@ -56,7 +56,7 @@ export function SectionOrganisation() {
               className="text-body"
             />
           </SettingRow>
-          <SettingRow label="Account type" hint="Set at sign-up">
+          <SettingRow label="Account Type" hint="Set at sign-up">
             <div className="flex flex-wrap items-center gap-2">
               <Chip size="sm">{agency ? "Agency Partner" : `Life Sciences Company${s.sector ? ` · ${s.sector}` : ""}`}</Chip>
               <Text size="caption" tone="subtle" className="inline-flex items-center gap-1">
@@ -66,11 +66,11 @@ export function SectionOrganisation() {
           </SettingRow>
           {/* Agencies aren't asked for a legal entity. */}
           {!agency && (
-            <SettingRow label="Legal entity" hint="Used on invoices" htmlFor="org-entity">
+            <SettingRow label="Legal Entity" hint="Used on invoices" htmlFor="org-entity">
               <Field id="org-entity" value={s.legalEntity} onChange={(e) => s.setWorkspaceField("legalEntity", e.target.value)} className="text-body" />
             </SettingRow>
           )}
-          <SettingRow label="Allowed email domains" hint="Who can sign up or ask to join">
+          <SettingRow label="Allowed Email Domains" hint="Who can sign up or ask to join">
             <div className="grid gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {s.allowedDomains.map((d) => (
@@ -105,7 +105,7 @@ export function SectionOrganisation() {
       <SettingsCard
         title="Workspaces"
         description={agency ? "Usually one per client. Each has its own team, roles, libraries and credits." : "Each has its own team, roles, libraries and credits. People are added to each one separately."}
-        actions={<Button size="sm" onClick={() => setCreating(true)}><Plus className="size-3.5" /> New workspace</Button>}
+        actions={<Button size="sm" onClick={() => setCreating(true)}><Plus className="size-3.5" /> New Workspace</Button>}
       >
         <div className="divide-y divide-hair">
           {workspaces.map((w) => (
@@ -135,13 +135,13 @@ export function SectionOrganisation() {
                 <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                   {!w.current && !w.archived && (
                     <Button size="sm" variant="secondary" onClick={() => open(w.id, !!w.me)}>
-                      {w.me ? "Open" : "Open as workspace admin"}
+                      {w.me ? "Open" : "Open as Workspace Admin"}
                     </Button>
                   )}
                   {/* An organisation admin who's a regular member somewhere can step up there. */}
                   {w.me && !w.me.permissions.includes("admin") && !w.archived && (
                     <Button size="sm" variant="ghost" onClick={() => s.joinWorkspaceAsAdmin(w.id)}>
-                      Make myself workspace admin
+                      Make Myself Workspace Admin
                     </Button>
                   )}
                   {!w.archived && <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: w.id, name: w.name })}>Rename</Button>}
@@ -168,13 +168,13 @@ export function SectionOrganisation() {
       )}
 
       <SettingsCard
-        title={agency ? "Agency admins" : "Organisation admins"}
+        title={agency ? "Agency Admins" : "Organisation Admins"}
         description={
           agency
             ? "Agency-wide: create, rename and archive workspaces, manage allowed domains, and open any workspace as its workspace admin. Being Workspace admin of one workspace is set in that workspace's Team instead."
             : "Company-wide: create, rename and archive workspaces, manage allowed domains, and open any workspace as its workspace admin. Being Workspace admin of one workspace is set in that workspace's Team instead."
         }
-        actions={<Button size="sm" variant="secondary" onClick={() => setAddingAdmin(true)} disabled={candidates.length === 0}><Plus className="size-3.5" /> Add admin</Button>}
+        actions={<Button size="sm" variant="secondary" onClick={() => setAddingAdmin(true)} disabled={candidates.length === 0}><Plus className="size-3.5" /> Add Admin</Button>}
       >
         <div className="divide-y divide-hair">
           {admins.map((p) => {
@@ -229,13 +229,13 @@ function AddOrgAdminModal({
       open
       onClose={onClose}
       size="sm"
-      title="Add an organisation admin"
+      title="Add an Organisation Admin"
       description={`Someone already in ${orgName}. Their role in each workspace stays as it is.`}
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
           <Button size="sm" disabled={!person} onClick={() => onAdd(personId)}>
-            {person ? `Make ${person.label.split(" ")[0]} an organisation admin` : "Make organisation admin"}
+            {person ? `Make ${person.label.split(" ")[0]} an Organisation Admin` : "Make Organisation Admin"}
           </Button>
         </div>
       }

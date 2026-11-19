@@ -97,7 +97,7 @@ export function Step1Format() {
 
       <div>
         <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-          Choose a format
+          Choose a Format
         </div>
 
         {/* 2 Format Cards Grid */}
@@ -367,7 +367,7 @@ export function Step1Format() {
             cursor: "pointer",
           }}
         >
-          Next: pick your Brand Dossier
+          Next: Pick Your Brand Dossier
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

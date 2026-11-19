@@ -67,7 +67,7 @@ export const scenes: Scene[] = [
     duration: 8,
     narration: "For adults living with moderate-to-severe plaque psoriasis, visible symptoms can be only part of the burden.",
     visual: "A restrained clinical portrait gives way to an abstract skin-barrier landscape with dark emerald accents.",
-    negativeVisual: "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering.",
+    negativeVisual: "Overly stylised cartoons, text overlays, harsh shadows, low quality rendering.",
     claim: "Disease-burden statement",
     evidenceState: "supported",
     narrativeTag: "Intro",
@@ -148,7 +148,7 @@ export const scenes: Scene[] = [
     mediaType: "both",
     mediaImageSrc: "/anatomical-heart.png",
     mediaVideoSrc: "/4360-178617258_medium.mp4",
-    mediaLabel: "Cardiac & Vascular Model",
+    mediaLabel: "Cardiac and Vascular Model",
   },
   {
     id: "scene-4",

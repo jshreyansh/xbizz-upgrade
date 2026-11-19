@@ -52,7 +52,7 @@ export function AdsPreviewGallery({ groups, dark = false }: { groups: GalleryGro
             )}
           >
             <ArrowLeft className="size-3.5" />
-            All ads
+            All Ads
           </button>
           <span className="min-w-0 truncate text-label font-bold">{current.label}</span>
           <span className="truncate text-caption text-ink-4">{current.sub}</span>

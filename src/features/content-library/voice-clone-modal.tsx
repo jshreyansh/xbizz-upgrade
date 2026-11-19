@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button, IconButton } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { Field } from "@/components/ui/field";
+import { DropZone } from "@/components/patterns/drop-zone";
 import { cn } from "@/lib/cn";
 import { Toggle } from "@/features/settings/settings-parts";
 import { useSettingsStore } from "@/features/settings/settings-store";
@@ -78,7 +79,7 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${Math.floor(s % 60).toStrin
 export function VoiceCloneModal({
   onCancel,
   onSave,
-  saveLabel = "Save to library",
+  saveLabel = "Save to Library",
 }: {
   onCancel: () => void;
   onSave: (voice: Voice) => void;
@@ -216,7 +217,6 @@ export function VoiceCloneModal({
     });
 
   /* ── Uploading ── */
-  const fileRef = useRef<HTMLInputElement>(null);
   const onFile = (file: File) => {
     setUploadError(null);
     const url = URL.createObjectURL(file);
@@ -433,11 +433,11 @@ export function VoiceCloneModal({
       <div className="flex items-center justify-between gap-3">
         <Button variant="ghost" onClick={redo} className="gap-1.5">
           <RotateCcw className="size-3.5" />
-          {take?.method === "uploaded" ? "Use another clip" : "Record again"}
+          {take?.method === "uploaded" ? "Use Another Clip" : "Record Again"}
         </Button>
         <Button onClick={clone} disabled={!ready} title={ready ? undefined : "Name the voice and confirm whose it is first"} className="gap-1.5 px-5 font-bold">
           <LogoMark size={15} />
-          Clone voice
+          Clone Voice
         </Button>
       </div>
     ) : step === "result" ? (
@@ -452,7 +452,7 @@ export function VoiceCloneModal({
           className="gap-1.5"
         >
           <ArrowLeft className="size-3.5" />
-          Change details and re-clone
+          Change Details and Re-Clone
         </Button>
         <Button onClick={save} className="gap-1.5 px-5 font-bold">
           <Check className="size-4" />
@@ -466,20 +466,20 @@ export function VoiceCloneModal({
         </Button>
         <Button onClick={stopRecording} disabled={elapsed < MIN_SECONDS} className="gap-1.5 px-5 font-bold">
           <Square className="size-3.5 fill-current" />
-          {elapsed < MIN_SECONDS ? `Keep going · ${Math.ceil(MIN_SECONDS - elapsed)}s` : "Stop and use this take"}
+          {elapsed < MIN_SECONDS ? `Keep Going · ${Math.ceil(MIN_SECONDS - elapsed)}s` : "Stop and Use This Take"}
         </Button>
       </div>
     ) : step === "start" && method === "record" ? (
       <div className="flex items-center justify-end gap-3">
         <Button onClick={startRecording} className="gap-1.5 px-5 font-bold">
           <Mic className="size-4" />
-          Start recording
+          Start Recording
         </Button>
       </div>
     ) : undefined;
 
   return (
-    <Modal open onClose={onCancel} title="Clone a voice" description={
+    <Modal open onClose={onCancel} title="Clone a Voice" description={
         step === "details"
           ? "Check what SwishX heard and say whose voice it is. Then clone it and listen before saving."
           : step === "cloning"
@@ -493,8 +493,8 @@ export function VoiceCloneModal({
         <div className="space-y-4">
           <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="How to clone">
             {([
-              { id: "record" as const, icon: Mic, title: "Record now", blurb: "Read a short script from the teleprompter, in the language you'll use." },
-              { id: "upload" as const, icon: Upload, title: "Upload a clip", blurb: "An existing recording. SwishX listens for the language." },
+              { id: "record" as const, icon: Mic, title: "Record Now", blurb: "Read a short script from the teleprompter, in the language you'll use." },
+              { id: "upload" as const, icon: Upload, title: "Upload a Clip", blurb: "An existing recording. SwishX listens for the language." },
             ]).map((m) => {
               const on = method === m.id;
               const Icon = m.icon;
@@ -550,32 +550,20 @@ export function VoiceCloneModal({
                   <AlertTriangle className="size-4 shrink-0" />
                   <span className="min-w-0 flex-1">The microphone isn&apos;t available. Allow it in the browser&apos;s address bar, then try again.</span>
                   <Button size="sm" variant="secondary" onClick={useSampleTake}>
-                    Use a sample take
+                    Use a Sample Take
                   </Button>
                 </div>
               )}
             </div>
           ) : (
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-control border border-dashed border-hair-3 bg-canvas px-4 py-7 text-center transition hover:border-brand hover:bg-tint"
-              >
-                <FileUp className="size-5 text-brand" />
-                <span className="text-body font-bold text-ink">Choose an audio file</span>
-                <span className="text-caption text-ink-4">MP3 · WAV · M4A · OGG · at least 10 seconds of one voice, no music</span>
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
+              <DropZone
+                title="Choose an Audio File"
+                hint="MP3 · WAV · M4A · OGG · at least 10 seconds of one voice, no music"
+                icon={<FileUp className="size-5" />}
                 accept="audio/*,.mp3,.wav,.m4a,.ogg"
-                hidden
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = "";
-                  if (file) onFile(file);
-                }}
+                onFiles={([file]) => onFile(file)}
+                className="rounded-control"
               />
               {uploadError && (
                 <p className="flex items-start gap-1.5 text-label font-semibold text-danger">
@@ -717,8 +705,8 @@ export function VoiceCloneModal({
           </div>
 
           <label className="flex w-fit cursor-pointer items-center gap-2.5" title="Only if the room was noisy. Cleaning a clean clip makes the clone sound less like the speaker.">
-            <Toggle checked={cleanup} onChange={setCleanup} label="Clean up background noise" />
-            <span className="text-label font-semibold text-ink-2">Clean up background noise</span>
+            <Toggle checked={cleanup} onChange={setCleanup} label="Clean Up Background Noise" />
+            <span className="text-label font-semibold text-ink-2">Clean Up Background Noise</span>
             <span className="text-caption text-ink-4">only if the room was noisy</span>
           </label>
 
@@ -730,8 +718,8 @@ export function VoiceCloneModal({
                 Whose voice is this?
               </span>
               {([
-                { id: "own" as const, icon: UserRound, title: `My own · ${myName}` },
-                { id: "other" as const, icon: Users, title: "Someone else's" },
+                { id: "own" as const, icon: UserRound, title: `My Own · ${myName}` },
+                { id: "other" as const, icon: Users, title: "Someone Else's" },
               ]).map((o) => {
                 const on = whose === o.id;
                 const Icon = o.icon;
@@ -797,7 +785,7 @@ export function VoiceCloneModal({
                     className="flex h-9 cursor-pointer items-center gap-2 rounded-control border border-dashed border-hair-3 bg-card px-3 text-left text-body text-ink-3 transition hover:border-brand"
                   >
                     <FileUp className="size-4 shrink-0" />
-                    <span className="truncate">Attach signed consent form</span>
+                    <span className="truncate">Attach Signed Consent Form</span>
                     <span className="ml-auto shrink-0 text-caption text-ink-4">optional</span>
                   </button>
                 )}
@@ -888,8 +876,8 @@ export function VoiceCloneModal({
 
           <div className="grid gap-3 sm:grid-cols-2">
             {([
-              { id: "source", title: "Your recording", sub: `${clock(take.seconds)} · ${take.method === "recorded" ? "recorded" : "uploaded"}${cleanup ? " · noise removed" : ""}`, playing: playingTake, tone: "ok", disabled: false },
-              { id: "clone", title: "Cloned voice", sub: generating ? "Generating your line…" : stale ? "Still the previous line. Generate to hear yours" : "Reading the line below", playing: playingClone, tone: "brand", disabled: generating },
+              { id: "source", title: "Your Recording", sub: `${clock(take.seconds)} · ${take.method === "recorded" ? "recorded" : "uploaded"}${cleanup ? " · noise removed" : ""}`, playing: playingTake, tone: "ok", disabled: false },
+              { id: "clone", title: "Cloned Voice", sub: generating ? "Generating your line…" : stale ? "Still the previous line. Generate to hear yours" : "Reading the line below", playing: playingClone, tone: "brand", disabled: generating },
             ] as const).map((card) => (
               <div key={card.id} className={cn("space-y-3 rounded-card border p-4", card.tone === "brand" ? "border-brand/30 bg-tint" : "border-hair-2 bg-card")}>
                 <div className="flex items-center justify-between gap-2">
@@ -930,7 +918,7 @@ export function VoiceCloneModal({
 
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className="text-label font-semibold text-ink-2">Try a line in {lang.label}</span>
+              <span className="text-label font-semibold text-ink-2">Try a Line in {lang.label}</span>
               {stale && !generating && <span className="text-caption font-semibold text-warn">Not generated yet</span>}
             </div>
             <div className={cn("rounded-control border bg-card transition focus-within:ring-1", stale ? "border-warn-line focus-within:border-warn focus-within:ring-warn/20" : "border-hair-2 focus-within:border-brand focus-within:ring-brand/20")}>
@@ -961,7 +949,7 @@ export function VoiceCloneModal({
                 </span>
                 <Button size="sm" onClick={generate} disabled={!draft.trim() || generating || !stale} className="h-8 shrink-0 gap-1.5 px-3 font-bold">
                   <LogoMark size={13} className={generating ? "animate-spin" : undefined} />
-                  {generating ? "Generating…" : stale ? "Generate in this voice" : "Generated"}
+                  {generating ? "Generating…" : stale ? "Generate in This Voice" : "Generated"}
                 </Button>
               </div>
             </div>

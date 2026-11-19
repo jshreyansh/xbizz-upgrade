@@ -21,7 +21,7 @@ export const FAMILY_LABELS: Record<TemplateFamily, string> = {
   "stat-hero": "Stat Hero",
   "trial-summary": "Trial Summary",
   "bench-data": "Bench Data",
-  "moa-scroll": "Anatomy & MoA Scroll",
+  "moa-scroll": "Anatomy and MoA Scroll",
   "burden-disease": "Burden of Disease",
 };
 
@@ -31,7 +31,7 @@ export type TemplateElement = "chart" | "packshot" | "table" | "isi" | "moa-diag
 
 export const ELEMENT_LABELS: Record<TemplateElement, string> = {
   chart: "Chart",
-  packshot: "Pack shot",
+  packshot: "Packshot",
   table: "Table",
   isi: "ISI block",
   "moa-diagram": "MoA diagram",

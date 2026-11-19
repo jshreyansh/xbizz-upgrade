@@ -164,7 +164,7 @@ export function ProjectMenu({
           {!published && (
             <button type="button" role="menuitem" className={item} onClick={() => { setOpen(false); setShareOpen(true); }}>
               <Users className="size-4 text-ink-3" />
-              <span className="flex-1">Who can see this</span>
+              <span className="flex-1">Who Can See This</span>
               <span className="text-caption font-bold text-ink-4">{visibilityLabel(sharing.visibility)}</span>
             </button>
           )}
@@ -214,9 +214,9 @@ export function ShareDraftModal({
   };
 
   const options: { id: Visibility["kind"]; Icon: typeof Lock; label: string; hint: string }[] = [
-    { id: "private", Icon: Lock, label: "Only me", hint: "Private. Admins can't see it either." },
+    { id: "private", Icon: Lock, label: "Only Me", hint: "Private. Admins can't see it either." },
     { id: "workspace", Icon: Globe, label: `Everyone in ${workspaceName}`, hint: "Each person opens it within their own permissions." },
-    { id: "people", Icon: Users, label: "Specific people", hint: "Only the people you pick." },
+    { id: "people", Icon: Users, label: "Specific People", hint: "Only the people you pick." },
   ];
 
   return (
@@ -224,7 +224,7 @@ export function ShareDraftModal({
       open={open}
       onClose={onClose}
       size="sm"
-      title="Who can see this draft"
+      title="Who Can See This Draft"
       description={title}
       footer={
         <div className="flex items-center justify-end gap-2">

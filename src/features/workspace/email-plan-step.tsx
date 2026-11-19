@@ -21,6 +21,7 @@ import {
   type EmailTemplate,
 } from "@/features/workspace/email-options";
 import type { EmailProject } from "@/features/workspace/email-project";
+import { Chip } from "@/components/ui/chip";
 
 type SectionId = "subjects" | "blocks" | "template";
 
@@ -147,9 +148,9 @@ function BlockAttachmentsModal({
                           <span className="block truncate text-caption text-ink-4">{c.url}</span>
                         </div>
                       </div>
-                      <span className="shrink-0 rounded-chip bg-subtle px-2 py-0.5 text-micro font-bold text-ink-3">
+                      <Chip tone="neutral" size="xs" weight="bold" className="border-0">
                         Used in: {otherBlock?.title || "Another block"}
-                      </span>
+                      </Chip>
                     </div>
                   );
                 }
@@ -204,7 +205,7 @@ function BlockAttachmentsModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Link2 className="size-4 text-accent-violet" />
-              <span className="text-body font-bold text-ink">Citations & Backlinks</span>
+              <span className="text-body font-bold text-ink">Citations and Backlinks</span>
             </div>
             <span className="text-caption text-ink-4">Multiple allowed per block</span>
           </div>
@@ -236,9 +237,9 @@ function BlockAttachmentsModal({
                           </span>
                         </div>
                       </div>
-                      <span className="shrink-0 rounded-chip bg-subtle px-2 py-0.5 text-micro font-bold text-ink-3">
+                      <Chip tone="neutral" size="xs" weight="bold" className="border-0">
                         Used in: {otherBlock?.title || "Another block"}
-                      </span>
+                      </Chip>
                     </div>
                   );
                 }
@@ -320,7 +321,7 @@ function BlockRulesModal({
       open={open}
       onClose={onClose}
       size="md"
-      title={`Rules & Permissions: ${block.title}`}
+      title={`Rules and Permissions: ${block.title}`}
       description="Configure sales rep permissions and MLR compliance locking for this fragment in Veeva CRM Approved Email."
       footer={
         <div className="flex items-center justify-between gap-3">
@@ -418,8 +419,8 @@ function BlockRulesModal({
         {/* Rule 2: Editability */}
         <div className="space-y-2.5 border-t border-hair-2 pt-4">
           <div className="flex items-center justify-between">
-            <span className="text-body font-bold text-ink">Content &amp; Claim Protection</span>
-            <span className="text-caption font-semibold text-ink-3">{editable ? "Customizable note" : "100% Locked copy"}</span>
+            <span className="text-body font-bold text-ink">Content and Claim Protection</span>
+            <span className="text-caption font-semibold text-ink-3">{editable ? "Customisable note" : "100% locked copy"}</span>
           </div>
 
           <div className="grid gap-2.5 sm:grid-cols-2">
@@ -466,12 +467,12 @@ function BlockRulesModal({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 font-bold text-body text-ink">
                     <PenLine className="size-3.5 text-brand" />
-                    <span>Editable rep commentary</span>
+                    <span>Editable Rep Commentary</span>
                   </div>
                   <Tag tone="warn">Unformatted</Tag>
                 </div>
                 <p className="mt-1.5 text-caption leading-relaxed text-ink-3">
-                  Permits the rep to add a short contextual comment (up to 255 chars) alongside the approved claim.
+                  Permits the rep to add a short contextual comment (up to 255 characters) alongside the approved claim.
                 </p>
               </div>
               <span className="mt-3 block text-micro font-extrabold uppercase tracking-wide text-ink-4">
@@ -561,34 +562,29 @@ function BlockPlanTile({
               <div className="flex flex-wrap items-center gap-1.5">
                 {/* Rule badge */}
                 {rule.mandatory ? (
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-micro font-bold text-ink-2" title="Mandatory fragment: locked in template">
-                    <Lock className="size-3 text-ink-3" />
-                    <span>Mandatory</span>
-                  </span>
+                  <Chip tone="neutral" size="xs" weight="bold" className="border-hair-2 text-ink-2" title="Mandatory fragment: locked in template" iconLeft={<Lock className="size-3 text-ink-3" />}>
+                    Mandatory
+                  </Chip>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-micro font-bold text-ok" title="Optional fragment: rep can choose whether to include">
-                    <Check className="size-3 text-ok" />
-                    <span>Optional</span>
-                  </span>
+                  <Chip tone="ok" size="xs" weight="bold" title="Optional fragment: rep can choose whether to include" iconLeft={<Check className="size-3 text-ok" />}>
+                    Optional
+                  </Chip>
                 )}
                 {rule.editable && (
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep" title="Rep editable commentary allowed">
-                    <PenLine className="size-3" />
-                    <span>Editable Note</span>
-                  </span>
+                  <Chip tone="brand" size="xs" weight="bold" title="Rep editable commentary allowed" iconLeft={<PenLine className="size-3" />}>
+                    Editable Note
+                  </Chip>
                 )}
 
                 {attachedCtas.length > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
-                    <MousePointerClick className="size-3" />
-                    <span>{attachedCtas.length} {attachedCtas.length === 1 ? "CTA" : "CTAs"}</span>
-                  </span>
+                  <Chip tone="brand" size="xs" weight="bold" iconLeft={<MousePointerClick className="size-3" />}>
+                    {attachedCtas.length} {attachedCtas.length === 1 ? "CTA" : "CTAs"}
+                  </Chip>
                 )}
                 {attachedBacklinks.length > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-micro font-bold text-ink-2">
-                    <Link2 className="size-3" />
-                    <span>{attachedBacklinks.length} {attachedBacklinks.length === 1 ? "Backlink" : "Backlinks"}</span>
-                  </span>
+                  <Chip tone="neutral" size="xs" weight="bold" className="border-hair-2 text-ink-2" iconLeft={<Link2 className="size-3" />}>
+                    {attachedBacklinks.length} {attachedBacklinks.length === 1 ? "Backlink" : "Backlinks"}
+                  </Chip>
                 )}
               </div>
             )}
@@ -612,7 +608,7 @@ function BlockPlanTile({
               <span
                 onClick={onOpenRulesModal}
                 className="inline-flex items-center gap-1.5 rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-label font-bold text-ink-2 shadow-2xs cursor-pointer hover:border-hair-3 transition"
-                title="Mandatory fragment (locked in template) · Click to edit"
+                title="Mandatory fragment (locked in template) · click to edit"
               >
                 <Lock className="size-3 text-ink-3" />
                 <span>Mandatory</span>
@@ -634,7 +630,7 @@ function BlockPlanTile({
                   type="button"
                   onClick={onResetMandatory}
                   className="grid size-4 cursor-pointer place-items-center rounded-full hover:bg-ok-line/50 transition text-ok"
-                  title="Reset to Mandatory fragment"
+                  title="Reset to mandatory fragment"
                 >
                   <X className="size-3" />
                 </button>
@@ -659,7 +655,7 @@ function BlockPlanTile({
                   type="button"
                   onClick={onResetEditable}
                   className="grid size-4 cursor-pointer place-items-center rounded-full hover:bg-brand/20 transition text-brand-deep"
-                  title="Reset to Locked MLR text"
+                  title="Reset to locked MLR text"
                 >
                   <X className="size-3" />
                 </button>
@@ -668,7 +664,7 @@ function BlockPlanTile({
               <span
                 onClick={onOpenRulesModal}
                 className="inline-flex items-center gap-1.5 rounded-chip border border-accent-violet/30 bg-accent-violet/10 px-2 py-0.5 text-label font-bold text-accent-violet shadow-2xs cursor-pointer hover:bg-accent-violet/15 transition"
-                title="Locked MLR text (compliance preserved) · Click to edit"
+                title="Locked MLR text (compliance preserved) · click to edit"
               >
                 <ShieldCheck className="size-3 text-accent-violet" />
                 <span>Locked Text</span>
@@ -726,7 +722,7 @@ function BlockPlanTile({
               className="h-7 gap-1 px-2.5 text-micro font-bold cursor-pointer"
             >
               <ShieldCheck className="size-3.5 text-accent-violet" />
-              <span>Rules &amp; Permissions</span>
+              <span>Rules and Permissions</span>
             </Button>
             <Button
               size="sm"
@@ -950,8 +946,8 @@ export function EmailPlanStep({
             <div className="flex flex-col gap-2 rounded-control border border-hair-2 bg-subtle/50 p-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-body font-bold text-ink">Need an Additional Content Block?</span>
-                  <span className="rounded-chip bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep border border-tint-line">Context required</span>
+                  <span className="text-body font-bold text-ink">Need an additional content block?</span>
+                  <Chip tone="brand" size="xs" weight="bold" className="px-1.5">Context required</Chip>
                 </div>
                 <p className="mt-0.5 text-caption text-ink-3">
                   Unlike subject lines, content blocks require clinical evidence and MLR source context. Ask SwishX in chat to draft a grounded block.
@@ -978,7 +974,7 @@ export function EmailPlanStep({
         {/* 3. Template, as a grid of layouts */}
         <PlanSectionShell
           icon={LayoutTemplate}
-          title="Email Template & Layout"
+          title="Email Template and Layout"
           summary={`${p.template.title} · holds ${p.template.holds} blocks`}
           state={planState(false)}
           source={p.template.from === "brand" ? "from your brand" : "SwishX layout"}
@@ -1022,7 +1018,7 @@ export function EmailPlanStep({
                             className="flex cursor-pointer items-center justify-center gap-1.5 border-t border-hair py-2 text-label font-bold text-ink-2 hover:bg-subtle"
                           >
                             <Eye className="size-3.5" />
-                            Preview with your content
+                            Preview with Your Content
                           </button>
                         </div>
                       );
@@ -1055,7 +1051,7 @@ export function EmailPlanStep({
                 }}
                 className="font-bold"
               >
-                Use this template
+                Use This Template
               </Button>
             </div>
           }

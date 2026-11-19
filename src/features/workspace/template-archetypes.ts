@@ -38,7 +38,7 @@ export const TEMPLATE_ARCHETYPES: TemplateArchetype[] = [
     previewBg: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
     badge: "EMBRACE-3 Pivotal Study",
     metric: "N=613 Patients",
-    metricSub: "Multi-Center Randomized Trial",
+    metricSub: "Multi-Centre Randomised Trial",
     points: ["Dual kinase blockade mechanism", "FDA §2.1 label indication partition", "Zero microvascular adverse accumulation"],
   },
   {
@@ -54,7 +54,7 @@ export const TEMPLATE_ARCHETYPES: TemplateArchetype[] = [
   },
   {
     id: "moa-scroll",
-    name: "Anatomy & MoA Scroll",
+    name: "Anatomy and MoA Scroll",
     tagline: "3D cellular pathways with dual kinase cascade diagram and tissue uptake markers.",
     accent: "#7c3aed",
     previewBg: "linear-gradient(135deg, #1e1035 0%, #2e1852 100%)",

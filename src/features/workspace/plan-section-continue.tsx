@@ -24,7 +24,7 @@ export interface PlanSectionContinueProps {
   hint?: string;
 }
 
-export function PlanSectionContinue({ onClick, label = "Save & Continue", disabled, hint }: PlanSectionContinueProps) {
+export function PlanSectionContinue({ onClick, label = "Save and Continue", disabled, hint }: PlanSectionContinueProps) {
   return (
     <div className="flex items-center justify-end gap-3 pt-2">
       {hint && <span className="text-label text-ink-3">{hint}</span>}

@@ -49,7 +49,7 @@ export function IndicationWording({ options, picked }: { options: Indication[]; 
         </>
       ) : (
         <>
-          <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Approved wording</span>
+          <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Approved Wording</span>
           <div className="mt-1 space-y-2">
             {picked.map((i) => (
               <div key={i.label}>
@@ -136,7 +136,7 @@ export function IndicationRows({ editing, onEdit }: { editing: string | null; on
     <>
       {options.length > 0 && (
         <DecisionRow
-          label={isDevice ? "Intended use" : "Indication"}
+          label={isDevice ? "Intended Use" : "Indication"}
           value={picked.length === 0 ? allChip : indicationsLabel(picked, options.length)}
           icon={<Target className="size-4" />}
           editing={editing === "indication"}
@@ -160,14 +160,14 @@ export function IndicationRows({ editing, onEdit }: { editing: string | null; on
         </DecisionRow>
       )}
       <DecisionRow
-        label="Therapy area"
+        label="Therapy Area"
         value={areasLabel(therapyAreas)}
         icon={<Shapes className="size-4" />}
         editing={editing === "therapyArea"}
         onEdit={() => onEdit(editing === "therapyArea" ? null : "therapyArea")}
       >
         <ChipChoices
-          label="Therapy area"
+          label="Therapy Area"
           options={candidateAreas.length > 1 ? [ALL_AREAS, ...candidateAreas] : candidateAreas}
           values={allAreasPicked ? [ALL_AREAS, ...candidateAreas] : therapyAreas}
           onToggle={(area) => {

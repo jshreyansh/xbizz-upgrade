@@ -102,7 +102,7 @@ export function EmailPieceBrowser({
           </Segmented>
           <Segmented className="shrink-0">
             <SegmentedButton active={approvedOnly} onClick={() => setApprovedOnly(true)}>
-              Approved only
+              Approved Only
             </SegmentedButton>
             <SegmentedButton active={!approvedOnly} onClick={() => setApprovedOnly(false)}>
               Everything
@@ -165,7 +165,7 @@ export function EmailPiecePicker({ project: p }: { project: EmailProject }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="text-body font-bold text-ink-2">
-            Build it from an approved piece? <span className="font-semibold text-ink-4">Optional</span>
+            Build It from an Approved Piece? <span className="font-semibold text-ink-4">Optional</span>
           </div>
           <p className="text-label text-ink-3">Base the email on a leave-behind or video you already got approved. Its claims lead the email, and it&apos;s included as a document card.</p>
         </div>
@@ -178,7 +178,7 @@ export function EmailPiecePicker({ project: p }: { project: EmailProject }) {
             <ShieldCheck className="size-6" />
           </div>
           <span className="grid gap-0.5 p-2.5">
-            <b className="text-body text-ink">The dossier only</b>
+            <b className="text-body text-ink">The Dossier Only</b>
             <span className="text-label text-ink-3">SwishX picks the claims from the {p.brandName} dossier.</span>
           </span>
         </button>
@@ -203,7 +203,7 @@ export function EmailPiecePicker({ project: p }: { project: EmailProject }) {
       {browsing && (
         <EmailPieceBrowser
           project={p}
-          title="Build it from an approved piece"
+          title="Build It from an Approved Piece"
           picked={startPiece ? [startPiece.id] : []}
           onPick={(id) => {
             choose(id);

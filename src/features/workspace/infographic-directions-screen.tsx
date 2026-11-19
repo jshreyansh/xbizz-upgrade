@@ -36,7 +36,7 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { LogoMark } from "@/components/ui/logo-mark";
+import { PlanChatHeader } from "@/components/patterns/inspector-tabs";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import {
@@ -112,7 +112,7 @@ const CONTENT_ANGLES = [
   "Product Introduction",
   "Mechanism of Action",
   "Indications",
-  "Dosage & Safety",
+  "Dosage and Safety",
   "Drug Interactions",
   "Side Effects",
 ];
@@ -588,8 +588,8 @@ export function InfographicDirectionsScreen() {
           role: "swishx",
           text:
             attached.length === 1
-              ? `Got **${attached[0].name}**. Where should it go. A grounded source, page artwork, a creative reference for the look, or just context for this question?`
-              : `Got ${attached.length} files. Where should they go, grounded sources, page artwork, creative references for the look, or just context for this question?`,
+              ? `Got **${attached[0].name}**. Where should it go: a grounded source, page artwork, a creative reference for the look, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go: grounded sources, page artwork, creative references for the look, or just context for this question?`,
         });
       }, 600);
       return;
@@ -632,7 +632,7 @@ export function InfographicDirectionsScreen() {
         ]);
         setOpenSection("references");
         say(
-          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the layout. No claim will ground in it.`
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual and Creative References**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the layout. No claim will ground in it.`
         );
         return;
       }
@@ -644,7 +644,7 @@ export function InfographicDirectionsScreen() {
         ]);
         setOpenSection("assets");
         say(
-          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product & Device Visual Assets**.`
+          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product and Device Visual Assets**.`
         );
         return;
       }
@@ -671,7 +671,7 @@ export function InfographicDirectionsScreen() {
         reply = `This poster's size, orientation and page count come from the congress. To change them, edit its rules in **Congress and Visual Guidelines**.`;
       } else if (lower.includes("16:9") || lower.includes("landscape")) {
         setPageShape("16:9");
-        reply = `Updated page shape to **Landscape 16:9** (optimized for screen projection and desktop detailers).`;
+        reply = `Updated page shape to **Landscape 16:9** (optimised for screen projection and desktop detailers).`;
       } else if (lower.includes("3:4") || lower.includes("portrait")) {
         setPageShape("3:4");
         reply = `Updated page shape to **Portrait 3:4** (ideal for iPad detailers and vertical reading).`;
@@ -723,7 +723,7 @@ export function InfographicDirectionsScreen() {
               <ProjectTitle kind="document" fallback={`${brandName} HCP Infographic`} className="text-body font-[800]" />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-              Saved just now · MLR Ready
+              Saved just now · MLR ready
             </div>
           </div>
 
@@ -738,7 +738,7 @@ export function InfographicDirectionsScreen() {
               className="flex max-w-[240px] cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand"
             >
               <Layers className="size-3 shrink-0 text-brand" />
-              <span className="truncate">{activeScenario?.label ?? "Choose use case"}</span>
+              <span className="truncate">{activeScenario?.label ?? "Choose Use Case"}</span>
               <ChevronDown className="size-3 shrink-0 opacity-60" />
             </button>
           </div>
@@ -799,7 +799,7 @@ export function InfographicDirectionsScreen() {
               /* Reading the request and whatever came with it — which is what
                  the questions are about, so the wait explains why it asks. */
               <GenerationProgress
-                title="Reading your request..."
+                title="Reading your request…"
                 subtitle={
                   briefAttachments.length
                     ? `Understanding the brief and checking what each of the ${briefAttachments.length} attached ${briefAttachments.length === 1 ? "file" : "files"} can ground.`
@@ -830,7 +830,7 @@ export function InfographicDirectionsScreen() {
                         flow has no production plan stage, so it names the
                         thing it actually leads to. */}
                     <h2 className="text-display font-[850] text-ink tracking-tight">
-                      Need your input
+                      Need Your Input
                     </h2>
                     <p className="text-body text-ink-3 mt-0.5">
                       Answer below to help us refine the creative for you.
@@ -890,7 +890,7 @@ export function InfographicDirectionsScreen() {
                       in the video plan, rather than tucked into the visuals. */}
                   <CreativePlanSection
                     icon={Stamp}
-                    title="Brand mark"
+                    title="Brand Mark"
                     summary={
                       brandNotes.noLogo && congress
                         ? `No logo · not allowed by ${congress.acronym}`
@@ -918,7 +918,7 @@ export function InfographicDirectionsScreen() {
                   {/* 5. Product & Brand Visual Assets */}
                   <CreativePlanSection
                     icon={ImageIcon}
-                    title="Product & Device Visual Assets"
+                    title="Product and Device Visual Assets"
                     summary={packshots.length > 0 ? `${packshots.length} packshot${packshots.length === 1 ? "" : "s"} attached` : "Packshots and device media"}
                     state={planState(sectionNeedsYou("assets"), sectionOptional("assets"))}
                     open={openSection === "assets"}
@@ -926,7 +926,7 @@ export function InfographicDirectionsScreen() {
                   >
                     <div className="space-y-4">
                       <div>
-                        <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
+                        <div className="text-body font-bold text-ink mb-1">Product Packshots (Optional)</div>
                         <MediaAttachmentGrid
                           items={packshots.map((ps) => ({
                             id: ps.id,
@@ -936,7 +936,7 @@ export function InfographicDirectionsScreen() {
                             kind: "image" as const,
                             variation: ps.variation,
                           }))}
-                          uploadLabel={packshots.length === 0 ? "Upload product image" : "Add another"}
+                          uploadLabel={packshots.length === 0 ? "Upload Product Image" : "Add Another"}
                           uploadHint="PNG, JPG"
                           onUpload={() =>
                             setPendingMedia([
@@ -969,7 +969,7 @@ export function InfographicDirectionsScreen() {
                           return (
                             <div className="mt-3">
                               <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                                Suggested from platform
+                                Suggested From Platform
                               </span>
                               <AssetStrip>
                                 {reusable.map((asset) => (
@@ -1013,7 +1013,7 @@ export function InfographicDirectionsScreen() {
                       and a reference shapes the layout. */}
                   <CreativePlanSection
                     icon={Palette}
-                    title="Visual & creative references"
+                    title="Visual and Creative References"
                     summary={
                       referenceList.length > 0
                         ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"}`
@@ -1038,7 +1038,7 @@ export function InfographicDirectionsScreen() {
                           previewUrl: r.previewUrl,
                           kind: r.kind ?? "image",
                         }))}
-                        uploadLabel={referenceList.length === 0 ? "Upload a reference" : "Add another"}
+                        uploadLabel={referenceList.length === 0 ? "Upload a Reference" : "Add Another"}
                         onUpload={() =>
                           setPendingReference([
                             {
@@ -1071,7 +1071,7 @@ export function InfographicDirectionsScreen() {
                         return (
                           <div>
                             <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                              Suggested from platform
+                              Suggested From Platform
                             </span>
                             <AssetStrip>
                               {reusable.map((asset) => (
@@ -1103,7 +1103,7 @@ export function InfographicDirectionsScreen() {
                       })()}
                     </div>
                     <PlanSectionContinue
-                      label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                      label={referenceList.length === 0 ? "Skip and Continue" : "Save and Continue"}
                       onClick={() => advanceFrom("references")}
                     />
                   </CreativePlanSection>
@@ -1112,7 +1112,7 @@ export function InfographicDirectionsScreen() {
                       changed, the same as the video plan. */}
                   <CreativePlanSection
                     icon={Users}
-                    title="Message and audience"
+                    title="Message and Audience"
                     summary={`${audience || "HCP"}${audience === "HCP" && specialities.length > 0 ? ` · ${specialityLabel(specialities)}` : ""} · ${selectedAngles.length} topics · ${language}`}
                     state={planState(sectionNeedsYou("audience"), sectionOptional("audience"))}
                     source="from brief"
@@ -1207,7 +1207,7 @@ export function InfographicDirectionsScreen() {
                         the shape, not something attached to it. */}
                     <CreativePlanSection
                       icon={LayoutGrid}
-                      title="Format & pages"
+                      title="Format and Pages"
                       summary={`${formatLabel} · ${pageCountLabel(pageCount)}`}
                       state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
                       source="from brief"
@@ -1309,7 +1309,7 @@ export function InfographicDirectionsScreen() {
                 >
                   <span>
                     {currentStep === "brief"
-                      ? "Confirm Plan & Choose Template"
+                      ? "Confirm Plan and Choose Template"
                       : "Choose Template"}
                   </span>
                   <ArrowRight className="size-3.5 ml-1.5" />
@@ -1322,19 +1322,7 @@ export function InfographicDirectionsScreen() {
       }
       panel={
         <>
-          {/* Chat Top Banner */}
-          <div className="p-3.5 border-b border-hair bg-card shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-body font-bold text-brand">
-                <LogoMark size={14} />
-                <span>Direct with SwishX</span>
-              </div>
-              <span className="rounded-chip bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
-                Online
-              </span>
-            </div>
-
-          </div>
+          <PlanChatHeader />
 
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
@@ -1369,8 +1357,8 @@ export function InfographicDirectionsScreen() {
                   {msg.role === "swishx" && idx === chatMessages.length - 1 && planPhase === "plan" && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {(isPoster
-                        ? ["Use Stat Hero Template", "Elevate MoA in Section 2"]
-                        : ["Switch to Portrait 3:4", "Use Stat Hero Template", "Elevate MoA in Section 2", "Set to 2 Pages"]
+                        ? ["Use the Stat Hero template", "Elevate MoA in section 2"]
+                        : ["Switch to portrait 3:4", "Use the Stat Hero template", "Elevate MoA in section 2", "Set to 2 pages"]
                       ).map((chip) => (
                         <button
                           key={chip}
@@ -1439,7 +1427,7 @@ export function InfographicDirectionsScreen() {
               value={chatInput}
               onChange={setChatInput}
               onSubmit={() => handleSendChat()}
-              placeholder="Ask SwishX or request a change to the plan..."
+              placeholder="Ask SwishX or request a change to the plan…"
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
             >
               <ChatAttachmentRow attachments={chatFiles} />
@@ -1562,7 +1550,7 @@ export function InfographicDirectionsScreen() {
             <ScenarioDrawer
               currentScenarioId={demoScenarioId}
               assetType="infographic"
-              title="Use cases"
+              title="Use Cases"
               onSelect={loadUseCase}
               onReset={() => {
                 const fallback =

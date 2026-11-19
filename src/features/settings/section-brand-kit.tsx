@@ -17,7 +17,7 @@ export function SectionBrandKit() {
     <Stack gap={4}>
       {!canManage && (
         <Text size="label" tone="muted" className="block">
-          View only. Changing the workspace brand kit comes with Brand kit: Manage.
+          View only. Changing the workspace brand kit comes with Brand Kit: Manage.
         </Text>
       )}
       <BrandKitEditor

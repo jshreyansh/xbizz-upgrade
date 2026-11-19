@@ -246,7 +246,7 @@ function EmailDraw({ spec, large }: { spec: EmailThumbSpec; large?: boolean }) {
       {/* The safety information every branded email carries, and the footer. */}
       <div className="border-t-[3px] border-accent-violet bg-subtle px-5 py-3 leading-snug text-ink-2" style={px(9)}>
         <b className="block text-ink" style={px(10)}>IMPORTANT SAFETY INFORMATION</b>
-        Serious infections that may lead to hospitalization or death have been reported. Check blood counts before starting
+        Serious infections that may lead to hospitalisation or death have been reported. Check blood counts before starting
         and during treatment. Please see full <u className="text-accent-violet">Prescribing Information</u>, including Boxed Warning.
       </div>
       <div className={cn("bg-ink px-5 py-2.5 leading-snug text-white/70", large ? "pb-4" : "")} style={px(8)}>

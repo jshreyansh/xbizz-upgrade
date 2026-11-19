@@ -67,6 +67,8 @@ import { IndicationRows } from "@/features/workspace/indication-rows";
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
+import { PlanChatHeader } from "@/components/patterns/inspector-tabs";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { IntakeQuestionCard } from "@/features/workspace/intake-question-card";
 import { ProjectContextModal } from "@/features/workspace/project-context-modal";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
@@ -300,9 +302,9 @@ export function AdsDirectionsScreen() {
         : reminderBlocked
           ? { title: "Reminder ads aren't allowed", detail: `${brandName} has a boxed warning. Choose Product Claim or Help-Seeking Ads.` }
           : kept.length === 0
-            ? { title: "No ads to make", detail: "Tick at least one ad in Ads to make." }
+            ? { title: "No ads to make", detail: "Tick at least one ad in Where It Runs and What It Makes." }
             : needsPresenter
-              ? { title: "Choose a presenter", detail: "The video ads are presenter-led. Pick who speaks to camera in Character, voice and sound." }
+              ? { title: "Choose a presenter", detail: "The video ads are presenter-led. Pick who speaks to camera in Character, Voice and Sound." }
               : null;
   const planReady = planPhase === "plan" && !blocker;
 
@@ -313,7 +315,7 @@ export function AdsDirectionsScreen() {
     if (intakeQuestions.length === 0) {
       addChatMessage({
         role: "swishx",
-        text: `I've read the brief against the **${brandName}** dossier and checked each placement. The plan is on the left, with every ad closing on **${closing}**; change that in **Key message & claims**. Start by adding your sources, then confirm and I'll write the campaign storyboard from them.`,
+        text: `I've read the brief against the **${brandName}** dossier and checked each placement. The plan is on the left, with every ad closing on **${closing}**; change that in **Key Message and Claims**. Start by adding your sources, then confirm and I'll write the campaign storyboard from them.`,
       });
       setPlanPhase("plan");
       return;
@@ -365,7 +367,7 @@ export function AdsDirectionsScreen() {
   const [chatContexts, setChatContexts] = useState<Array<{ id: string; label: string; detail: string }>>([]);
   const handMessageToChat = () => {
     setCopilotPanelOpen(true);
-    setChatContexts((prev) => (prev.some((c) => c.id === "message") ? prev : [...prev, { id: "message", label: "Key message & claims", detail: leadMessage }]));
+    setChatContexts((prev) => (prev.some((c) => c.id === "message") ? prev : [...prev, { id: "message", label: "Key Message and Claims", detail: leadMessage }]));
     setChatInput((prev) => (prev.trim() ? prev : "My key message is "));
     requestAnimationFrame(() => {
       const field = document.querySelector<HTMLTextAreaElement>("[data-chat-composer]");
@@ -385,7 +387,7 @@ export function AdsDirectionsScreen() {
     if (result.nextStep) setNextStep(result.nextStep);
     setOpenSection("message");
     const lines = [
-      `I've updated **Key message & claims** from what you shared${files.length ? ` and ${files.length === 1 ? "your file" : `your ${files.length} files`}` : ""}.`,
+      `I've updated **Key Message and Claims** from what you shared${files.length ? ` and ${files.length === 1 ? "your file" : `your ${files.length} files`}` : ""}.`,
       `Key message: **${result.messages[0]}**${pickedNow[0] ? `, in the approved wording of ${pickedNow[0].id}` : ""}. The other options are in the section, marked From your input.`,
       ...(pickedNow.length ? [`Approved claims: ${pickedNow.map((c) => c.id).join(", ")}.`] : adType === "product-claim" ? ["None of the approved claims matched, so I kept the ones you had."] : ["These ads are unbranded, so they carry no product claims."]),
       ...(result.nextStep ? [`Closing line: **${closingLine(result.nextStep, adType, brandName)}**`] : []),
@@ -443,7 +445,7 @@ export function AdsDirectionsScreen() {
         reply = `Switched to **help-seeking** ads. ${brandName} won't be named or shown, so the packshots are gone too.`;
       } else if (/hcp|doctor|physician/.test(lower) && /audience|switch|for/.test(lower)) {
         setAudience("HCP");
-        reply = "The ads are now for **HCPs**. Pick a specialty in **Audience and branding** if you want to narrow it.";
+        reply = "The ads are now for **HCPs**. Pick a specialty in **Audience and Branding** if you want to narrow it.";
       } else if (/saving|copay/.test(lower)) {
         setNextStep("Sign up for savings");
         reply = `Every ad now closes with: **${closingLine("Sign up for savings", adType, brandName)}**`;
@@ -521,7 +523,7 @@ export function AdsDirectionsScreen() {
         <section className="relative flex min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-y-auto border-r border-hair bg-[#eef1ed] p-4 sm:p-6 lg:p-7">
           {planPhase === "research" && (
             <GenerationProgress
-              title="Reading your request..."
+              title="Reading your request…"
               subtitle="Understanding the brief, checking it against the approved dossier and each placement's specs."
               steps={intakeStepList}
               onDone={handleIntakeResearched}
@@ -532,7 +534,7 @@ export function AdsDirectionsScreen() {
 
           {planPhase === "plan" && stage === "building" && (
             <GenerationProgress
-              title="Building the campaign storyboard..."
+              title="Building the campaign storyboard…"
               subtitle={`Writing the video story and planning the image ads from your key message and the ${brandName} dossier.`}
               steps={buildSteps}
               onDone={handleCampaignBuilt}
@@ -606,7 +608,7 @@ export function AdsDirectionsScreen() {
             <>
               <div className="flex shrink-0 items-center justify-between pb-1">
                 <div>
-                  <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
+                  <h2 className="text-display font-[850] tracking-tight text-ink">Need Your Input</h2>
                   <p className="mt-0.5 text-body text-ink-3">Answer below to help us refine the ads for you.</p>
                 </div>
               </div>
@@ -664,7 +666,7 @@ export function AdsDirectionsScreen() {
                     for them and shows the extraction running. */}
                 <PlanSectionShell
                   icon={MessageSquareQuote}
-                  title="Key message & claims"
+                  title="Key Message and Claims"
                   summary={
                     extraction === "waiting"
                       ? "Add a source first. The key message and claims come from it"
@@ -682,15 +684,17 @@ export function AdsDirectionsScreen() {
                   onToggle={() => toggleSection("message")}
                 >
                   {extraction === "waiting" && (
-                    <div className="rounded-control border border-dashed border-hair-2 bg-canvas px-4 py-5 text-center">
-                      <p className="text-body font-bold text-ink-2">Waiting for your sources</p>
-                      <p className="mt-0.5 text-label text-ink-3">
-                        Use the evidence dossier or add files in Research and Sources. SwishX pulls the key message and approved claims from them.
-                      </p>
-                      <Button size="sm" variant="secondary" className="mt-3" onClick={() => setOpenSection("sources")}>
-                        Go to Research and Sources
-                      </Button>
-                    </div>
+                    <EmptyState
+                      tone="canvas"
+                      className="rounded-control py-5"
+                      title="Waiting for your sources"
+                      hint="Use the evidence dossier or add files in Research and Sources. SwishX pulls the key message and approved claims from them."
+                      action={
+                        <Button size="sm" variant="secondary" onClick={() => setOpenSection("sources")}>
+                          Go to Research and Sources
+                        </Button>
+                      }
+                    />
                   )}
                   {extraction === "extracting" && (
                     <div className="space-y-3" aria-live="polite">
@@ -711,7 +715,7 @@ export function AdsDirectionsScreen() {
                         A branded ad can only say what the Claims Library has approved. Add claims there, or make these ads unbranded.
                       </p>
                       <Button size="sm" variant="secondary" className="mt-2.5" onClick={() => changeBranding("unbranded")}>
-                        Make them help-seeking ads
+                        Make Them Help-Seeking Ads
                       </Button>
                     </div>
                   )}
@@ -729,7 +733,7 @@ export function AdsDirectionsScreen() {
                           Undo
                         </Button>
                         <Button size="sm" variant="secondary" onClick={handMessageToChat}>
-                          Add to chat
+                          Add to Chat
                         </Button>
                       </div>
                     ) : (
@@ -741,7 +745,7 @@ export function AdsDirectionsScreen() {
                         </p>
                         <Button size="sm" onClick={handMessageToChat} className="shrink-0 gap-1.5">
                           <LogoMark size={13} />
-                          Add to chat
+                          Add to Chat
                         </Button>
                       </div>
                     )
@@ -769,7 +773,7 @@ export function AdsDirectionsScreen() {
                 {/* 3. Audience and branding — answered at the start, changeable here. */}
                 <PlanSectionShell
                   icon={Users}
-                  title="Audience and branding"
+                  title="Audience and Branding"
                   summary={`${who === "HCP" ? "HCPs" : "Patients"}${who === "HCP" && specialities.length > 0 ? ` · ${specialityLabel(specialities)}` : ""} · ${branding.label}`}
                   state={planState(needsYou.audience)}
                   source="from project start"
@@ -800,7 +804,7 @@ export function AdsDirectionsScreen() {
                     {who === "HCP" && (
                       <DecisionRow
                         label="Specialty"
-                        value={specialities.length > 0 ? specialityLabel(specialities) : "Any specialty"}
+                        value={specialities.length > 0 ? specialityLabel(specialities) : "Any speciality"}
                         icon={<Stethoscope className="size-4" />}
                         editing={editingDecision === "speciality"}
                         onEdit={() => setEditingDecision(editingDecision === "speciality" ? null : "speciality")}
@@ -851,7 +855,7 @@ export function AdsDirectionsScreen() {
                     anything is written. */}
                 <PlanSectionShell
                   icon={ListChecks}
-                  title="Where it runs and what it makes"
+                  title="Where It Runs and What It Makes"
                   summary={`${adPlacements.length} placements · ${kept.length} ads · ${credits.toLocaleString()} credits`}
                   state={planState(needsYou.ads)}
                   source={mediaPlanName ? "from your media plan" : "suggested"}
@@ -923,11 +927,11 @@ export function AdsDirectionsScreen() {
                         <div className="rounded-panel border border-white/10 bg-[#121614] p-4 text-white shadow-md">
                           <div className="flex flex-col justify-between gap-2 border-b border-white/10 pb-2.5 sm:flex-row sm:items-center">
                             <div>
-                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Project budget</div>
+                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Project Budget</div>
                               <div className="text-subhead font-[850] text-white">⚡ {credits.toLocaleString()} credits</div>
                             </div>
                             <div className="text-label text-white/70">
-                              <span>Team balance: </span>
+                              <span>Team Balance: </span>
                               <strong className={cn("font-bold", over ? "text-warn-on-dark" : "text-ok-on-dark")}>{creditBalance.toLocaleString()} credits</strong>
                             </div>
                           </div>
@@ -940,7 +944,7 @@ export function AdsDirectionsScreen() {
                               Placements: <strong className="font-semibold text-white">{adPlacements.length}</strong>
                             </span>
                             <span>
-                              Estimated making time: <strong className="font-semibold text-white">~{videos ? "8–10" : "2–3"} min</strong>
+                              Estimated Making Time: <strong className="font-semibold text-white">~{videos ? "8–10" : "2–3"} min</strong>
                             </span>
                           </div>
                           {over && (
@@ -960,7 +964,7 @@ export function AdsDirectionsScreen() {
                 {makesVideo && (
                   <PlanSectionShell
                     icon={Mic2}
-                    title="Character, voice and sound"
+                    title="Character, Voice and Sound"
                     summary={`${adTreatment === "presenter" ? "Presenter-led" : "Narrated"} · ${castSummary(adTreatment, presenter, characters)} · ${language} · ${music}`}
                     state={planState(needsPresenter, adTreatment === "narrated" && characters.length === 0)}
                     open={openSection === "voice"}
@@ -994,7 +998,7 @@ export function AdsDirectionsScreen() {
                 {showsProduct && (
                   <PlanSectionShell
                     icon={ImageIcon}
-                    title="Product & Device Visual Assets"
+                    title="Product and Device Visual Assets"
                     summary={packshots.length > 0 ? `${packshots.length} packshot${packshots.length === 1 ? "" : "s"} attached` : "Packshots for the end card and key visual"}
                     state={planState(false, packshots.length === 0)}
                     open={openSection === "visuals"}
@@ -1003,7 +1007,7 @@ export function AdsDirectionsScreen() {
                     <div className="space-y-3">
                       <MediaAttachmentGrid
                         items={packshots.map((ps) => ({ id: ps.id, name: ps.name, note: ps.note, previewUrl: ps.url, kind: "image" as const, variation: ps.variation }))}
-                        uploadLabel={packshots.length === 0 ? "Upload product image" : "Add another"}
+                        uploadLabel={packshots.length === 0 ? "Upload Product Image" : "Add Another"}
                         uploadHint="PNG, JPG"
                         onUpload={() =>
                           setPendingPackshot([
@@ -1021,7 +1025,7 @@ export function AdsDirectionsScreen() {
                         if (reusable.length === 0) return null;
                         return (
                           <div>
-                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested From Platform</span>
                             <AssetStrip>
                               {reusable.map((asset) => (
                                 <MediaAssetTile
@@ -1047,7 +1051,7 @@ export function AdsDirectionsScreen() {
                       })()}
                     </div>
                     <PlanSectionContinue
-                      label={packshots.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                      label={packshots.length === 0 ? "Skip and Continue" : "Save and Continue"}
                       onClick={() => advanceFrom("visuals")}
                     />
                   </PlanSectionShell>
@@ -1056,7 +1060,7 @@ export function AdsDirectionsScreen() {
                 {/* 6. Visual & creative references — the look, never a claim. */}
                 <PlanSectionShell
                   icon={Palette}
-                  title="Visual & creative references"
+                  title="Visual and Creative References"
                   summary={references.length > 0 ? `${references.length} reference${references.length === 1 ? "" : "s"}` : "The look you are after"}
                   state={planState(false, references.length === 0)}
                   source={references.length > 0 ? `${references.length} attached` : undefined}
@@ -1069,7 +1073,7 @@ export function AdsDirectionsScreen() {
                     </p>
                     <MediaAttachmentGrid
                       items={references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl, kind: r.kind }))}
-                      uploadLabel={references.length === 0 ? "Upload a reference" : "Add another"}
+                      uploadLabel={references.length === 0 ? "Upload a Reference" : "Add Another"}
                       uploadHint="PNG, JPG, MP4, PDF, PPTX · a PDF or deck works for carousels, a page per card"
                       onUpload={() =>
                         setPendingReference([
@@ -1087,7 +1091,7 @@ export function AdsDirectionsScreen() {
                       if (reusable.length === 0) return null;
                       return (
                         <div>
-                          <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                          <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested From Platform</span>
                           <AssetStrip>
                             {reusable.map((asset) => (
                               <MediaAssetTile
@@ -1112,7 +1116,7 @@ export function AdsDirectionsScreen() {
                     })()}
                   </div>
                   <PlanSectionContinue
-                    label={references.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                    label={references.length === 0 ? "Skip and Continue" : "Save and Continue"}
                     onClick={() => advanceFrom("references")}
                   />
                 </PlanSectionShell>
@@ -1120,7 +1124,7 @@ export function AdsDirectionsScreen() {
                 {/* 7. Brand mark — the same section as the video plan. */}
                 <PlanSectionShell
                   icon={Stamp}
-                  title="Brand mark"
+                  title="Brand Mark"
                   summary={
                     adType === "unbranded"
                       ? "No logo. Help-seeking ads carry no brand mark"
@@ -1159,7 +1163,7 @@ export function AdsDirectionsScreen() {
                   onClick={confirmPlan}
                   className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep disabled:opacity-40"
                 >
-                  <span>Confirm Plan &amp; Build Storyboard</span>
+                  <span>Confirm Plan and Build Storyboard</span>
                   <ArrowRight className="ml-1.5 size-3.5" />
                 </Button>
               }
@@ -1169,15 +1173,7 @@ export function AdsDirectionsScreen() {
       }
       panel={
         <>
-          <div className="shrink-0 border-b border-hair bg-card p-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-body font-bold text-brand">
-                <LogoMark size={14} />
-                <span>Direct with SwishX</span>
-              </div>
-              <span className="rounded-chip bg-ok/15 px-2 py-0.5 text-micro font-bold text-ok">Online</span>
-            </div>
-          </div>
+          <PlanChatHeader />
 
           <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
             {chatMessages.map((msg, idx) => (
@@ -1252,7 +1248,7 @@ export function AdsDirectionsScreen() {
               value={chatInput}
               onChange={setChatInput}
               onSubmit={() => handleSendChat()}
-              placeholder="Ask SwishX or request a change to the plan..."
+              placeholder="Ask SwishX or request a change to the plan…"
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
             >
               <ChatAttachmentRow attachments={chatFiles} />

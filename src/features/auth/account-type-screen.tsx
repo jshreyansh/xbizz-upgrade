@@ -32,8 +32,8 @@ const TYPES: Array<{ id: AccountType; title: string; body: string; icon: LucideI
 
 const SECTORS: Array<{ id: Sector; icon: LucideIcon; hint: string }> = [
   { id: "Pharma", icon: Pill, hint: "Medicines" },
-  { id: "Biotech", icon: Dna, hint: "Biologics and Cell Therapies" },
-  { id: "Medtech", icon: Activity, hint: "Devices and Diagnostics" },
+  { id: "Biotech", icon: Dna, hint: "Biologics and cell therapies" },
+  { id: "Medtech", icon: Activity, hint: "Devices and diagnostics" },
 ];
 
 /** A small drawing for each type: a molecule for life sciences, two overlapping circles for an agency and its client. */

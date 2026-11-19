@@ -1,5 +1,6 @@
 "use client";
 
+import { PlanChatHeader } from "@/components/patterns/inspector-tabs";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { DevShapeMenuItems } from "@/features/workspace/dev-shape-menu";
 import {
@@ -122,18 +123,18 @@ type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" 
 /** One name per section, so the progress bar and the tiles agree. */
 const SECTION_TITLES: Record<PlanSectionId, string> = {
   sources: "Research and Sources",
-  treatment: "Creative treatment",
-  logo: "Brand mark",
-  "product-assets": "Product & Device Visual Assets",
-  references: "Visual & creative references",
-  message: "Message and audience",
-  delivery: "Delivery & Cost",
-  voice: "Voice and sound",
-  story: "Story structure",
+  treatment: "Creative Treatment",
+  logo: "Brand Mark",
+  "product-assets": "Product and Device Visual Assets",
+  references: "Visual and Creative References",
+  message: "Message and Audience",
+  delivery: "Delivery and Cost",
+  voice: "Voice and Sound",
+  story: "Story Structure",
 };
 
 // Destinations (parked): const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
-const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
+const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing and safety", "Patient impact"];
 
 
 /* Partial: the Ads plan is not built yet, so an ad falls back to the video profile. */
@@ -190,8 +191,8 @@ const profiles: Partial<Record<AssetType, {
     rationale: "A clear top-to-bottom information path makes the science understandable without becoming a dense scientific poster.",
     treatments: [
       { id: "guided", label: "Guided evidence hierarchy", description: "Move from context to mechanism, evidence and implication." },
-      { id: "process", label: "Process explanation", description: "Use a sequential scientific pathway as the organizing device." },
-      { id: "comparison", label: "Comparison", description: "Organize the content around two or more evidence states." },
+      { id: "process", label: "Process explanation", description: "Use a sequential scientific pathway as the organising device." },
+      { id: "comparison", label: "Comparison", description: "Organise the content around two or more evidence states." },
     ],
     units: [
       { title: "Headline", detail: "Primary communication message" },
@@ -265,10 +266,10 @@ function scriptBuildSteps(sceneCount: number): GenerationStep[] {
   const scenes: GenerationStep[] = [];
   for (let i = 1; i <= sceneCount; i += 1) {
     scenes.push({ label: `Wrote scene ${i} narration`, seconds: 0.34 });
-    scenes.push({ label: `Set scene ${i} visual direction & avoid list`, seconds: 0.28 });
+    scenes.push({ label: `Set scene ${i} visual direction and avoid list`, seconds: 0.28 });
   }
   return [
-    { label: "Parsed campaign brief & focus topics", seconds: 0.5 },
+    { label: "Parsed campaign brief and focus topics", seconds: 0.5 },
     { label: "Resolved audience, market and intended use", seconds: 0.4 },
     { label: "Opened the approved dossier", seconds: 0.5 },
     { label: "Indexed 214 approved claims", seconds: 0.6 },
@@ -800,7 +801,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * collapse everything to null and leave Product Assets to be found by hand.
    */
   /* In the order they are drawn. An order that disagrees with the markup
-     sends Save & Continue jumping back up the page — which is what putting
+     sends Save and Continue jumping back up the page — which is what putting
      the mark after the product assets here, while drawing it before them,
      had already started doing. */
   const sectionOrder: PlanSectionId[] = [
@@ -994,12 +995,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      */
     if (groundingBlocked) {
       setOpenSection("sources");
-      addChatMessage({ role: "user", text: "Confirm plan & build script" });
+      addChatMessage({ role: "user", text: "Confirm plan and build script" });
       addChatMessage({
         role: "swishx",
         text: requestTooVague
-          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job, who it is for and what it has to land, with **Edit the prompt**, in Research and Sources.`
-          : `I can't build a script yet, there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Edit the prompt** in Research and Sources to give me the context in words.`,
+          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job, who it is for and what it has to land, with **Edit the Prompt**, in Research and Sources.`
+          : `I can't build a script yet, there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Edit the Prompt** in Research and Sources to give me the context in words.`,
       });
       return;
     }
@@ -1011,11 +1012,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      * why only appears now, not when the plan was first laid out.
      */
     if (sourcesWillFail) {
-      addChatMessage({ role: "user", text: "Confirm plan & build script" });
+      addChatMessage({ role: "user", text: "Confirm plan and build script" });
       setVerifyingSources(true);
       addChatMessage({
         role: "swishx",
-        text: `Verifying the ${uploadedDocs.length} attached source${uploadedDocs.length === 1 ? "" : "s"} before writing anything...`,
+        text: `Verifying the ${uploadedDocs.length} attached source${uploadedDocs.length === 1 ? "" : "s"} before writing anything…`,
       });
 
       setTimeout(() => {
@@ -1025,7 +1026,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         setOpenSection("sources");
         addChatMessage({
           role: "swishx",
-          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script, they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Edit the prompt** in Research and Sources to supply the context directly.`,
+          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script, they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Edit the Prompt** in Research and Sources to supply the context directly.`,
         });
       }, 1400);
       return;
@@ -1039,12 +1040,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
     addChatMessage({
       role: "user",
-      text: "Confirm plan & build script",
+      text: "Confirm plan and build script",
     });
 
     addChatMessage({
       role: "swishx",
-      text: `Confirmed plan parameters for **${brandName}**. Structuring 5-scene clinical script and grounding against FDA approved claims...`,
+      text: `Confirmed plan parameters for **${brandName}**. Structuring 5-scene clinical script and grounding against FDA approved claims…`,
     });
   };
 
@@ -1052,7 +1053,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const handleScriptBuilt = () => {
     addChatMessage({
       role: "swishx",
-      text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
+      text: `Script and storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
     });
     setVideoSubStage("studio");
     setView("studio");
@@ -1080,7 +1081,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     if (intakeQuestions.length === 0) {
       addChatMessage({
         role: "swishx",
-        text: `I've laid the plan out on the left from your brief and the **${brandName}** dossier. It runs **${said.duration ?? duration}**${said.duration ? ", as the brief says" : ""}; change the length in **Delivery & Cost**, or tell me anything else to change.`,
+        text: `I've laid the plan out on the left from your brief and the **${brandName}** dossier. It runs **${said.duration ?? duration}**${said.duration ? ", as the brief says" : ""}; change the length in **Delivery and Cost**, or tell me anything else to change.`,
       });
       setPlanPhase("plan");
       setPlanLanded(false);
@@ -1237,7 +1238,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         ]);
         setOpenSection("product-assets");
         say(
-          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product & Device Visual Assets**, with your note against ${files.length === 1 ? "it" : "them"}.`
+          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product and Device Visual Assets**, with your note against ${files.length === 1 ? "it" : "them"}.`
         );
         return;
       }
@@ -1255,7 +1256,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         ]);
         setOpenSection("references");
         say(
-          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the treatment. No claim will ground in it.`
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual and Creative References**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the treatment. No claim will ground in it.`
         );
         return;
       }
@@ -1339,7 +1340,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               className="flex max-w-[240px] items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand cursor-pointer"
             >
               <Layers className="size-3 shrink-0 text-brand" />
-              <span className="truncate">{activeScenario?.label ?? "Choose use case"}</span>
+              <span className="truncate">{activeScenario?.label ?? "Choose Use Case"}</span>
               <ChevronDown className="size-3 shrink-0 opacity-60" />
             </button>
           </div>
@@ -1373,7 +1374,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           >
             {isGenerating ? (
               <GenerationProgress
-                title="Building the storyboard..."
+                title="Building the storyboard…"
                 subtitle="Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims."
                 steps={scriptBuildStepList}
                 onDone={handleScriptBuilt}
@@ -1382,7 +1383,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               /* Reading the request and whatever came with it — which is what
                  the questions are about, so the wait explains why it asks. */
               <GenerationProgress
-                title="Reading your request..."
+                title="Reading your request…"
                 subtitle={
                   briefAttachments.length
                     ? `Understanding the brief and checking what each of the ${briefAttachments.length} attached ${briefAttachments.length === 1 ? "file" : "files"} can ground.`
@@ -1407,7 +1408,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         Storyboard Parameters" described the machinery; the
                         person here is being asked some questions. */}
                     <h2 className="text-display font-[850] text-ink tracking-tight">
-                      Need your input
+                      Need Your Input
                     </h2>
                     <p className="text-body text-ink-3 mt-0.5">
                       Answer below to help us refine the storyboard for you.
@@ -1437,7 +1438,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </p>
                         <div className="mt-3">
                           <Button size="sm" variant="primary" onClick={openPromptEditor} className="text-label font-bold cursor-pointer">
-                            <Pencil className="size-3.5" /> Edit the prompt
+                            <Pencil className="size-3.5" /> Edit the Prompt
                           </Button>
                         </div>
                       </div>
@@ -1494,7 +1495,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {isMagicAvatar ? (
                     <PlanSection
                       icon={Mic2}
-                      title="Presenter, voice and sound"
+                      title="Presenter, Voice and Sound"
                       summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
                       state={planState(!presenter)}
                       open={openSection === "voice"}
@@ -1614,21 +1615,21 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           }}
                           className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
                         >
-                          {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
+                          {isProductFocus ? "Confirm Avatar and Proceed to Product Assets" : "Confirm Avatar and Continue"} <ArrowRight className="size-4 ml-1" />
                         </Button>
                       </div>
                     </PlanSection>
                   ) : (
                     <PlanSection
                       icon={Film}
-                      title="Creative treatment"
+                      title="Creative Treatment"
                       summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
                       state={planState(!confirmedTreatment)}
                       open={openSection === "treatment"}
                       onToggle={() => toggleSection("treatment")}
                     >
                       <div className="squircle rounded-panel bg-subtle px-4 py-3.5">
-                        <div className="text-body-lg font-semibold text-brand">Why this fits</div>
+                        <div className="text-body-lg font-semibold text-brand">Why This Fits</div>
                         <p className="mt-1 text-body-lg leading-5 text-ink-3">{profile.rationale}</p>
                       </div>
                       <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
@@ -1687,7 +1688,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {shows("logo") && (
                   <PlanSection
                     icon={Stamp}
-                    title="Brand mark"
+                    title="Brand Mark"
                     summary={
                       logoMark.position === "none"
                         ? "No logo. The asset ships unbranded"
@@ -1710,13 +1711,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {shows("product-assets") && (
                   <PlanSection
                     icon={PackageCheck}
-                    title="Product & Device Visual Assets"
+                    title="Product and Device Visual Assets"
                     summary={
                       productMediaList.length > 0
                         ? `${productMediaList.length} media attached · 3D packshots grounded`
                         : isProductFocus
                         ? "Required for Product Introduction · Please attach product photos/videos"
-                        : "Optional product packshots & 3D device renders"
+                        : "Optional product packshots and 3D device renders"
                     }
                     state={planState(sectionNeedsYou("product-assets"), sectionOptional("product-assets"))}
                     source={productMediaList.length > 0 ? `${productMediaList.length} attached` : undefined}
@@ -1726,7 +1727,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <div className="space-y-3.5">
                       <div className="rounded-control bg-canvas border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
                         <p className="font-bold text-ink mb-1">
-                          Product Packshots &amp; Device Reference Media
+                          Product Packshots and Device Reference Media
                         </p>
                         <p className="text-ink-3 text-body">
                           Packaging, delivery pen or MoA clips. Placed into the product scenes.
@@ -1744,7 +1745,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           variation: m.variation,
                         }))}
                         uploadLabel={
-                          productMediaList.length === 0 ? "Upload product photos / videos" : "Add more media"
+                          productMediaList.length === 0 ? "Upload Product Photos or Videos" : "Add More Media"
                         }
                         onUpload={() =>
                           /* Held, not attached: what the packshot is for is
@@ -1785,7 +1786,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         return (
                           <div>
                             <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                              Suggested from platform
+                              Suggested from Platform
                             </span>
                             <AssetStrip>
                               {reusable.map((asset) => (
@@ -1826,7 +1827,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         second button under it. The attach-if-empty behaviour it
                         carried is preserved here. */}
                     <PlanSectionContinue
-                      label={productMediaList.length === 0 ? "Attach & Continue" : "Save & Continue"}
+                      label={productMediaList.length === 0 ? "Attach and Continue" : "Save and Continue"}
                       onClick={() => {
                         if (productMediaList.length === 0) {
                           setProductMediaList([
@@ -1856,7 +1857,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {shows("references") && (
                   <PlanSection
                     icon={Palette}
-                    title="Visual & creative references"
+                    title="Visual and Creative References"
                     summary={
                       referenceList.length > 0
                         ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"}`
@@ -1881,7 +1882,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           previewUrl: r.previewUrl,
                           kind: r.kind,
                         }))}
-                        uploadLabel={referenceList.length === 0 ? "Upload a reference" : "Add another"}
+                        uploadLabel={referenceList.length === 0 ? "Upload a Reference" : "Add Another"}
                         onUpload={() =>
                           setPendingReference([
                             {
@@ -1913,7 +1914,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         return (
                           <div>
                             <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                              Suggested from platform
+                              Suggested from Platform
                             </span>
                             <AssetStrip>
                               {reusable.map((asset) => (
@@ -1946,7 +1947,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       })()}
                     </div>
                     <PlanSectionContinue
-                      label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                      label={referenceList.length === 0 ? "Skip and Continue" : "Save and Continue"}
                       onClick={() => advanceFrom("references")}
                     />
                   </PlanSection>
@@ -1955,7 +1956,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {/* 3. Message and Audience */}
                   <PlanSection
                     icon={Target}
-                    title="Message and audience"
+                    title="Message and Audience"
                     summary={`${audience}${audience === "HCP" && specialities.length > 0 ? ` · ${specialityLabel(specialities)}` : ""} · ${selectedTopics.length} topics`}
                     state={planState(sectionNeedsYou("message"))}
                     source="from brief"
@@ -1986,14 +1987,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           else there is nothing to narrow, so the row is not asked. */}
                       {audience === "HCP" && (
                         <DecisionRow
-                          label="Specialty"
+                          label="Speciality"
                           value={specialityLabel(specialities)}
                           icon={<Stethoscope className="size-4" />}
                           editing={editingDecision === "specialty"}
                           onEdit={() => setEditingDecision(editingDecision === "specialty" ? null : "specialty")}
                         >
                           <ChipChoices
-                            label="Narrow to a specialty (optional)"
+                            label="Narrow to a speciality (optional)"
                             options={HCP_SPECIALITIES}
                             values={specialities}
                             onToggle={(spec) =>
@@ -2047,7 +2048,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {/* 4. Delivery & Cost */}
                   <PlanSection
                     icon={MonitorPlay}
-                    title="Delivery & Cost"
+                    title="Delivery and Cost"
                     summary={`${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}`}
                     state={planState(sectionNeedsYou("delivery"))}
                     source={`${estimatedCredits.toLocaleString()} credits`}
@@ -2103,7 +2104,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
                       >
                         <SteppedControl
-                          label={assetType === "video" ? "Video length" : "Content amount"}
+                          label={assetType === "video" ? "Video Length" : "Content Amount"}
                           value={duration}
                           options={profile.lengthOptions}
                           onChange={setDuration}
@@ -2140,7 +2141,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 </span>
                               </div>
                               <p className="text-label leading-snug text-ink-3">
-                                Lifelike motion that stops the scroll, ideal for launches &amp; HCP presentations.
+                                Lifelike motion that stops the scroll, ideal for launches and HCP presentations.
                               </p>
                             </div>
                             <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-hair text-caption text-ink-3">
@@ -2227,7 +2228,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {shows("voice") && assetType === "video" && (
                     <PlanSection
                       icon={Mic2}
-                      title="Character, voice and sound"
+                      title="Character, Voice and Sound"
                       summary={`${castSummary(needsPresenter ? "presenter" : "narrated", presenter, storyCharacters)} · ${language} · ${music}`}
                       state={planState(sectionNeedsYou("voice"))}
                       open={openSection === "voice"}
@@ -2316,7 +2317,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   {/* 7. Story Structure */}
                   <PlanSection
                     icon={LayoutList}
-                    title="Story structure"
+                    title="Story Structure"
                     summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
                     state={planState(sectionNeedsYou("story"))}
                     source={derivedPlan.followsSuppliedScript ? "from your script" : "recommended"}
@@ -2369,7 +2370,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                       )}
                     >
-                      <span>Confirm Plan &amp; Build Script</span>
+                      <span>Confirm Plan and Build Script</span>
                       <ArrowRight className="size-3.5 ml-1.5" />
                     </Button>
                   }
@@ -2380,18 +2381,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       }
       panel={
         <>
-          {/* Chat Top Online Banner */}
-          <div className="p-3.5 border-b border-hair bg-card shrink-0">
-            <div className="rounded-control border border-brand/20 bg-tint p-2.5">
-              <div className="flex items-center gap-2 text-label font-bold text-brand-deep">
-                <LogoMark size={14} className="text-brand" />
-                <span>Direct with SwishX</span>
-                <span className="ml-auto rounded-chip bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
-                  {isGenerating ? "Synthesizing..." : "Online"}
-                </span>
-              </div>
-            </div>
-          </div>
+          <PlanChatHeader busy={isGenerating} />
 
           {/* Chat Messages Thread */}
           <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
@@ -2428,9 +2418,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     planPhase === "plan" && (
                     <div className="mt-2.5 pt-2 border-t border-hair flex flex-wrap gap-1.5">
                       {[
-                        "Switch to 9:16 Portrait",
-                        "Elevate MoA in Scene 2",
-                        "Add Dr. Maya Presenter",
+                        "Switch to 9:16 portrait",
+                        "Elevate MoA in scene 2",
+                        "Add Dr. Maya as presenter",
                         "Shorten to 45 seconds",
                       ].map((chip) => (
                         <button
@@ -2466,7 +2456,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     {isPlanReady ? "Ready to generate script" : "Review plan parameters"}
                   </div>
                   <div className="text-micro text-ink-3 truncate">
-                    {isPlanReady ? "Grounded against 214 approved claims" : "Confirm creative & assets"}
+                    {isPlanReady ? "Grounded against 214 approved claims" : "Confirm creative and assets"}
                   </div>
                 </div>
               </div>
@@ -2482,7 +2472,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     : "bg-black/10 text-black/40 cursor-not-allowed"
                 )}
               >
-                <span>Confirm Plan &amp; Build Script</span>
+                <span>Confirm Plan and Build Script</span>
                 <ArrowRight className="size-3 ml-1" />
               </Button>
             </div>
@@ -2501,7 +2491,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               onChange={setChatInput}
               onSubmit={handleSendChatMessage}
               disabled={isGenerating}
-              placeholder={isGenerating ? "Generating scenes..." : "Ask SwishX or request a change to the plan..."}
+              placeholder={isGenerating ? "Generating scenes…" : "Ask SwishX or request a change to the plan…"}
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
             >
               {/* The files on this message, above the field they were added
@@ -2639,12 +2629,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                file, and walking back to the brief screen to do it would throw
                away everything already decided on this one. */
             <Portal>
-            <div className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Edit prompt">
+            <div className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Edit Prompt">
               <div className="rise-in w-full max-w-[620px] overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
                 <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-6 py-4">
                   <div>
-                    <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">Your request</div>
-                    <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">Edit the prompt</h2>
+                    <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">Your Request</div>
+                    <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">Edit the Prompt</h2>
                     <p className="mt-0.5 text-body text-ink-3">
                       Add what is missing. The plan re-reads against it.
                     </p>
@@ -2665,7 +2655,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onChange={(e) => setPromptDraft(e.target.value)}
                     rows={7}
                     autoFocus
-                    placeholder="Describe the asset, the audience, and the evidence it should rest on..."
+                    placeholder="Describe the asset, the audience, and the evidence it should rest on…"
                     className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-3.5 text-body-lg leading-relaxed text-ink transition-all focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
                   />
                   <p className="mt-2 text-label text-ink-3">
@@ -2684,7 +2674,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     disabled={!promptDraft.trim()}
                     className="gap-2 px-5 font-bold text-body cursor-pointer disabled:opacity-40"
                   >
-                    <span>Save &amp; re-read plan</span>
+                    <span>Save and Re-Read Plan</span>
                     <ArrowRight className="size-3.5" />
                   </Button>
                 </div>
@@ -2696,7 +2686,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <ScenarioDrawer
               currentScenarioId={demoScenarioId}
               assetType={assetType}
-              title="Use cases"
+              title="Use Cases"
               onSelect={loadUseCase}
               onReset={() => {
                 const fallback = demoScenarios.find((s) => s.id === defaultDemoScenarioId) ?? demoScenarios[0];
@@ -2907,7 +2897,7 @@ function structureDescription(option: string) {
   if (option.includes("Proof")) return "Lead with the clinical need, then prove the efficacy.";
   if (option.includes("Solution")) return "Establish problem states, then introduce product value.";
   if (option.includes("Evidence")) return "Focus on dual inhibition pathway and clinical study outcomes.";
-  return "Organized around clear narrative chapters.";
+  return "Organised around clear narrative chapters.";
 }
 
 function SourceManager({
@@ -2926,7 +2916,7 @@ function SourceManager({
         <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
           <div>
             <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
-            <h2 className="mt-1 text-display font-bold tracking-tight">Verified evidence citations</h2>
+            <h2 className="mt-1 text-display font-bold tracking-tight">Verified Evidence Citations</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />

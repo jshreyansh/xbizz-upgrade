@@ -49,7 +49,7 @@ export function Step5ScenesTimeline() {
             Visual Director
           </button>
           <button style={{ color: "var(--ink-3)", fontWeight: 650, fontSize: 13, height: "100%", padding: "0 4px" }}>
-            Narration &amp; Overlays
+            Narration and Overlays
           </button>
           <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--ink-4)" }}>
             {scenes.length} scenes · 142 wpm cadence
@@ -115,7 +115,7 @@ export function Step5ScenesTimeline() {
                   disabled={activeSceneIndex === 0}
                   style={{ fontSize: 12.5, color: activeSceneIndex === 0 ? "var(--ink-4)" : "var(--brand)", fontWeight: 700, cursor: "pointer" }}
                 >
-                  ◀ Prev scene
+                  ◀ Previous Scene
                 </button>
                 <span style={{ color: "var(--hair-3)" }}>·</span>
                 <button
@@ -123,7 +123,7 @@ export function Step5ScenesTimeline() {
                   disabled={activeSceneIndex === scenes.length - 1}
                   style={{ fontSize: 12.5, color: activeSceneIndex === scenes.length - 1 ? "var(--ink-4)" : "var(--brand)", fontWeight: 700, cursor: "pointer" }}
                 >
-                  Next scene ▶
+                  Next Scene ▶
                 </button>
               </div>
             </div>
@@ -144,7 +144,7 @@ export function Step5ScenesTimeline() {
             {/* Visual Prompt */}
             <div>
               <label style={{ display: "block", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                🖼 Visual prompt
+                🖼 Visual Prompt
               </label>
               <textarea
                 value={curScene.visualPrompt}
@@ -157,7 +157,7 @@ export function Step5ScenesTimeline() {
             {/* Negative Prompt */}
             <div>
               <label style={{ display: "block", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                🚫 Negative prompt
+                🚫 Negative Prompt
               </label>
               <textarea
                 value={curScene.negativePrompt}
@@ -170,7 +170,7 @@ export function Step5ScenesTimeline() {
             {/* On-screen text */}
             <div>
               <label style={{ display: "block", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
-                T On-screen text (burned overlay)
+                T On-Screen Text (Burned Overlay)
               </label>
               <div style={{ display: "flex", gap: 10 }}>
                 <input
@@ -201,7 +201,7 @@ export function Step5ScenesTimeline() {
           </div>
           <div style={{ display: "flex", gap: 6, height: 44 }}>
             <div style={{ flex: "0 0 54px", background: "rgba(10,13,20,.08)", borderRadius: 6, display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>
-              INTRO
+              Intro
             </div>
             {scenes.map((sc, i) => (
               <button
@@ -230,7 +230,7 @@ export function Step5ScenesTimeline() {
               ISI
             </div>
             <div style={{ flex: "0 0 54px", background: "rgba(10,13,20,.08)", borderRadius: 6, display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>
-              OUTRO
+              Outro
             </div>
           </div>
         </div>
@@ -298,7 +298,7 @@ export function Step5ScenesTimeline() {
             cursor: "pointer",
           }}
         >
-          Continue to generate
+          Continue to Generate
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

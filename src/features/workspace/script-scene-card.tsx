@@ -164,7 +164,7 @@ export function CitationPill({
               onClick={(e) => e.stopPropagation()}
               className="mt-2 flex items-center justify-center gap-1.5 rounded-glyph border border-hair-2 bg-subtle px-2 py-1.5 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand cursor-pointer"
             >
-              <span>View source</span>
+              <span>View Source</span>
               <ExternalLink className="size-3" />
             </a>
           )}

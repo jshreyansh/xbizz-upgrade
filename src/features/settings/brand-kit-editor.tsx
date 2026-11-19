@@ -27,11 +27,11 @@ import { cn } from "@/lib/cn";
  * if the preview sits on the ground the slot is FOR.
  */
 const SLOTS: { id: LogoSlot; label: string; hint: string; ground: "light" | "dark"; accepts: string }[] = [
-  { id: "lockup-light", label: "Full lockup",  hint: "Documents, leave-behinds, light scenes", ground: "light", accepts: "SVG, PNG" },
-  { id: "lockup-dark",  label: "Full lockup",  hint: "Video scenes, dark overlays",            ground: "dark",  accepts: "SVG, PNG" },
-  { id: "mark-light",   label: "Mark only",    hint: "Corners, watermarks, tight spaces",      ground: "light", accepts: "SVG, PNG" },
-  { id: "mark-dark",    label: "Mark only",    hint: "Video corner bug",                       ground: "dark",  accepts: "SVG, PNG" },
-  { id: "animated",     label: "Animated logo", hint: "Intro and outro stings",                ground: "dark",  accepts: "MP4, WebM, Lottie" },
+  { id: "lockup-light", label: "Full Lockup",  hint: "Documents, leave-behinds, light scenes", ground: "light", accepts: "SVG, PNG" },
+  { id: "lockup-dark",  label: "Full Lockup",  hint: "Video scenes, dark overlays",            ground: "dark",  accepts: "SVG, PNG" },
+  { id: "mark-light",   label: "Mark Only",    hint: "Corners, watermarks, tight spaces",      ground: "light", accepts: "SVG, PNG" },
+  { id: "mark-dark",    label: "Mark Only",    hint: "Video corner bug",                       ground: "dark",  accepts: "SVG, PNG" },
+  { id: "animated",     label: "Animated Logo", hint: "Intro and outro stings",                ground: "dark",  accepts: "MP4, WebM, Lottie" },
   { id: "favicon",      label: "Favicon",      hint: "Shared links, published pages",          ground: "light", accepts: "SVG, PNG 512²" },
 ];
 

@@ -173,9 +173,9 @@ export function NarrationPlayer({ scenes, voice }: { scenes: Scene[]; voice: str
   const [voiceName, voiceStyle] = voice.split("·").map((s) => s.trim());
 
   return (
-    <section aria-label="Full narration" className="@container pb-5">
+    <section aria-label="Full Narration" className="@container pb-5">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pb-2.5">
-        <h3 className="text-subhead font-[850] tracking-tight text-ink">Full narration</h3>
+        <h3 className="text-subhead font-[850] tracking-tight text-ink">Full Narration</h3>
         <span className="text-label text-ink-3">
           {voiceName}
           {voiceStyle ? ` · ${voiceStyle}` : ""} · {spans.length} scenes · {clock(total)}

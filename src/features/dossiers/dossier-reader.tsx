@@ -399,7 +399,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
                     {sec.content.split("\n\n").map((para, i) => (
                       <p key={i} style={{ marginBottom: 18 }}>
                         {para}{" "}
-                        <CitationPill citations={citationFor(i)} onDetails={openClaimInRail} detailsLabel="All claims" />
+                        <CitationPill citations={citationFor(i)} onDetails={openClaimInRail} detailsLabel="All Claims" />
                       </p>
                     ))}
 
@@ -425,7 +425,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
                           {sub.content.split("\n\n").map((para, j) => (
                             <p key={j} style={{ marginBottom: 18 }}>
                               {para}{" "}
-                              <CitationPill citations={citationFor(offset + j)} onDetails={openClaimInRail} detailsLabel="All claims" />
+                              <CitationPill citations={citationFor(offset + j)} onDetails={openClaimInRail} detailsLabel="All Claims" />
                             </p>
                           ))}
                         </section>
@@ -471,7 +471,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
                     disabled={secIndex === 0}
                     style={{ fontSize: 12.5, fontWeight: 700, color: secIndex === 0 ? "var(--ink-4)" : "var(--ink-2)", cursor: secIndex === 0 ? "default" : "pointer" }}
                   >
-                    ← Previous section
+                    ← Previous Section
                   </button>
                   <span style={{ fontSize: 11.5, color: "var(--ink-4)", fontWeight: 650 }}>
                     Page {secIndex + 1} of {activeDossier.sections.length}
@@ -481,7 +481,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
                     disabled={secIndex === activeDossier.sections.length - 1}
                     style={{ fontSize: 12.5, fontWeight: 700, color: secIndex === activeDossier.sections.length - 1 ? "var(--ink-4)" : "var(--ink-2)", cursor: secIndex === activeDossier.sections.length - 1 ? "default" : "pointer" }}
                   >
-                    Next section →
+                    Next Section →
                   </button>
                 </div>
               </div>
@@ -507,7 +507,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "14px 16px", borderBottom: "1px solid var(--hair)" }}>
                 <div>
                   <span style={{ display: "block", fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-4)" }}>
-                    Cited claims
+                    Cited Claims
                   </span>
                   <b style={{ fontSize: 13.5, fontWeight: 800 }}>{sectionClaims.length} in this section</b>
                 </div>
@@ -562,7 +562,7 @@ export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossie
                           style={{ marginTop: 7, fontSize: 11.5, fontWeight: 700 }}
                           className="inline-flex cursor-pointer items-center gap-1 text-brand transition-colors hover:text-brand-deep"
                         >
-                          View source
+                          View Source
                           <ExternalLink className="size-3" />
                         </a>
                       )}

@@ -19,6 +19,7 @@ import {
   Lock,
   MessageCircle,
   MessageSquare,
+  MessageSquareQuote,
   Package,
   PanelRight,
   Pencil,
@@ -64,7 +65,7 @@ import { ReviewComments } from "@/features/workspace/review-comments";
 import type { AssetComment } from "@/features/workspace/asset-comments";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { AdsPreviewGallery, GalleryFilm, GalleryPager, type GalleryGroup } from "@/features/workspace/ads-preview-gallery";
-import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, InspectorTabStrip, ReadOnlyChatNote } from "@/components/patterns/inspector-tabs";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
@@ -122,6 +123,7 @@ import {
   type StillSize,
   type VideoShape,
 } from "@/features/workspace/ad-frames";
+import { Chip } from "@/components/ui/chip";
 
 /**
  * The Ads studio: every ad the campaign makes, edited in one place.
@@ -135,7 +137,7 @@ import {
  * shot's footage, the packshot — and the panel beside it is the chat and the
  * approved claims, nothing else.
  *
- * "Edit once, update every size" is on by default: a change to the 16:9 is a
+ * "Edit Once, Update Every Size" is on by default: a change to the 16:9 is a
  * change to the 9:16 and 1:1 too. Turned off, a change stays in the size it
  * was made in, and that size is marked as edited.
  */
@@ -186,10 +188,10 @@ const PART_ICON: Record<string, LucideIcon> = {
 };
 
 const CORNERS: Array<{ id: LogoCorner; icon: LucideIcon; label: string }> = [
-  { id: "tl", icon: ArrowUpLeft, label: "Top left" },
-  { id: "tr", icon: ArrowUpRight, label: "Top right" },
-  { id: "bl", icon: ArrowDownLeft, label: "Bottom left" },
-  { id: "br", icon: ArrowDownRight, label: "Bottom right" },
+  { id: "tl", icon: ArrowUpLeft, label: "Top Left" },
+  { id: "tr", icon: ArrowUpRight, label: "Top Right" },
+  { id: "bl", icon: ArrowDownLeft, label: "Bottom Left" },
+  { id: "br", icon: ArrowDownRight, label: "Bottom Right" },
 ];
 
 
@@ -592,7 +594,7 @@ export function AdsStudioScreen() {
   const accounts = [...new Set(adPlacements.map((id) => AD_PLACEMENTS.find((p) => p.id === id)?.account))];
   const approvals = [
     accounts.includes("Google Ads") && "Google pharmaceutical certification",
-    accounts.includes("Meta Ads") && "Meta prescription drug authorization",
+    accounts.includes("Meta Ads") && "Meta prescription drug authorisation",
     accounts.includes("TikTok Ads") && "TikTok proof of FDA approval",
     accounts.includes("LinkedIn Ads") && "LinkedIn healthcare ad policy",
   ].filter(Boolean) as string[];
@@ -722,8 +724,8 @@ export function AdsStudioScreen() {
       });
     } else if (part === "footage") {
       items = [
-        { key: "replace", node: <ToolButton icon={Upload} label="Replace clip" onClick={() => showToast("Pick a clip from the brand library or upload one")} /> },
-        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate video" onClick={() => setRegenShot(true)} /> },
+        { key: "replace", node: <ToolButton icon={Upload} label="Replace Clip" onClick={() => showToast("Pick a clip from the brand library or upload one")} /> },
+        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate Video" onClick={() => setRegenShot(true)} /> },
         toolbarDivider("d1"),
         {
           key: "shot",
@@ -736,13 +738,13 @@ export function AdsStudioScreen() {
       ];
     } else if (part === "picture") {
       items = [
-        { key: "replace", node: <ToolButton icon={Upload} label="Replace image" onClick={() => showToast("Pick an image from the brand library or upload one")} /> },
-        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate image" onClick={() => setRegenPicture(selected)} /> },
+        { key: "replace", node: <ToolButton icon={Upload} label="Replace Image" onClick={() => showToast("Pick an image from the brand library or upload one")} /> },
+        { key: "regenerate", node: <ToolButton icon={RefreshCw} label="Regenerate Image" onClick={() => setRegenPicture(selected)} /> },
       ];
     } else if (part === "packshot") {
       items = [
         { key: "approved", node: <ToolNote icon={BadgeCheck} tone="ok">Approved packshot</ToolNote> },
-        { key: "replace", node: <ToolButton icon={Upload} label="Swap packshot" onClick={() => showToast("Pick another approved packshot from the brand library")} /> },
+        { key: "replace", node: <ToolButton icon={Upload} label="Swap Packshot" onClick={() => showToast("Pick another approved packshot from the brand library")} /> },
       ];
     } else if (part === "logo") {
       items = owner.startsWith("scene:")
@@ -784,7 +786,7 @@ export function AdsStudioScreen() {
           node: (
             <ToolButton
               icon={BarChart3}
-              label="Edit data"
+              label="Edit Data"
               onClick={() => handToChat({ id: selected, label: `Scene ${scene.number} · Chart`, detail: scene.graph?.title ?? "Chart" }, "Change the chart so that ")}
             />
           ),
@@ -887,7 +889,7 @@ export function AdsStudioScreen() {
             <LayoutGrid className="size-4" />
           </span>
           <span className="min-w-0">
-            <span className="block text-label font-bold text-ink">All ads</span>
+            <span className="block text-label font-bold text-ink">All Ads</span>
             <span className="block truncate text-micro text-ink-3">Every ad at its real size</span>
           </span>
         </button>
@@ -895,7 +897,7 @@ export function AdsStudioScreen() {
         {hasVideo &&
           railItem({
             item: "video",
-            label: "Video story",
+            label: "Video Story",
             sub: `${story.reduce((s, sc) => s + sc.duration, 0)} sec · ${story.length} scenes · ${videoShapes.length} ${videoShapes.length === 1 ? "size" : "sizes"}`,
             ready: itemReady.video,
             thumb: (
@@ -937,7 +939,7 @@ export function AdsStudioScreen() {
         {hasImage &&
           railItem({
             item: "image",
-            label: "Image ad",
+            label: "Image Ad",
             sub: [...stillShapes, ...(hasBanners ? [`${BANNER_SIZES.length} banners`] : [])].join(" · "),
             ready: itemReady.image,
             thumb: (
@@ -951,7 +953,7 @@ export function AdsStudioScreen() {
           searchPlan &&
           railItem({
             item: "search",
-            label: "Search ad",
+            label: "Search Ad",
             sub: `${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`,
             ready: itemReady.search,
             thumb: <TextCursorInput className="size-4 text-ink-3" />,
@@ -1091,7 +1093,7 @@ export function AdsStudioScreen() {
           </OverviewGroup>
         )}
         {hasImage && (
-          <OverviewGroup title="Image ad">
+          <OverviewGroup title="Image Ad">
             {imageSizes.map((size) => {
               const box = STILL_SIZE[size];
               const ratio = box.w / box.h;
@@ -1108,8 +1110,8 @@ export function AdsStudioScreen() {
           </OverviewGroup>
         )}
         {hasSearch && searchPlan && (
-          <OverviewGroup title="Search ad · Google">
-            <OverviewTile label="Search ad" sub={`${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`} onOpen={() => openAd("search")}>
+          <OverviewGroup title="Search Ad · Google">
+            <OverviewTile label="Search Ad" sub={`${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`} onOpen={() => openAd("search")}>
               <span className="block w-[420px] max-w-full p-2">
                 <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, 0)} />
               </span>
@@ -1159,7 +1161,7 @@ export function AdsStudioScreen() {
         {label}
       </label>
     );
-  const editOnceToggle = barToggle(editOnce, setEditOnce, "Edit once, update every size");
+  const editOnceToggle = barToggle(editOnce, setEditOnce, "Edit Once, Update Every Size");
 
   /* ── Full preview: the whole story, scene after scene ── */
   const chapters = story.reduce<Array<{ id: string; number: number; title: string; start: number; duration: number }>>(
@@ -1218,7 +1220,7 @@ export function AdsStudioScreen() {
           >
             <ArrowLeft className="size-3.5" />
           </button>
-          {barTitle("Full preview")}
+          {barTitle("Full Preview")}
           {barNote(`${filmLength} sec · ${story.length} scenes · ${videoShape}`)}
           <span className="ml-auto" />
           {shapeSwitch}
@@ -1265,7 +1267,7 @@ export function AdsStudioScreen() {
                   onClick={closeFullPreview}
                   className="ml-auto shrink-0 cursor-pointer rounded-glyph border border-white/20 px-2.5 py-1 text-caption font-bold text-white/80 transition hover:border-white/40 hover:text-white"
                 >
-                  Back to editing
+                  Back to Editing
                 </button>
               </div>
             </div>
@@ -1287,7 +1289,7 @@ export function AdsStudioScreen() {
             className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph border border-brand/30 bg-tint px-2.5 py-1 text-caption font-extrabold text-brand-deep shadow-2xs transition hover:border-brand hover:bg-brand hover:text-white"
           >
             <Play className="size-3 fill-current" />
-            Full preview
+            Full Preview
           </button>
           {videoShapes.length > 1 && editOnceToggle}
         </>
@@ -1336,7 +1338,7 @@ export function AdsStudioScreen() {
       {canvasBar(
         <>
           {barTitle(imageSize === masterSize ? `Master · ${imageSize}` : imageSize)}
-          {barNote(lookNote ?? `Template: ${imageTemplate?.name ?? "Full picture, words on top"}`)}
+          {barNote(lookNote ?? `Template: ${imageTemplate?.name ?? "Full Picture, Words on Top"}`)}
           <span className="ml-auto" />
           {editOnceToggle}
         </>
@@ -1391,9 +1393,9 @@ export function AdsStudioScreen() {
       {canvasBar(
         <>
           {barTitle(`Card ${cardIndex + 1} of ${cards.length} · ${card.role}`)}
-          {barNote(lookNote ?? `Template: ${carouselTemplate?.name ?? "Picture, then words"}`)}
+          {barNote(lookNote ?? `Template: ${carouselTemplate?.name ?? "Picture, Then Words"}`)}
           <span className="ml-auto" />
-          {barToggle(sameLook, setSameLook, "Same look on every card")}
+          {barToggle(sameLook, setSameLook, "Same Look on Every Card")}
         </>
       )}
       <div className="relative flex min-h-0 flex-1 flex-col" onClick={() => setSelected(null)}>
@@ -1431,10 +1433,10 @@ export function AdsStudioScreen() {
       {canvasBar(
         <>
           {barTitle(`Page ${pageIndex + 1} of ${pages.length} · ${page.role}`)}
-          {barNote(lookNote ?? `Template: ${documentTemplate?.name ?? "Clinical summary"}`)}
+          {barNote(lookNote ?? `Template: ${documentTemplate?.name ?? "Clinical Summary"}`)}
           {page.claimId && barNote(`Written from ${page.claimId}`)}
           <span className="ml-auto" />
-          {barToggle(sameLook, setSameLook, "Same look on every page")}
+          {barToggle(sameLook, setSameLook, "Same Look on Every Page")}
         </>
       )}
       <div className="relative flex min-h-0 flex-1 flex-col" onClick={() => setSelected(null)}>
@@ -1466,11 +1468,11 @@ export function AdsStudioScreen() {
     <>
       {canvasBar(
         <>
-          {barTitle("Search ad")}
+          {barTitle("Search Ad")}
           {barNote(`When someone searches "${searchPlan.query}"`)}
           <span className="ml-auto" />
           <Button size="sm" variant="secondary" onClick={() => setSearchCombo((n) => n + 1)} className="h-7 shrink-0 px-2.5 text-caption">
-            Show another combination
+            Show Another Combination
           </Button>
         </>
       )}
@@ -1497,7 +1499,7 @@ export function AdsStudioScreen() {
           <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="search.d" selected={selected} onSelect={setSelected} />
         </div>
         <div className="mx-auto max-w-[960px] rounded-card border border-hair bg-card p-4" onClick={(e) => e.stopPropagation()}>
-          <p className="mb-2 text-label font-bold text-ink-2">Checked against every combination</p>
+          <p className="mb-2 text-label font-bold text-ink-2">Checked Against Every Combination</p>
           <SearchChecks checks={searchPlan.checks} />
         </div>
       </div>
@@ -1513,7 +1515,7 @@ export function AdsStudioScreen() {
             items: [
               {
                 key: "video",
-                label: "Video story",
+                label: "Video Story",
                 sub: `${story.length} scenes · ${sizeWords(videoShapes)}`,
                 thumb: (
                   <Scaled w={VIDEO_SIZE[railThumbShape].w} h={VIDEO_SIZE[railThumbShape].h} width={railThumbShape === "16:9" ? 220 : 110}>
@@ -1529,7 +1531,7 @@ export function AdsStudioScreen() {
     ...(hasImage
       ? [
           {
-            title: "Image ad",
+            title: "Image Ad",
             items: imageSizes.map((size) => {
               const box = STILL_SIZE[size];
               const ratio = box.w / box.h;
@@ -1619,11 +1621,11 @@ export function AdsStudioScreen() {
     ...(searchPlan
       ? [
           {
-            title: "Search ad · Google",
+            title: "Search Ad · Google",
             items: [
               {
                 key: "search",
-                label: "Search ad",
+                label: "Search Ad",
                 sub: `${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`,
                 thumb: (
                   <span className="block w-[300px] p-2">
@@ -1654,19 +1656,19 @@ export function AdsStudioScreen() {
   const toolbar =
     focus === "search" && !submitted && !toolbarSelection ? (
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
-        <span className="text-label font-bold text-ink">Search ad</span>
+        <span className="text-label font-bold text-ink">Search Ad</span>
         <span className="text-label text-ink-3">Select a headline or description to pin it or rewrite it.</span>
       </div>
     ) : submitted ? (
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
-        <span className="shrink-0 text-label font-bold text-ink">Shared review</span>
+        <span className="shrink-0 text-label font-bold text-ink">Shared Review</span>
         <span className="truncate text-label text-ink-3">
           {selected ? `Commenting on ${commentAt}. Write it in Comments.` : "Open any ad and select a part of it to pin a comment there."}
         </span>
       </div>
     ) : focus === "all" ? (
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
-        <span className="text-label font-bold text-ink">All ads</span>
+        <span className="text-label font-bold text-ink">All Ads</span>
         <span className="text-label text-ink-3">
           {`${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes · ${allReady ? "all ready" : `${readyCount} of ${outputs.length} ready`} · open one to edit it`}
         </span>
@@ -1686,28 +1688,31 @@ export function AdsStudioScreen() {
       />
     );
 
-  /* ── The panel: chat and claims while editing; comments and claims on the review ── */
-  const tab: PanelTab = submitted && panelTab === "assistant" ? "comments" : panelTab;
+  /* ── The panel: Chat · Claims · Comments, in the editor and on the review.
+     Chat is read-only on the review; Comments turns on once published. ── */
+  const commentsOn = publishedCount > 0;
+  const tab: PanelTab = !commentsOn && panelTab === "comments" ? "assistant" : panelTab;
   const openComments = comments.filter((c) => c.status === "open").length;
   const panel = (
     <>
-      <div className="border-b border-hair bg-subtle p-2.5">
-        <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
-          {!submitted && (
-            <InspectorTabButton tab="assistant" current={tab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
-              Chat
-            </InspectorTabButton>
-          )}
-          {(submitted || comments.length > 0) && (
-            <InspectorTabButton tab="comments" current={tab} onClick={setPanelTab} icon={MessageSquare} count={openComments}>
-              Comments
-            </InspectorTabButton>
-          )}
-          <InspectorTabButton tab="evidence" current={tab} onClick={setPanelTab} icon={ShieldCheck} count={allClaims.length}>
-            Claims
-          </InspectorTabButton>
-        </div>
-      </div>
+      <InspectorTabStrip>
+        <InspectorTabButton tab="assistant" current={tab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
+          Chat
+        </InspectorTabButton>
+        <InspectorTabButton tab="evidence" current={tab} onClick={setPanelTab} icon={ShieldCheck} count={allClaims.length}>
+          Claims
+        </InspectorTabButton>
+        <InspectorTabButton
+          tab="comments"
+          current={tab}
+          onClick={setPanelTab}
+          icon={MessageSquareQuote}
+          count={openComments}
+          disabledHint={commentsOn ? undefined : "Comments turn on once it's published and shared"}
+        >
+          Comments
+        </InspectorTabButton>
+      </InspectorTabStrip>
 
       {tab === "comments" ? (
         <ReviewComments
@@ -1731,6 +1736,7 @@ export function AdsStudioScreen() {
         />
       ) : tab === "assistant" ? (
         <div className="flex min-h-0 flex-1 flex-col">
+          {submitted && <ReadOnlyChatNote />}
           <div className="flex items-center gap-2 border-b border-hair bg-tint px-3.5 py-2 text-label font-bold text-brand-deep">
             <MessageSquare className="size-3.5 shrink-0" />
             <span className="truncate">{scopeLabel}</span>
@@ -1744,7 +1750,7 @@ export function AdsStudioScreen() {
                 <div className="max-w-[85%] space-y-2">
                   <div className={cn("rounded-panel p-3 text-body leading-relaxed", msg.role === "user" ? "rounded-tr-xs bg-brand text-white" : "rounded-tl-xs border border-hair bg-subtle text-ink")}>
                     <FormattedMessageText text={msg.text} />
-                    <ChatChips chips={msg.chips} onPick={(chip) => handleSendChat(chip)} />
+                    {!submitted && <ChatChips chips={msg.chips} onPick={(chip) => handleSendChat(chip)} />}
                   </div>
                   {msg.role === "swishx" && idx === chatMessages.length - 1 && !submitted && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
@@ -1765,22 +1771,23 @@ export function AdsStudioScreen() {
             ))}
             <div ref={chatBottomRef} />
           </div>
-          <div className="shrink-0 space-y-2 border-t border-hair bg-card p-3">
-            <ChatComposer
-              value={chatInput}
-              onChange={setChatInput}
-              onSubmit={() => handleSendChat()}
-              disabled={submitted}
-              placeholder={submitted ? "Locked while MLR reviews the ads" : reach ? `Ask SwishX or request a change (${reach})…` : "Ask SwishX or request a change…"}
-              attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
-            >
-              <ChatAttachmentRow attachments={chatFiles} />
-              <ComposerTray
-                items={chatContexts.map((c) => ({ id: c.id, icon: <MessageSquare className="size-3" />, label: c.label, detail: c.detail }))}
-                onRemove={(id) => setChatContexts((prev) => prev.filter((c) => c.id !== id))}
-              />
-            </ChatComposer>
-          </div>
+          {!submitted && (
+            <div className="shrink-0 space-y-2 border-t border-hair bg-card p-3">
+              <ChatComposer
+                value={chatInput}
+                onChange={setChatInput}
+                onSubmit={() => handleSendChat()}
+                placeholder={reach ? `Ask SwishX or request a change (${reach})…` : "Ask SwishX or request a change…"}
+                attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
+              >
+                <ChatAttachmentRow attachments={chatFiles} />
+                <ComposerTray
+                  items={chatContexts.map((c) => ({ id: c.id, icon: <MessageSquare className="size-3" />, label: c.label, detail: c.detail }))}
+                  onRemove={(id) => setChatContexts((prev) => prev.filter((c) => c.id !== id))}
+                />
+              </ChatComposer>
+            </div>
+          )}
         </div>
       ) : (
         <AdClaimsPanel
@@ -1892,7 +1899,7 @@ export function AdsStudioScreen() {
               label="What should change?"
               hint="Leave it empty for another take on the same shot. The narration and timing stay as they are."
               placeholder="e.g. a caregiver passing her the mug, warmer light"
-              submitLabel="Regenerate video"
+              submitLabel="Regenerate Video"
               onClose={() => setRegenShot(false)}
               onSubmit={(note) => {
                 setRegenShot(false);
@@ -1935,7 +1942,7 @@ export function AdsStudioScreen() {
               checks={publishChecks}
               submit={
                 assetReview.stages.length
-                  ? { label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review", route: assetReview.stages.map((st) => st.name) }
+                  ? { label: assetReview.item?.status === "changes" ? "Resubmit for Review" : "Submit for Review", route: assetReview.stages.map((st) => st.name) }
                   : undefined
               }
               onClose={() => setPublishOpen(false)}
@@ -2100,15 +2107,15 @@ function AdClaimsPanel({
     <div className="flex-1 space-y-3 overflow-y-auto p-4">
       <div className="flex items-center justify-between border-b border-hair pb-2.5">
         <div>
-          <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Compliance grounding</div>
+          <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Compliance Grounding</div>
           <h2 className="mt-0.5 text-body-lg font-[800] text-ink">
             {claims.length} approved {claims.length === 1 ? "claim" : "claims"}
           </h2>
         </div>
-        <span className="rounded-chip border border-ok-line bg-ok-bg px-2.5 py-0.5 text-micro font-bold text-ok">✓ PromoMats verified</span>
+        <Chip tone="ok" size="xs" weight="bold" className="px-2.5">✓ PromoMats verified</Chip>
       </div>
       {claims.length === 0 && (
-        <p className="text-body text-ink-3">These are help-seeking ads, so they make no product claims. Its words come from the disease-awareness statements in the dossier.</p>
+        <p className="text-body text-ink-3">These are help-seeking ads, so they make no product claims. Their words come from the disease-awareness statements in the dossier.</p>
       )}
       <div className="space-y-2.5">
         {ordered.map((claim) => {
@@ -2150,7 +2157,7 @@ function AdClaimsPanel({
                 )}
               >
                 <BookOpen className="size-3" />
-                See in dossier
+                See in Dossier
               </button>
             </div>
           );

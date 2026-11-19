@@ -38,7 +38,7 @@ export function RenderStartedModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Your video is being assembled"
+        aria-label="Your Video Is Being Assembled"
         className="fixed inset-0 z-[9999] grid place-items-center bg-ink/60 p-4 backdrop-blur-sm"
       >
         <div className="rise-in w-full max-w-[460px] overflow-hidden rounded-card border border-hair bg-card text-left shadow-modal">
@@ -51,7 +51,7 @@ export function RenderStartedModal({
                 <div className="text-caption font-extrabold uppercase tracking-[.12em] text-brand">
                   Publishing · {render.version}
                 </div>
-                <h2 className="mt-0.5 text-title font-[850] tracking-tight text-ink">Your video is being assembled</h2>
+                <h2 className="mt-0.5 text-title font-[850] tracking-tight text-ink">Your Video Is Being Assembled</h2>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export function RenderStartedModal({
           <div className="flex flex-col-reverse gap-2 border-t border-hair bg-subtle px-6 py-4 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={onStay} className="gap-1.5">
               <MonitorPlay className="size-4" />
-              Stay here
+              Stay Here
             </Button>
             <Button onClick={onLibrary} className="gap-1.5 font-bold">
               <FolderOpen className="size-4" />

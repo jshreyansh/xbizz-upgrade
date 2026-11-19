@@ -10,6 +10,7 @@ import { CreateBrandModal } from "@/features/product-library/create-brand-modal"
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DataList } from "@/components/patterns/data-list";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
+import { Chip } from "@/components/ui/chip";
 
 export function ProductLibraryScreen() {
   const router = useRouter();
@@ -148,18 +149,10 @@ export function ProductLibraryScreen() {
             subtitle={<span className="italic">{p.genericName}</span>}
             chips={
               <>
-                <span
-                  className={`rounded-chip border px-2 py-0.5 text-caption font-bold ${
-                    p.dossiersVerified === p.dossiersTotal
-                      ? "border-ok-line bg-ok-bg text-ok"
-                      : "border-tint-line bg-tint text-brand-deep"
-                  }`}
-                >
+                <Chip tone={p.dossiersVerified === p.dossiersTotal ? "ok" : "brand"} weight="bold">
                   {p.dossiersVerified} dossiers
-                </span>
-                <span className="rounded-chip border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                  {p.claimsApproved} claims
-                </span>
+                </Chip>
+                <Chip tone="neutral" weight="bold">{p.claimsApproved} claims</Chip>
               </>
             }
             footerLeft={p.updated}
@@ -198,9 +191,7 @@ export function ProductLibraryScreen() {
               header: "Type",
               width: 110,
               cell: (p) => (
-                <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">
-                  {p.type}
-                </span>
+                <Chip tone="neutral" weight="bold" className="uppercase tracking-[.03em]">{p.type}</Chip>
               ),
             },
             {
@@ -208,15 +199,9 @@ export function ProductLibraryScreen() {
               header: "Dossiers",
               width: 120,
               cell: (p) => (
-                <span
-                  className={`rounded-chip border px-2 py-0.5 text-caption font-bold ${
-                    p.dossiersVerified === p.dossiersTotal
-                      ? "border-ok-line bg-ok-bg text-ok"
-                      : "border-tint-line bg-tint text-brand-deep"
-                  }`}
-                >
+                <Chip tone={p.dossiersVerified === p.dossiersTotal ? "ok" : "brand"} weight="bold">
                   {p.dossiersVerified} of {p.dossiersTotal}
-                </span>
+                </Chip>
               ),
             },
             {

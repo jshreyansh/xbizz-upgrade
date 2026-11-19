@@ -133,7 +133,7 @@ export default function NewDossierCreatePage() {
     }
 
     if (isQuestion(text)) {
-      return "Give me a short brief, what this brand is for and who it's for, and a regulatory anchor if you know it. I'll analyze approved label & literature, draft every section, and hand you an editable review before it's final.";
+      return "Give me a short brief, what this brand is for and who it's for, and a regulatory anchor if you know it. I'll analyse approved label and literature, draft every section, and hand you an editable review before it's final.";
     }
 
     const anchorMatch = REGULATORY_BODIES.find((b) => lower.includes(b.toLowerCase()));
@@ -150,16 +150,16 @@ export default function NewDossierCreatePage() {
     if (/\b(go|start|analy[sz]e)\b/i.test(lower)) {
       if (indication.trim() || looksLikeBrief) {
         setTimeout(() => startAnalysis(), 700);
-        return "On it, analyzing now.";
+        return "On it, analysing now.";
       }
       return "I need a brief first, tell me what this brand is for and who it's for.";
     }
-    if (notes.length) return `Done, set ${notes.join(" and ")}. Say "go" whenever you're ready to analyze.`;
+    if (notes.length) return `Done, set ${notes.join(" and ")}. Say "go" whenever you're ready to analyse.`;
     return 'Tell me the brief (what it\'s for, who it\'s for) and the regulatory anchor, or just say "go" once the form is filled in.';
   }
 
   const { messages, thinking, send, pushAssistant } = useAssistantChat(
-    `Tell me the brief for ${brandName}, and the regulatory anchor if you know it, I'll fill this step in for you.`,
+    `Tell me the brief for ${brandName}, and the regulatory anchor if you know it. I'll fill this step in for you.`,
     respond
   );
 
@@ -169,7 +169,7 @@ export default function NewDossierCreatePage() {
 
   async function startAnalysis() {
     setPhase("processing");
-    pushAssistant("Analyzing your brief now, I'll let you know the moment the draft's ready.");
+    pushAssistant("Analysing your brief now, I'll let you know the moment the draft's ready.");
     // Run the real generation alongside a minimum display time so the
     // processing checklist always finishes its animation — whether the
     // API responds in 200ms or a few seconds.
@@ -220,9 +220,9 @@ export default function NewDossierCreatePage() {
                   thinking={thinking}
                   onSend={send}
                   disabled={phase === "processing"}
-                  disabledNote="Analyzing, hang tight…"
+                  disabledNote="Analysing, hang tight…"
                   placeholder={phase === "review" ? 'e.g. "rewrite the safety section"' : "Tell me the brief, or the anchor"}
-                  subtitle={phase === "review" ? "Edit & rebuild by prompt" : "Fill this step by prompt"}
+                  subtitle={phase === "review" ? "Edit and rebuild by prompt" : "Fill this step by prompt"}
                   quickReplies={
                     phase === "input"
                       ? ["What does this step do?"]
@@ -236,7 +236,7 @@ export default function NewDossierCreatePage() {
       >
         {phase === "input" && (
           <>
-            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h1>
+            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s Dossier</h1>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 14px" }}>
               Give us the brief, we&rsquo;ll draft every section, then hand you an editable review before it&rsquo;s final.
             </p>
@@ -247,7 +247,7 @@ export default function NewDossierCreatePage() {
               </div>
             )}
 
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Indication / brief</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Indication / Brief</label>
             <textarea
               value={indication}
               onChange={(e) => setIndication(e.target.value)}
@@ -256,7 +256,7 @@ export default function NewDossierCreatePage() {
               style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, marginBottom: 20, resize: "vertical", color: "var(--ink)", fontFamily: "inherit" }}
             />
 
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Regulatory anchor</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Regulatory Anchor</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
               {REGULATORY_BODIES.map((body) => (
                 <button
@@ -296,22 +296,22 @@ export default function NewDossierCreatePage() {
                 boxShadow: !canAnalyze ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
               }}
             >
-              Analyze &amp; create
+              Analyse and Create
             </button>
           </>
         )}
 
         {phase === "processing" && (
           <ProcessingChecklist
-            title="Analyzing brand & building preview"
-            items={["Reading approved label & literature", "Drafting section outline", "Grounding claims to sources", "Building preview"]}
+            title="Analysing brand and building preview"
+            items={["Reading approved label and literature", "Drafting section outline", "Grounding claims to sources", "Building preview"]}
             onDone={() => {}}
           />
         )}
 
         {phase === "review" && (
           <>
-            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Review {brandName}&rsquo;s draft</h1>
+            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Review {brandName}&rsquo;s Draft</h1>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 20px" }}>
               Every section is already drafted, edit anything, or ask the agent to rewrite a section.
             </p>
@@ -326,7 +326,7 @@ export default function NewDossierCreatePage() {
                 style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "var(--brand-deep)", background: "var(--tint)", border: "1px solid var(--tint-line)", padding: "5px 10px", borderRadius: 99 }}
               >
                 <Plus size={13} />
-                Add section
+                Add Section
               </button>
             </div>
 
@@ -380,7 +380,7 @@ export default function NewDossierCreatePage() {
                 boxShadow: "0 12px 24px -12px rgba(253,72,22,.6)",
               }}
             >
-              Continue to preview
+              Continue to Preview
               <ArrowRight size={15} />
             </button>
           </>
@@ -396,7 +396,7 @@ export default function NewDossierCreatePage() {
 
         {phase === "success" && dossier && (
           <SuccessScreen
-            headline="Brand dossier created"
+            headline="Brand Dossier Created"
             subtitle={`${dossier.brandName} is drafted, grounded, and ready for review.`}
             dossier={dossier}
             onClose={() => finish(false)}

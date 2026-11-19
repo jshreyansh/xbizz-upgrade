@@ -73,11 +73,11 @@ const CHAINS: ApprovalChain[] = [
 ];
 
 const NOTIFICATIONS: NotificationPref[] = [
-  { key: "approvals",  label: "Approval requests", email: true,  inApp: true,  teams: true,  inAppSupported: true },
-  { key: "campaigns",  label: "Campaign updates",  email: true,  inApp: true,  teams: false, inAppSupported: true },
-  { key: "engagement", label: "Engagement alerts", email: false, inApp: true,  teams: false, inAppSupported: true },
-  { key: "weekly",     label: "Weekly summary",    email: true,  inApp: false, teams: false, inAppSupported: false },
-  { key: "compliance", label: "Compliance alerts", email: true,  inApp: true,  teams: true,  inAppSupported: true },
+  { key: "approvals",  label: "Approval Requests", email: true,  inApp: true,  teams: true,  inAppSupported: true },
+  { key: "campaigns",  label: "Campaign Updates",  email: true,  inApp: true,  teams: false, inAppSupported: true },
+  { key: "engagement", label: "Engagement Alerts", email: false, inApp: true,  teams: false, inAppSupported: true },
+  { key: "weekly",     label: "Weekly Summary",    email: true,  inApp: false, teams: false, inAppSupported: false },
+  { key: "compliance", label: "Compliance Alerts", email: true,  inApp: true,  teams: true,  inAppSupported: true },
 ];
 
 const VEEVA_LOGS: IntegrationLog[] = [

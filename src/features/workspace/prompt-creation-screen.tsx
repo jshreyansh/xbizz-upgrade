@@ -32,7 +32,7 @@ const TOPIC_LIBRARY = [
   "Mechanism of Action",
   "Safety Profile",
   "Patient Journey",
-  "Access & Reimbursement",
+  "Access and Reimbursement",
 ];
 
 interface ExamplePrompt {
@@ -46,7 +46,7 @@ const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     text: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   },
   {
-    tag: "Mechanism & Efficacy",
+    tag: "Mechanism and Efficacy",
     text: "Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for Velmora.",
   },
   {
@@ -62,7 +62,7 @@ const MORE_EXAMPLE_PROMPTS: ExamplePrompt[] = [
   },
   {
     tag: "Payer Value Story",
-    text: "Summarize the health-economic case for Onkavia for a payer committee, leading with the QALY and budget-impact findings.",
+    text: "Summarise the health-economic case for Onkavia for a payer committee, leading with the QALY and budget-impact findings.",
   },
 ];
 
@@ -221,7 +221,7 @@ export function PromptCreationScreen() {
 
         {/* Heading */}
         <div className="text-center">
-          <span className="text-label font-extrabold uppercase tracking-[.12em] text-brand-deep">Turn ideas into impact</span>
+          <span className="text-label font-extrabold uppercase tracking-[.12em] text-brand-deep">Turn Ideas into Impact</span>
           <h1 className="mx-auto mt-3 max-w-[16ch] text-hero-lg font-extrabold leading-[1.08] tracking-tight text-ink">
             What video would you like to create today?
           </h1>
@@ -262,7 +262,7 @@ export function PromptCreationScreen() {
               <div className="relative">
                 <Chip active={!!brand} tone="brand" onClick={() => setBrandPickerOpen((v) => !v)}>
                   <Building2 size={12} />
-                  {brand ? brand.name : "Choose a brand"}
+                  {brand ? brand.name : "Choose a Brand"}
                   {brand && (
                     <span
                       className="ml-0.5 grid size-3.5 place-items-center rounded-full"
@@ -403,13 +403,13 @@ export function PromptCreationScreen() {
         {/* Example prompts */}
         <div className="mt-10">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-label font-extrabold uppercase tracking-[.1em] text-ink-4">Example prompts</span>
+            <span className="text-label font-extrabold uppercase tracking-[.1em] text-ink-4">Example Prompts</span>
             <button
               type="button"
               onClick={() => setShowMorePrompts((v) => !v)}
               className="text-body font-bold text-brand-deep hover:underline"
             >
-              {showMorePrompts ? "Show fewer" : "View all prompts"} →
+              {showMorePrompts ? "Show Fewer" : "View All Prompts"} →
             </button>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -426,7 +426,7 @@ export function PromptCreationScreen() {
                     onClick={() => applyExamplePrompt(ex.text)}
                     className="shrink-0 text-body font-bold text-brand-deep opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   >
-                    Use prompt →
+                    Use Prompt →
                   </button>
                 </div>
               );

@@ -67,16 +67,16 @@ export const AREAS: Area[] = [
     { id: "comment", label: "Comment", hint: "Plus comment on it", tokens: ["comment"] },
     { id: "create", label: "Create", hint: "Plus make, edit, submit for review and share", tokens: ["comment", "create"] },
   ] },
-  { id: "review", label: "MLR review", trailing: "Be a reviewer on an approval-chain stage: approve or request changes", levels: [
+  { id: "review", label: "MLR Review", trailing: "Be a reviewer on an approval-chain stage: approve or request changes", levels: [
     NONE,
     { id: "approve", label: "Approve", hint: "Review and decide in MLR Review", tokens: ["approve"] },
   ] },
-  { id: "library", label: "Product & Claims Library", trailing: "Products, claims, Brand Dossiers and attachments", levels: [
+  { id: "library", label: "Product and Claims Library", trailing: "Products, claims, Brand Dossiers and attachments", levels: [
     NONE,
     { id: "view", label: "View", hint: "Browse, read-only", tokens: ["library"] },
     { id: "manage", label: "Manage", hint: "Add, edit and archive", tokens: ["library", "products"] },
   ] },
-  { id: "brand", label: "Brand kit", trailing: "The workspace's design standard for every asset, and each product's own kit", levels: [
+  { id: "brand", label: "Brand Kit", trailing: "The workspace's design standard for every asset, and each product's own kit", levels: [
     NONE,
     { id: "view", label: "View", hint: "Logos, type and colours, read-only", tokens: ["brand"] },
     { id: "manage", label: "Manage", hint: "Change them", tokens: ["brand", "brandManage"] },
@@ -91,7 +91,7 @@ export const AREAS: Area[] = [
     { id: "view", label: "View", hint: "See what's connected and use it", tokens: ["integrations"] },
     { id: "manage", label: "Manage", hint: "Connect, configure, set channel access", tokens: ["integrations", "integrationsManage"] },
   ] },
-  { id: "chains", label: "Approval chains", trailing: "Who reviews whose work, in Compliance & MLR", levels: [
+  { id: "chains", label: "Approval Chains", trailing: "Who reviews whose work, in Compliance and MLR", levels: [
     NONE,
     { id: "view", label: "View", hint: "Your own chain, or the chains you review in", tokens: ["chains"] },
     { id: "manage", label: "Manage", hint: "Set up everyone's chains", tokens: ["chains", "chainsManage"] },
@@ -104,7 +104,7 @@ export const AREAS: Area[] = [
     NONE,
     { id: "view", label: "View", hint: "See performance", tokens: ["analytics"] },
   ] },
-  { id: "billing", label: "Billing & credits", trailing: "The workspace's own plan and credit pool", levels: [
+  { id: "billing", label: "Billing and Credits", trailing: "The workspace's own plan and credit pool", levels: [
     NONE,
     { id: "view", label: "View", hint: "Balance and usage; ask for a top-up", tokens: ["billingView"] },
     { id: "manage", label: "Manage", hint: "Top up, plan, payment, invoices", tokens: ["billingView", "billing"] },
@@ -319,7 +319,7 @@ export type LogoSlot =
 export const COLOR_ROLES = [
   { id: "primary", label: "Primary",            trailing: "Buttons, links, the brand mark" },
   { id: "accent",  label: "Accent",             trailing: "Highlights and secondary emphasis" },
-  { id: "callout", label: "Callout background", trailing: "Tinted panels and evidence blocks" },
+  { id: "callout", label: "Callout Background", trailing: "Tinted panels and evidence blocks" },
   { id: "text",    label: "Text",               trailing: "Body copy on light grounds" },
 ] as const;
 export type ColorRole = (typeof COLOR_ROLES)[number]["id"];
@@ -455,7 +455,7 @@ export function roleSees(perms: readonly PermissionId[]): { sees: string[]; cant
     lv("content") === "create" ? "Video and Docs studios, Characters and the AI co-workers: make, edit, submit for review, share"
       : lv("content") === "comment" ? "Comments on anything they can open" : null,
     lv("review") === "approve" ? "MLR Review: the queue, approve or request changes" : lv("content") === "create" ? "MLR Review: their own submissions" : null,
-    lv("library") === "manage" ? "Product & Claims Library and Brand Dossiers: add, edit, archive" : lv("library") === "view" ? "Product & Claims Library and Brand Dossiers: view" : null,
+    lv("library") === "manage" ? "Product and Claims Library and Brand Dossiers: add, edit, archive" : lv("library") === "view" ? "Product and Claims Library and Brand Dossiers: view" : null,
     lv("brand") === "manage" ? "Brand kits (workspace and products): edit" : lv("brand") === "view" ? "Brand kits: view" : null,
     lv("pronunciations") === "manage" ? "Pronunciations: add and fix" : lv("pronunciations") === "view" ? "Pronunciations: view" : null,
     lv("integrations") === "manage" ? "Integrations: connect and configure" : lv("integrations") === "view" ? "Integrations: see and use what's connected" : null,
@@ -468,7 +468,7 @@ export function roleSees(perms: readonly PermissionId[]): { sees: string[]; cant
   const cant = [
     lv("content") !== "create" && "Studios and editing",
     lv("review") !== "approve" && lv("content") !== "create" && "MLR Review",
-    lv("library") === "none" && "Product & Claims Library",
+    lv("library") === "none" && "Product and Claims Library",
     lv("analytics") === "none" && "Analytics",
     lv("billing") === "none" && "Billing",
   ].filter((x): x is string => !!x);

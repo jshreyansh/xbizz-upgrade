@@ -2,6 +2,7 @@
 
 import { ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 
 export interface VideoWizardHeaderProps {
   currentStep: 1 | 2 | 3;
@@ -10,9 +11,9 @@ export interface VideoWizardHeaderProps {
 }
 
 const STEP_CONFIG = [
-  { step: 1, title: "Choose brand dossier & goals", short: "Source" },
-  { step: 2, title: "Define the video brief", short: "Brief" },
-  { step: 3, title: "Confirm the video plan", short: "Plan" },
+  { step: 1, title: "Choose Brand Dossier and Goals", short: "Source" },
+  { step: 2, title: "Define the Video Brief", short: "Brief" },
+  { step: 3, title: "Confirm the Video Plan", short: "Plan" },
 ] as const;
 
 export function VideoWizardHeader({
@@ -44,9 +45,9 @@ export function VideoWizardHeader({
           <h1 className="text-subhead font-[800] tracking-tight text-ink sm:text-title truncate transition-all duration-300">
             {currentStepConfig.title}
           </h1>
-          <span className="shrink-0 rounded-chip bg-tint px-2.5 py-0.5 text-label font-bold text-brand-deep border border-tint-line">
+          <Chip tone="brand" size="md" weight="bold">
             Step {currentStep} of 3
-          </span>
+          </Chip>
         </div>
 
         {/* Step dots under header text (smooth animated pill like onboarding) */}

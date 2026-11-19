@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, Check, CheckCircle2, Eye, FileText, Film, Image as ImageIcon, Library, Link2, Mail, Megaphone, MousePointerClick, Palette, Stamp, PanelRight, PenLine, Send, ShieldCheck, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
-import { LogoMark } from "@/components/ui/logo-mark";
+import { PlanChatHeader } from "@/components/patterns/inspector-tabs";
 import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -129,11 +129,11 @@ export function EmailDirectionsScreen() {
     ? { title: "Add a source to start", detail: "Use the evidence dossier or add files in Research and Sources." }
     : needsYou.button
       ? {
-          title: "Complete buttons & links",
+          title: "Complete buttons and links",
           detail: missingCta
-            ? `Add the page "${missingCta.label || p.ctaText || "the main button"}" opens, in Buttons & Links.`
+            ? `Add the page "${missingCta.label || p.ctaText || "the main button"}" opens, in Buttons and Links.`
             : missingBacklink
-            ? `Add the web address for "${missingBacklink.title || "a link"}", in Buttons & Links.`
+            ? `Add the web address for "${missingBacklink.title || "a link"}", in Buttons and Links.`
             : "Every button and resource backlink must have a valid web address starting with https://",
         }
       : null;
@@ -144,7 +144,7 @@ export function EmailDirectionsScreen() {
       role: "swishx",
       text: `I've drafted a **${purpose.label.toLowerCase()}** email for ${audienceNoun(p.audience)}, sent by the ${p.sender.long.toLowerCase()}, from the **${brandName}** dossier${p.startPiece ? `, led by the **${p.startPiece.title}** it follows up` : ""}. ${
         p.isHQ ? `The ${p.sender.long.toLowerCase()} sends it as it is.` : `${Who} pick which of ${p.included.length} approved blocks to send${p.showNote ? " and can add a short note" : ""}.`
-      }${p.cta.status === "missing" ? ` One thing I need from you: the page **${p.ctaText}** opens. Add its URL in **The email's button**.` : ""}`,
+      }${p.cta.status === "missing" ? ` One thing I need from you: the page **${p.ctaText}** opens. Add its URL in **Buttons and Links**.` : ""}`,
     });
     setPlanPhase("plan");
   };
@@ -251,7 +251,7 @@ export function EmailDirectionsScreen() {
     const newBl: EmailBacklinkItem = {
       id: `bl-${Date.now()}`,
       title: "Clinical Study Registry",
-      context: "Phase III registration & study protocol on ClinicalTrials.gov",
+      context: "Phase III registration and study protocol on ClinicalTrials.gov",
       url: "https://clinicaltrials.gov",
       blockId: null,
     };
@@ -337,7 +337,7 @@ export function EmailDirectionsScreen() {
         <section className="relative flex min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-y-auto border-r border-hair bg-[#eef1ed] p-4 sm:p-6 lg:p-7">
           {planPhase !== "plan" && (
             <GenerationProgress
-              title="Reading your request..."
+              title="Reading your request…"
               subtitle={`Checking the brief against the ${brandName} dossier and its approved claims.`}
               steps={[
                 { label: `Read the brief and the ${brandName} dossier`, seconds: 1.2 },
@@ -350,18 +350,18 @@ export function EmailDirectionsScreen() {
           )}
 
           {planPhase === "plan" && stage === "drafting" && (
-            <GenerationProgress title="Drafting the email plan..." subtitle="Writing the blocks and subject lines from your sources." steps={draftSteps} onDone={openEmailPlan} />
+            <GenerationProgress title="Drafting the email plan…" subtitle="Writing the blocks and subject lines from your sources." steps={draftSteps} onDone={openEmailPlan} />
           )}
 
           {planPhase === "plan" && stage === "building" && (
-            <GenerationProgress title="Building the email..." subtitle={`Writing the ${purpose.label.toLowerCase()} email from approved claims.`} steps={buildSteps} onDone={openEditor} />
+            <GenerationProgress title="Building the email…" subtitle={`Writing the ${purpose.label.toLowerCase()} email from approved claims.`} steps={buildSteps} onDone={openEditor} />
           )}
 
           {planPhase === "plan" && stage === "input" && (
             <>
               <div className="flex shrink-0 items-center justify-between pb-1">
                 <div>
-                  <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
+                  <h2 className="text-display font-[850] tracking-tight text-ink">Need Your Input</h2>
                   <p className="mt-0.5 text-body text-ink-3">What SwishX needs comes first. Everything else is drafted; open a section to change it.</p>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export function EmailDirectionsScreen() {
                                     title="Open full interactive preview"
                                   >
                                     <Eye className="size-3.5" />
-                                    <span>Full preview</span>
+                                    <span>Full Preview</span>
                                   </button>
                                 </div>
 
@@ -475,7 +475,7 @@ export function EmailDirectionsScreen() {
                                       className="inline-flex items-center gap-1 text-brand font-bold hover:underline cursor-pointer"
                                     >
                                       <Eye className="size-3" />
-                                      <span>{isVideo ? "Play video" : pc.kind === "Docs" ? "Read all pages" : "Inspect cutdown"}</span>
+                                      <span>{isVideo ? "Play Video" : pc.kind === "Docs" ? "Read All Pages" : "Inspect Cutdown"}</span>
                                     </button>
                                   </div>
                                 </div>
@@ -496,7 +496,7 @@ export function EmailDirectionsScreen() {
                           className="h-8 gap-1.5 text-label font-bold cursor-pointer"
                         >
                           <Library className="size-3.5" />
-                          <span>{p.attachedPieces.length > 0 ? "Change or add materials" : "Browse approved materials"}</span>
+                          <span>{p.attachedPieces.length > 0 ? "Change or Add Materials" : "Browse Approved Materials"}</span>
                         </Button>
                       </div>
                     </div>
@@ -507,7 +507,7 @@ export function EmailDirectionsScreen() {
                 {/* 2. Audience and sender, as set at the start: a tile like every other, changeable here. */}
                 <PlanSectionShell
                   icon={Users}
-                  title="Audience & Sender"
+                  title="Audience and Sender"
                   summary={[brandName, AUDIENCE_LABEL[p.audience].title, p.sender.long, purpose.label, p.condition[0].toUpperCase() + p.condition.slice(1)].join(" · ")}
                   state={planState(false)}
                   source="from project start"
@@ -530,14 +530,14 @@ export function EmailDirectionsScreen() {
                         footnote="HCP and P&T Committee emails are Approved Email, deployed through your CRM."
                       />
                     </DecisionRow>
-                    <DecisionRow label="Sent by" value={p.sender.long} icon={<Mail className="size-4" />} editing={editing === "sender"} onEdit={() => setEditing(editing === "sender" ? null : "sender")}>
+                    <DecisionRow label="Sent By" value={p.sender.long} icon={<Mail className="size-4" />} editing={editing === "sender"} onEdit={() => setEditing(editing === "sender" ? null : "sender")}>
                       <ChipChoices
                         label="Who sends it?"
                         options={sendersFor(p.audience).map((id) => senderInfo(id, p.audience).long)}
                         values={[p.sender.long]}
                         onToggle={(long) => setAbout({ sender: sendersFor(p.audience).find((id) => senderInfo(id, p.audience).long === long)! })}
                         onDone={() => setEditing(null)}
-                        footnote="Controls personalization: personal note and fragment selection for sales reps; scientific non-promotional material for MSLs; locked broadcast for HQ."
+                        footnote="Controls personalisation: personal note and fragment selection for sales reps; scientific non-promotional material for MSLs; locked broadcast for HQ."
                       />
                     </DecisionRow>
                     <DecisionRow label="For" value={purpose.label} icon={<Link2 className="size-4" />} editing={editing === "purpose"} onEdit={() => setEditing(editing === "purpose" ? null : "purpose")}>
@@ -556,7 +556,7 @@ export function EmailDirectionsScreen() {
                 {/* Sending Channel & CRM Platform */}
                 <PlanSectionShell
                   icon={Send}
-                  title="Where it's sent from"
+                  title="Where It's Sent From"
                   summary={(() => {
                     const activeIds = email.channels && email.channels.length > 0 ? email.channels : [email.channel || "veeva"];
                     const activeChannels = activeIds.map((id) => EMAIL_CHANNELS.find((c) => c.id === id)!).filter(Boolean);
@@ -579,7 +579,7 @@ export function EmailDirectionsScreen() {
                 {!p.unbranded && (
                   <PlanSectionShell
                     icon={ImageIcon}
-                    title="Product & Device Visuals"
+                    title="Product and Device Visuals"
                     summary={email.packshots.length > 0 ? `${email.packshots.length} packshot${email.packshots.length === 1 ? "" : "s"} attached` : "Packshots SwishX can place in the email"}
                     state={planState(false, email.packshots.length === 0)}
                     open={openSection === "visuals"}
@@ -588,7 +588,7 @@ export function EmailDirectionsScreen() {
                     <div className="space-y-3">
                       <MediaAttachmentGrid
                         items={email.packshots.map((ps) => ({ id: ps.id, name: ps.name, note: ps.note, previewUrl: ps.url, kind: "image" as const, variation: ps.variation }))}
-                        uploadLabel={email.packshots.length === 0 ? "Upload product image" : "Add another"}
+                        uploadLabel={email.packshots.length === 0 ? "Upload Product Image" : "Add Another"}
                         uploadHint="PNG, JPG"
                         onUpload={() =>
                           setPendingPackshot([
@@ -606,7 +606,7 @@ export function EmailDirectionsScreen() {
                         if (reusable.length === 0) return null;
                         return (
                           <div>
-                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from Platform</span>
                             <AssetStrip>
                               {reusable.map((asset) => (
                                 <MediaAssetTile
@@ -633,14 +633,14 @@ export function EmailDirectionsScreen() {
                         );
                       })()}
                     </div>
-                    <PlanSectionContinue label={email.packshots.length === 0 ? "Skip & Continue" : "Save & Continue"} onClick={() => advanceFrom("visuals")} />
+                    <PlanSectionContinue label={email.packshots.length === 0 ? "Skip and Continue" : "Save and Continue"} onClick={() => advanceFrom("visuals")} />
                   </PlanSectionShell>
                 )}
 
                 {/* 4. Visual & creative references: the look, and the user's own assets, each with what to take from it. */}
                 <PlanSectionShell
                   icon={Palette}
-                  title="Visual & Creative References"
+                  title="Visual and Creative References"
                   summary={email.references.length > 0 ? `${email.references.length} reference${email.references.length === 1 ? "" : "s"}` : "The look you are after, or your own assets to use"}
                   state={planState(false, email.references.length === 0)}
                   source={email.references.length > 0 ? `${email.references.length} attached` : undefined}
@@ -653,7 +653,7 @@ export function EmailDirectionsScreen() {
                     </p>
                     <MediaAttachmentGrid
                       items={email.references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl, kind: r.kind }))}
-                      uploadLabel={email.references.length === 0 ? "Upload a reference" : "Add another"}
+                      uploadLabel={email.references.length === 0 ? "Upload a Reference" : "Add Another"}
                       uploadHint="PNG, JPG, PDF · an email screenshot works well"
                       onUpload={() =>
                         setPendingReference([
@@ -671,7 +671,7 @@ export function EmailDirectionsScreen() {
                       if (reusable.length === 0) return null;
                       return (
                         <div>
-                          <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                          <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from Platform</span>
                           <AssetStrip>
                             {reusable.map((asset) => (
                               <MediaAssetTile
@@ -697,14 +697,14 @@ export function EmailDirectionsScreen() {
                       );
                     })()}
                   </div>
-                  <PlanSectionContinue label={email.references.length === 0 ? "Skip & Continue" : "Save & Continue"} onClick={() => advanceFrom("references")} />
+                  <PlanSectionContinue label={email.references.length === 0 ? "Skip and Continue" : "Save and Continue"} onClick={() => advanceFrom("references")} />
                 </PlanSectionShell>
 
                 {/* 5. Brand mark, the same section as every plan. It sits in the email's header. */}
                 {!p.unbranded && (
                   <PlanSectionShell
                     icon={Stamp}
-                    title="Brand Logo & Mark"
+                    title="Brand Logo and Mark"
                     summary={logoMark.position === "none" ? "No logo" : `In the header · ${logoMark.name}`}
                     state={planState(false, true)}
                     source="from brand kit"
@@ -719,7 +719,7 @@ export function EmailDirectionsScreen() {
                 {/* 6. Email buttons and backlinks: Primary, Secondary CTAs, and verified resource backlinks */}
                 <PlanSectionShell
                   icon={MousePointerClick}
-                  title="Buttons & Links"
+                  title="Buttons and Links"
                   summary={
                     needsYou.button
                       ? "Add the page each button and link opens"
@@ -768,31 +768,31 @@ export function EmailDirectionsScreen() {
                     <div className="space-y-2">
                       <TickRow
                         on={email.repEdit.note}
-                        title="Add a personal note"
+                        title="Add a Personal Note"
                         detail="Up to 255 characters at the top, in their own words. Plain text, so no claims can be formatted into it."
                         onToggle={() => setEmail({ repEdit: { ...email.repEdit, note: !email.repEdit.note } })}
                       />
                       <TickRow
                         on={email.subjectMode === "choice"}
-                        title="Choose the subject line"
+                        title="Choose the Subject Line"
                         detail="SwishX drafts several on the email plan; they pick one when sending."
                         onToggle={() => setEmail(email.subjectMode === "choice" ? { subjectMode: "one", subjects: [email.subjects[0] ?? 0] } : { subjectMode: "choice", subjects: p.subjects.map((_, i) => i) })}
                       />
                       <TickRow
                         on={email.repEdit.blocks}
-                        title="Choose which blocks"
+                        title="Choose Which Blocks"
                         detail="From the blocks you confirm on the email plan, reps pick which to send (unless marked Mandatory)."
                         onToggle={() => setEmail({ repEdit: { ...email.repEdit, blocks: !email.repEdit.blocks } })}
                       />
                       <TickRow
                         on={!!email.repEdit.reorder}
-                        title="Reorder content blocks"
+                        title="Reorder Content Blocks"
                         detail="Allow sales reps in Veeva CRM Approved Email to rearrange the order of blocks to match conversation flow."
                         onToggle={() => setEmail({ repEdit: { ...email.repEdit, reorder: !email.repEdit.reorder } })}
                       />
                       <TickRow
                         on={email.repEdit.piece}
-                        title="Choose which documents to include"
+                        title="Choose Which Documents to Include"
                         detail="When the email has more than one document, they tick which go with it."
                         onToggle={() => setEmail({ repEdit: { ...email.repEdit, piece: !email.repEdit.piece } })}
                       />
@@ -810,9 +810,9 @@ export function EmailDirectionsScreen() {
                       p.unbranded
                         ? ["No Safety Information", "no product is named or implied, so none is needed"]
                         : ["Important Safety Information", `the current ${brandName} ISI${p.professional ? "" : " in plain language"}${p.boxedWarning ? ", with the boxed warning," : ""} at the foot of every email`],
-                      ["Unsubscribe & Company Address", p.professional ? "required in every commercial email" : "required, with why they're receiving it and the privacy policy"],
+                      ["Unsubscribe and Company Address", p.professional ? "required in every commercial email" : "required, with why they're receiving it and the privacy policy"],
                       ["MLR Job Code", `US-${brandName.slice(0, 3).toUpperCase()}-2611-0042, the number MLR approves this email under`],
-                      ["Layout & Responsiveness", "single column, 600 px wide, responsive across mobile, desktop, and Outlook"],
+                      ["Layout and Responsiveness", "single column, 600 px wide, responsive across mobile, desktop, and Outlook"],
                       ["Clinical References", "numbered automatically from each block's verified claim"],
                       ["Tracked Compliance Links", `${p.unbranded ? "" : p.professional ? "Prescribing Information, Important Safety Information, " : "Medication Guide, Important Safety Information, "}unsubscribe and privacy, each tracked for click reports`],
                     ].map(([title, detail]) => (
@@ -840,7 +840,7 @@ export function EmailDirectionsScreen() {
                   onClick={draftEmail}
                   className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep disabled:opacity-40"
                 >
-                  <span>Confirm &amp; Draft Email Plan</span>
+                  <span>Confirm and Draft Email Plan</span>
                   <ArrowRight className="ml-1.5 size-3.5" />
                 </Button>
               }
@@ -857,7 +857,7 @@ export function EmailDirectionsScreen() {
                 action={
                   <div className="flex shrink-0 items-center gap-2">
                     <Button variant="ghost" onClick={() => setStage("input")} className="h-9 text-body font-bold text-white hover:bg-white/10">
-                      Back to Need your input
+                      Back to Need Your Input
                     </Button>
                     <Button
                       disabled={p.included.length === 0}
@@ -876,15 +876,7 @@ export function EmailDirectionsScreen() {
       }
       panel={
         <>
-          <div className="shrink-0 border-b border-hair bg-card p-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-body font-bold text-brand">
-                <LogoMark size={14} />
-                <span>Direct with SwishX</span>
-              </div>
-              <span className="rounded-chip bg-ok/15 px-2 py-0.5 text-micro font-bold text-ok">Online</span>
-            </div>
-          </div>
+          <PlanChatHeader busy={stage === "drafting" || stage === "building"} />
           <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
             {chatMessages.map((msg, idx) => (
               <div key={idx} className={cn("flex max-w-full gap-2.5", msg.role === "user" ? "ml-auto justify-end" : "mr-auto")}>
@@ -940,7 +932,7 @@ export function EmailDirectionsScreen() {
               value={chatInput}
               onChange={setChatInput}
               onSubmit={() => handleSendChat()}
-              placeholder="Ask SwishX or request a change to the plan..."
+              placeholder="Ask SwishX or request a change to the plan…"
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
             >
               <ChatAttachmentRow attachments={chatFiles} />

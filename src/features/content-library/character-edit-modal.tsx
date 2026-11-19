@@ -54,7 +54,7 @@ export function CharacterEditModal({
       <div className="flex max-h-[88vh] w-full max-w-[520px] flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float">
         <div className="flex items-start justify-between gap-3 border-b border-hair px-5 py-4">
           <div>
-            <h2 className="text-subhead font-[850] tracking-tight text-ink">Edit character</h2>
+            <h2 className="text-subhead font-[850] tracking-tight text-ink">Edit Character</h2>
             <p className="mt-0.5 text-label text-ink-3">
               Details only. The views stay as they are.
             </p>
@@ -81,7 +81,7 @@ export function CharacterEditModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-label font-bold text-ink-2">Character type</label>
+            <label className="block text-label font-bold text-ink-2">Character Type</label>
             <div className="flex flex-wrap gap-1.5">
               {CHARACTER_TYPES.map((option) => {
                 const active = type === option;

@@ -96,7 +96,7 @@ export function SectionPronunciations() {
         </Stack>
       </SettingsCard>
 
-      <SettingsCard title="Try it" description="Paste narration to see what the pipeline will say.">
+      <SettingsCard title="Try It" description="Paste narration to see what the pipeline will say.">
         <Stack gap={3}>
           <div>
             <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Before</Text>

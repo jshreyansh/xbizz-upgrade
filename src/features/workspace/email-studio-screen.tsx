@@ -12,6 +12,7 @@ import {
   Mail,
   MessageCircle,
   MessageSquare,
+  MessageSquareQuote,
   PanelRight,
   Pencil,
   RefreshCw,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Modal } from "@/components/ui/modal";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -46,7 +48,9 @@ import { PreviewPublishModal } from "@/features/workspace/preview-publish-modal"
 import type { PreflightCheck } from "@/features/workspace/preflight-panel";
 import { useMlrReview } from "@/features/workspace/mlr-review";
 import { ReviewStatusBanner, useAssetReview } from "@/features/review/asset-review";
-import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, InspectorTabStrip, ReadOnlyChatNote } from "@/components/patterns/inspector-tabs";
+import { ReviewComments } from "@/features/workspace/review-comments";
+import type { AssetComment } from "@/features/workspace/asset-comments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { EditorToolbar, ToolButton, toolbarDivider, type ToolbarItem, type ToolbarSelection } from "@/features/workspace/editor-toolbar";
@@ -59,9 +63,10 @@ import { EmailRepPreview } from "@/features/workspace/email-rep-preview";
 import { EmailPublishPreview, emailPackage } from "@/features/workspace/email-export";
 import { veevaPackage } from "@/features/workspace/email-veeva-package";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
-import { DEFAULT_EMAIL_STYLES, isUrl, LINK_STATUS, SENDER_AS, SENDER_PLURAL, type EmailTypographyStyles } from "@/features/workspace/email-options";
+import { DEFAULT_EMAIL_STYLES, isUrl, LINK_STATUS, SENDER_AS_TITLE, SENDER_PLURAL, type EmailTypographyStyles } from "@/features/workspace/email-options";
+import { Chip } from "@/components/ui/chip";
 
-type PanelTab = "assistant" | "evidence" | "links";
+type PanelTab = "assistant" | "evidence" | "comments";
 
 const DOT: Record<ZoneType, string> = { lock: "bg-ink-4", auto: "bg-ok", choose: "bg-accent-blue", type: "bg-brand" };
 const PILL: Record<ZoneType, string> = { lock: "bg-subtle text-ink-3", auto: "bg-ok-bg text-ok", choose: "bg-accent-blue/10 text-accent-blue", type: "bg-tint text-brand-deep" };
@@ -72,8 +77,8 @@ const TONE: Record<"ok" | "lock" | "warn" | "danger", string> = { ok: "bg-ok-bg 
  *
  * The same studio as Ads and Docs: the email's parts down the rail, the email
  * on the canvas with one toolbar that follows the selection, and Chat and
- * Claims on the right — plus Links, because every link in an approved email
- * is something MLR reviews.
+ * Claims and Comments on the right. Every link in an approved email is
+ * something MLR reviews, so the links table is a dialog off the safety links.
  *
  * Its own idea is the lock: every part says what the sender can do with it, and
  * the parts a sender could change carry a switch on the toolbar, so the marketer
@@ -99,7 +104,8 @@ export function EmailStudioScreen() {
     setEmail({ styles: next });
     edited();
   };
-  const [panelTab, setPanelTab] = useState<PanelTab>("assistant");
+  const [panelTab, setPanelTab] = useState<PanelTab>(studioEntry === "review" ? "comments" : "assistant");
+  const [linksOpen, setLinksOpen] = useState(false);
   const [insert, setInsert] = useState<{ request: EmailInsertRequest; replace?: string } | null>(null);
   const [repOpen, setRepOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
@@ -201,7 +207,7 @@ export function EmailStudioScreen() {
           node: (
             <Field
               size="sm"
-              aria-label="Alt text"
+              aria-label="Alt Text"
               placeholder="Alt text: what it shows"
               value={selMedia.alt}
               onChange={(e) =>
@@ -252,7 +258,7 @@ export function EmailStudioScreen() {
               icon={RefreshCw}
               label="Regenerate"
               onClick={() => {
-                showToast(`Regenerating ${selMedia.title} with SwishX...`);
+                showToast(`Regenerating ${selMedia.title} with SwishX…`);
                 edited();
               }}
             />
@@ -345,10 +351,7 @@ export function EmailStudioScreen() {
             <ToolButton
               icon={Link2}
               label="View Links Table"
-              onClick={() => {
-                setCopilotPanelOpen(true);
-                setPanelTab("links");
-              }}
+              onClick={() => setLinksOpen(true)}
             />
           ),
         });
@@ -361,7 +364,7 @@ export function EmailStudioScreen() {
               icon={RefreshCw}
               label="Regenerate Hero"
               onClick={() => {
-                showToast("Regenerating hero image with SwishX...");
+                showToast("Regenerating hero image with SwishX…");
                 edited();
               }}
             />
@@ -534,7 +537,7 @@ export function EmailStudioScreen() {
               label="Rewrite with SwishX"
               onClick={() =>
                 handToChat(
-                  { id: "opening", label: "Opening & Indication", detail: purpose.opening(p.brandName, p.condition) },
+                  { id: "opening", label: "Opening and Indication", detail: purpose.opening(p.brandName, p.condition) },
                   "Rewrite this opening paragraph to be "
                 )
               }
@@ -549,7 +552,7 @@ export function EmailStudioScreen() {
               label="Shorten Opening"
               onClick={() =>
                 handToChat(
-                  { id: "opening", label: "Opening & Indication", detail: purpose.opening(p.brandName, p.condition) },
+                  { id: "opening", label: "Opening and Indication", detail: purpose.opening(p.brandName, p.condition) },
                   "Make the opening paragraph more concise and punchy: "
                 )
               }
@@ -667,7 +670,7 @@ export function EmailStudioScreen() {
                 active={emailStyles.buttonAlign === "center"}
                 onClick={() => patchEmailStyles({ buttonAlign: "center" })}
               >
-                Center
+                Centre
               </SegmentedButton>
               <SegmentedButton
                 active={emailStyles.buttonAlign === "full"}
@@ -788,7 +791,7 @@ export function EmailStudioScreen() {
           key: "isi-note",
           node: (
             <span className="text-caption font-semibold text-ink-3">
-              Mandatory Safety Information · From brand dossier
+              Mandatory safety information · from the brand dossier
             </span>
           ),
         });
@@ -808,7 +811,7 @@ export function EmailStudioScreen() {
           key: "foot-note",
           node: (
             <span className="text-caption font-semibold text-ink-3">
-              Unsubscribe & job code tokens auto-managed for {p.email.channel ? p.email.channel.toUpperCase() : "CRM"}
+              Unsubscribe and job code tokens managed automatically for {p.email.channel ? p.email.channel.toUpperCase() : "CRM"}
             </span>
           ),
         });
@@ -857,9 +860,10 @@ export function EmailStudioScreen() {
     ...(!p.professional ? [{ id: "plain", source: "Quality", title: "Plain language for patients and the public", detail: "No clinical jargon; reads at about a 6th to 8th grade level" }] : []),
     { id: "footer", source: "MLR", title: "Unsubscribe, company address and job code in the footer", detail: p.professional ? "Required in every commercial email" : "With why they're receiving it and the privacy policy" },
     p.cta.status === "missing"
-      ? { id: "cta", source: "MLR", severity: "blocker", title: `"${p.ctaText}" goes nowhere`, detail: "Add the page it opens in the Links tab." }
+      ? { id: "cta", source: "MLR", severity: "blocker", title: `"${p.ctaText}" goes nowhere`, detail: "Add the page it opens in the links table." }
       : { id: "cta", source: "Quality", title: `Every link has a destination · ${p.links.length} links`, detail: "Each tracked with a label for click reports" },
-    ...p.ctas.filter((c) => !c.url || !isUrl(c.url)).map((c) => ({
+    /* The primary button has its own check above. */
+    ...p.secondaryCtas.filter((c) => !c.url || !isUrl(c.url)).map((c) => ({
       id: `bad-cta-${c.id}`,
       source: "MLR" as const,
       severity: "blocker" as const,
@@ -879,9 +883,59 @@ export function EmailStudioScreen() {
     ...expiring.map((b) => ({ id: `exp-${b.id}`, source: "MLR", severity: "warning" as const, title: `${b.title}: approval ends ${b.expires}`, detail: "Senders can't use it after that. Leave it out, or plan its renewal." })),
   ];
 
+  /* ── Comments: pinned to a part of the email, once it is published and shared ── */
+  const commentPart = sel ? (selMedia ? selMedia.title : ZONE_NAME[sel as EmailZone] ?? sel) : null;
+  const commentAt = commentPart ? `Email · ${commentPart}` : "The whole email";
+  /* What reviewers raise first on an approved email: one point each, at most three. */
+  const teamComments = (): AssetComment[] => {
+    const at = { surface: "creative" as const, author: "Sarah Lin (Medical Director)", role: "Medical Reviewer", avatar: "SL", at: "2 hours ago", source: "team" as const, status: "open" as const, sentToChat: false };
+    const part = (id: EmailZone, n: number) => ({ containerId: id, containerNumber: n, containerLabel: "Email", elementId: id, elementLabel: ZONE_NAME[id] });
+    const seeds: AssetComment[] = [
+      ...(p.zones.includes("opening") ? [{ ...at, ...part("opening", 1), id: "team-opening", text: "Could the opening state the indication before the first result?" }] : []),
+      ...(p.zones.includes("cta") ? [{ ...at, ...part("cta", 2), id: "team-cta", author: "Priya Nair (Legal)", role: "Legal", avatar: "PN", text: "Please confirm the button links to the page MLR approved for this email." }] : []),
+      ...(p.zones.includes("isi") ? [{ ...at, ...part("isi", 3), id: "team-isi", author: "Dev Rao (Regulatory)", role: "Regulatory", avatar: "DR", text: "The safety information reads well. Can you check it's still legible on a phone?" }] : []),
+    ];
+    return seeds.slice(0, 3);
+  };
+  const [comments, setComments] = useState<AssetComment[]>(() => (studioEntry === "review" ? teamComments() : []));
+  const postComment = (text: string) => {
+    setComments((prev) => [
+      {
+        id: `c-${Date.now()}`,
+        surface: "creative",
+        containerId: sel ?? "email",
+        containerNumber: 1,
+        containerLabel: "Email",
+        elementId: sel ?? "email",
+        elementLabel: commentPart ?? "Whole email",
+        author: "Sarah Lin (Medical Director)",
+        role: "Medical Reviewer",
+        avatar: "SL",
+        text,
+        at: "Just now",
+        source: "team",
+        status: "open",
+        sentToChat: false,
+      },
+      ...prev,
+    ]);
+    showToast("Review comment posted");
+  };
+  const closeComment = (id: string, status: "resolved" | "rejected", note: string) =>
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, status, closedBy: "user", closedReason: note, closedInVersion: publishedCount + 1 } : c)));
+  /* Comments come from the shared link, so there are none to read until it has been published. */
+  const published = submitted || publishedCount > 0 || !!assetReview.item;
+
+  const startEditing = () => {
+    setStudioMode("editor");
+    setPanelTab("assistant");
+  };
   const publish = () => {
     setPublishOpen(false);
     setStudioMode("review");
+    setPanelTab("comments");
+    setCopilotPanelOpen(true);
+    setComments((prev) => (prev.length ? prev : teamComments()));
     setPublishedCount((n) => n + 1);
     setSelected(null);
     setView("inbox");
@@ -935,7 +989,7 @@ export function EmailStudioScreen() {
                   </button>
                   <div className="space-y-0.5 pl-6">
                     {[
-                      { id: "header:logo", label: "Logo & Brand Mark" },
+                      { id: "header:logo", label: "Logo and Brand Mark" },
                       { id: "header:links", label: "Safety Links (PI / ISI)" },
                       { id: "header:image", label: "Hero Image" },
                       { id: "header:heading", label: "Subject Heading" },
@@ -1002,7 +1056,7 @@ export function EmailStudioScreen() {
 
   const toolbar = submitted ? (
     <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
-      <span className="shrink-0 text-label font-bold text-ink">Shared review</span>
+      <span className="shrink-0 text-label font-bold text-ink">Shared Review</span>
       <span className="truncate text-label text-ink-3">{downloaded ? "Package downloaded. Upload it in Veeva PromoMats, where MLR review happens." : "Share it to download the package for Veeva PromoMats."}</span>
     </div>
   ) : (
@@ -1034,7 +1088,7 @@ export function EmailStudioScreen() {
 
   const main = (
     <section className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-[#eef1ed]">
-      {submitted && assetReview.item && <ReviewStatusBanner item={assetReview.item} onEdit={() => setStudioMode("editor")} />}
+      {submitted && assetReview.item && <ReviewStatusBanner item={assetReview.item} onEdit={startEditing} />}
       <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 px-4 pt-4">
         <Segmented>
           {availableViews.map((v) => (
@@ -1068,31 +1122,84 @@ export function EmailStudioScreen() {
     </section>
   );
 
-  /* ── Panel: Chat, Claims and Links ── */
-  const tab: PanelTab = submitted && panelTab === "assistant" ? "evidence" : panelTab;
+  /* ── Panel: Chat · Claims · Comments ── */
+  const tab: PanelTab = !published && panelTab === "comments" ? "assistant" : panelTab;
+  const openComments = comments.filter((c) => c.status === "open").length;
+  /* The Claims count is the email's real claims, so the list leads with exactly those. */
+  const claimBlocks = p.included.filter((b) => !b.newClaim);
+  const mediaClaims = p.claimIds.filter((id) => !claimBlocks.some((b) => b.claimId === id));
+  const otherBlocks = p.blocks.filter((b) => !claimBlocks.includes(b));
+  const claimCard = (b: (typeof p.blocks)[number], status: string, tone: string) => (
+    <div key={b.id} className={cn("rounded-control border p-3", b.expires ? "border-warn-line bg-warn-bg" : "border-hair bg-canvas")}>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">{b.claimId}</span>
+        <span className={cn("text-caption font-bold", tone)}>{status}</span>
+      </div>
+      <h4 className="text-body font-bold text-ink">{b.text}</h4>
+      <p className="mt-1 text-caption text-ink-3">
+        {b.source}
+        {b.expires ? ` · approval ends ${b.expires}` : ""}
+      </p>
+      <button
+        type="button"
+        onClick={() => setDossier(dossierFor(brandName, moleculeFor(brandName)))}
+        className="focus-ring mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-1.5 py-1 text-caption font-bold text-ink-4 transition hover:bg-tint hover:text-brand-deep"
+      >
+        <BookOpen className="size-3" />
+        See in Dossier
+      </button>
+    </div>
+  );
   const panel = (
     <>
-      <div className="border-b border-hair bg-subtle p-2.5">
-        <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
-          {!submitted && (
-            <InspectorTabButton tab="assistant" current={tab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
-              Chat
-            </InspectorTabButton>
-          )}
-          <InspectorTabButton tab="evidence" current={tab} onClick={setPanelTab} icon={ShieldCheck} count={p.claimIds.length}>
-            Claims
-          </InspectorTabButton>
-          <InspectorTabButton tab="links" current={tab} onClick={setPanelTab} icon={Link2} count={p.links.length}>
-            Links
-          </InspectorTabButton>
-        </div>
-      </div>
-      {tab === "assistant" ? (
+      <InspectorTabStrip>
+        <InspectorTabButton tab="assistant" current={tab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
+          Chat
+        </InspectorTabButton>
+        <InspectorTabButton tab="evidence" current={tab} onClick={setPanelTab} icon={ShieldCheck} count={p.claimIds.length}>
+          Claims
+        </InspectorTabButton>
+        <InspectorTabButton
+          tab="comments"
+          current={tab}
+          onClick={setPanelTab}
+          icon={MessageSquareQuote}
+          count={openComments}
+          alwaysCount
+          disabledHint={published ? undefined : "Comments turn on once it's published and shared"}
+        >
+          Comments
+        </InspectorTabButton>
+      </InspectorTabStrip>
+      {tab === "comments" ? (
+        <ReviewComments
+          comments={comments}
+          stampLabel={commentAt}
+          review={assetReview.item}
+          canClose={!submitted}
+          onAddAsSuggestion={
+            submitted
+              ? undefined
+              : (id) => {
+                  const c = comments.find((x) => x.id === id);
+                  if (!c) return;
+                  handToChat({ id: `comment-${id}`, label: `${c.containerLabel} · ${c.elementLabel}`, detail: c.text }, "Address this review comment: ");
+                  setComments((prev) => prev.map((x) => (x.id === id ? { ...x, sentToChat: true } : x)));
+                }
+          }
+          onResolve={(id, note) => closeComment(id, "resolved", note)}
+          onReject={(id, note) => closeComment(id, "rejected", note)}
+          onPost={postComment}
+        />
+      ) : tab === "assistant" ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex items-center gap-2 border-b border-hair bg-tint px-3.5 py-2 text-label font-bold text-brand-deep">
-            <MessageSquare className="size-3.5 shrink-0" />
-            <span className="truncate">{sel ? (selMedia ? selMedia.title : ZONE_NAME[sel as EmailZone]) : "The whole email"}</span>
-          </div>
+          {submitted && <ReadOnlyChatNote />}
+          {!submitted && (
+            <div className="flex items-center gap-2 border-b border-hair bg-tint px-3.5 py-2 text-label font-bold text-brand-deep">
+              <MessageSquare className="size-3.5 shrink-0" />
+              <span className="truncate">{sel ? (selMedia ? selMedia.title : ZONE_NAME[sel as EmailZone]) : "The whole email"}</span>
+            </div>
+          )}
           <div className="flex-1 space-y-3 overflow-y-auto p-3.5">
             {chatMessages.map((msg, idx) => (
               <div key={idx} className={cn("flex max-w-full gap-2.5", msg.role === "user" ? "ml-auto justify-end" : "mr-auto")}>
@@ -1101,7 +1208,7 @@ export function EmailStudioScreen() {
                   <div className={cn("rounded-panel p-3 text-body leading-relaxed", msg.role === "user" ? "rounded-tr-xs bg-brand text-white" : "rounded-tl-xs border border-hair bg-subtle text-ink")}>
                     <FormattedMessageText text={msg.text} />
                   </div>
-                  {msg.role === "swishx" && idx === chatMessages.length - 1 && (
+                  {!submitted && msg.role === "swishx" && idx === chatMessages.length - 1 && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {["Make the opening shorter", "Lock the blocks", "Remove the note"].map((chip) => (
                         <button
@@ -1118,7 +1225,7 @@ export function EmailStudioScreen() {
                 </div>
               </div>
             ))}
-            {expiring.length > 0 && !email.offBlocks.includes(expiring[0].id) && (
+            {!submitted && expiring.length > 0 && !email.offBlocks.includes(expiring[0].id) && (
               <div className="flex gap-2.5">
                 <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-brand text-caption font-bold text-white shadow-2xs">SX</div>
                 <div className="max-w-[85%] space-y-2 rounded-panel rounded-tl-xs border border-warn-line bg-warn-bg p-3 text-body leading-relaxed text-ink">
@@ -1127,7 +1234,7 @@ export function EmailStudioScreen() {
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     <Button size="sm" onClick={() => { setEmail({ offBlocks: [...email.offBlocks, expiring[0].id] }); edited(); showToast("Left out"); }}>
-                      Leave it out
+                      Leave It Out
                     </Button>
                   </div>
                 </div>
@@ -1135,81 +1242,52 @@ export function EmailStudioScreen() {
             )}
             <div ref={chatBottomRef} />
           </div>
-          <div className="shrink-0 space-y-2 border-t border-hair bg-card p-3">
-            <ChatComposer
-              value={chatInput}
-              onChange={setChatInput}
-              onSubmit={() => handleSendChat()}
-              placeholder="Ask SwishX or request a change…"
-              attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
-            >
-              <ChatAttachmentRow attachments={chatFiles} />
-              <ComposerTray
-                items={chatContexts.map((c) => ({ id: c.id, icon: <MessageSquare className="size-3" />, label: c.label, detail: c.detail }))}
-                onRemove={(id) => setChatContexts((prev) => prev.filter((c) => c.id !== id))}
-              />
-            </ChatComposer>
-          </div>
+          {!submitted && (
+            <div className="shrink-0 space-y-2 border-t border-hair bg-card p-3">
+              <ChatComposer
+                value={chatInput}
+                onChange={setChatInput}
+                onSubmit={() => handleSendChat()}
+                placeholder="Ask SwishX or request a change…"
+                attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
+              >
+                <ChatAttachmentRow attachments={chatFiles} />
+                <ComposerTray
+                  items={chatContexts.map((c) => ({ id: c.id, icon: <MessageSquare className="size-3" />, label: c.label, detail: c.detail }))}
+                  onRemove={(id) => setChatContexts((prev) => prev.filter((c) => c.id !== id))}
+                />
+              </ChatComposer>
+            </div>
+          )}
         </div>
-      ) : tab === "evidence" ? (
+      ) : (
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           <div className="flex items-center justify-between border-b border-hair pb-2.5">
             <div>
-              <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Compliance grounding</div>
+              <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Compliance Grounding</div>
               <h2 className="mt-0.5 text-body-lg font-[800] text-ink">
                 {p.claimIds.length} approved {p.claimIds.length === 1 ? "claim" : "claims"}
               </h2>
             </div>
-            <span className="rounded-chip border border-ok-line bg-ok-bg px-2.5 py-0.5 text-micro font-bold text-ok">✓ PromoMats verified</span>
+            <Chip tone="ok" size="xs" weight="bold" className="px-2.5">✓ PromoMats verified</Chip>
           </div>
-          {p.blocks.map((b) => {
-            const used = !email.offBlocks.includes(b.id);
-            return (
-              <div key={b.id} className={cn("rounded-control border p-3", b.expires ? "border-warn-line bg-warn-bg" : "border-hair bg-canvas")}>
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">{b.claimId}</span>
-                  <span className={cn("text-caption font-bold", used ? "text-ok" : "text-ink-4")}>{used ? "✓ In this email" : "Approved · not used"}</span>
-                </div>
-                <h4 className="text-body font-bold text-ink">{b.text}</h4>
-                <p className="mt-1 text-caption text-ink-3">
-                  {b.source}
-                  {b.expires ? ` · approval ends ${b.expires}` : ""}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setDossier(dossierFor(brandName, moleculeFor(brandName)))}
-                  className="focus-ring mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-1.5 py-1 text-caption font-bold text-ink-4 transition hover:bg-tint hover:text-brand-deep"
-                >
-                  <BookOpen className="size-3" />
-                  See in dossier
-                </button>
+          {claimBlocks.map((b) => claimCard(b, "✓ In this email", "text-ok"))}
+          {mediaClaims.map((id) => (
+            <div key={id} className="rounded-control border border-hair bg-canvas p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">{id}</span>
+                <span className="text-caption font-bold text-ok">✓ In an inserted image or video</span>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex-1 space-y-2.5 overflow-y-auto p-4">
-          <div className="border-b border-hair pb-2.5">
-            <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Every link is tracked</div>
-            <h2 className="mt-0.5 text-body-lg font-[800] text-ink">{p.links.length} links</h2>
-          </div>
-          {p.links.map((l, idx) => {
-            const s = LINK_STATUS[l.status];
-            return (
-              <div key={`${l.tag || l.label}-${idx}`} className={cn("rounded-control border p-3", l.status === "missing" ? "border-danger-line bg-danger-bg" : "border-hair bg-canvas")}>
-                <div className="flex items-center justify-between gap-2">
-                  <b className="min-w-0 truncate text-body text-ink">{l.label}</b>
-                  <span className={cn("shrink-0 rounded-chip px-1.5 py-0.5 text-micro font-extrabold", TONE[s.tone])}>{s.label}</span>
-                </div>
-                <p className="mt-1 break-all text-caption text-ink-3">{l.dest}</p>
-                <p className="mt-1 font-mono text-caption text-ink-4">LinkName={l.tag}</p>
-                {l.cta && l.status === "missing" && !submitted && (
-                  <Field size="sm" className="mt-2" placeholder="https://" value={email.ctaUrl} onChange={(e) => setEmail({ ctaUrl: e.target.value.trim() })} aria-label="Page the button opens" />
-                )}
-              </div>
-            );
-          })}
-          <p className="text-label text-ink-3">{p.unbranded ? "" : p.professional ? "Prescribing Information, safety information, " : "Medication Guide, safety information, "}unsubscribe and privacy links are added by SwishX.</p>
+            </div>
+          ))}
+          {otherBlocks.length > 0 && (
+            <>
+              <div className="pt-1 text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">Not Counted</div>
+              {otherBlocks.map((b) =>
+                b.newClaim && !email.offBlocks.includes(b.id) ? claimCard(b, "New claim · goes to MLR", "text-warn") : claimCard(b, "Approved · not used", "text-ink-4")
+              )}
+            </>
+          )}
         </div>
       )}
     </>
@@ -1253,7 +1331,7 @@ export function EmailStudioScreen() {
             {submitted ? (
               <>
                 {assetReview.canEdit && (
-                  <Button size="sm" variant="secondary" onClick={() => setStudioMode("editor")} className="gap-1.5 px-3.5 font-bold">
+                  <Button size="sm" variant="secondary" onClick={startEditing} className="gap-1.5 px-3.5 font-bold">
                     <Pencil className="size-3.5" />
                     Edit
                   </Button>
@@ -1271,7 +1349,7 @@ export function EmailStudioScreen() {
                 {!p.isHQ && (
                   <Button size="sm" variant="secondary" onClick={() => setRepOpen(true)} className="gap-1.5 px-3.5 font-bold">
                     <Send className="size-3.5" />
-                    Try it as {SENDER_AS[email.sender]}
+                    Try It as {SENDER_AS_TITLE[email.sender]}
                   </Button>
                 )}
                 <Button
@@ -1324,7 +1402,7 @@ export function EmailStudioScreen() {
               checks={checks}
               submit={
                 assetReview.stages.length
-                  ? { label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review", route: assetReview.stages.map((st) => st.name) }
+                  ? { label: assetReview.item?.status === "changes" ? "Resubmit for Review" : "Submit for Review", route: assetReview.stages.map((st) => st.name) }
                   : undefined
               }
               onClose={() => setPublishOpen(false)}
@@ -1344,6 +1422,43 @@ export function EmailStudioScreen() {
               if (m.startsWith("Downloaded")) setDownloaded(true);
             }}
           />
+          <Modal open={linksOpen} onClose={() => setLinksOpen(false)} title="Links" description={`Every link is tracked · ${p.links.length} links`} size="md">
+            <div className="space-y-2.5">
+              {p.links.map((l, idx) => {
+                const s = LINK_STATUS[l.status];
+                /* The buttons lead the list: the primary first, then the others in order. */
+                const ctaItem = l.cta ? (idx === 0 ? p.primaryCta : p.secondaryCtas[idx - 1]) : undefined;
+                return (
+                  <div key={`${l.tag || l.label}-${idx}`} className={cn("rounded-control border p-3", l.status === "missing" ? "border-danger-line bg-danger-bg" : "border-hair bg-canvas")}>
+                    <div className="flex items-center justify-between gap-2">
+                      <b className="min-w-0 truncate text-body text-ink">{l.label}</b>
+                      <span className={cn("shrink-0 rounded-chip px-1.5 py-0.5 text-micro font-extrabold", TONE[s.tone])}>{s.label}</span>
+                    </div>
+                    <p className="mt-1 break-all text-caption text-ink-3">{l.dest}</p>
+                    <p className="mt-1 font-mono text-caption text-ink-4">LinkName={l.tag}</p>
+                    {ctaItem && l.status === "missing" && !submitted && (
+                      <Field
+                        size="sm"
+                        className="mt-2"
+                        placeholder="https://"
+                        value={ctaItem.url}
+                        onChange={(e) => {
+                          const url = e.target.value.trim();
+                          setEmail({
+                            ...(idx === 0 ? { ctaUrl: url } : {}),
+                            ...(email.ctas?.length ? { ctas: email.ctas.map((c) => (c.id === ctaItem.id ? { ...c, url } : c)) } : {}),
+                          });
+                          edited();
+                        }}
+                        aria-label="Page the button opens"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+              <p className="text-label text-ink-3">{p.unbranded ? "" : p.professional ? "Prescribing Information, safety information, " : "Medication Guide, safety information, "}unsubscribe and privacy links are added by SwishX.</p>
+            </div>
+          </Modal>
           <DossierReaderModal dossier={dossier} onClose={() => setDossier(null)} />
           <SaveOrDiscardDialog
             open={!!exit.pending}

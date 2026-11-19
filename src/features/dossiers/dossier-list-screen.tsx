@@ -210,7 +210,7 @@ export function DossierListScreen({
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--ink-4)" }}>
               <span>Updated {dossier.lastUpdated}</span>
               <span style={{ color: "var(--brand)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                Inspect dossier →
+                Inspect Dossier →
               </span>
             </div>
           </div>

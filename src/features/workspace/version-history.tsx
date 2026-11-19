@@ -65,7 +65,7 @@ export const DOC_SESSIONS: SampleSession[] = [
     edits: 9,
     summary: [
       { text: "Applied 3 suggestions from the chat", by: "swishx" },
-      { text: "Added page 2, Evidence & Tolerability" },
+      { text: "Added page 2, Evidence and Tolerability" },
       { text: "Changed the body font to Inter" },
     ],
   },
@@ -277,7 +277,7 @@ function VersionHistoryModal({
           <div className="flex items-start gap-3 border-b border-hair px-5 py-3.5">
             <History className="mt-0.5 size-4 shrink-0 text-brand" />
             <div className="min-w-0 flex-1">
-              <p className="text-body-lg font-[850] text-ink">Version history</p>
+              <p className="text-body-lg font-[850] text-ink">Version History</p>
               <p className="text-label text-ink-3">
                 Each session is a point version (v0.1, v1.1); publishing makes a full version. Pick one to see it, and restore it if you need to.
               </p>
@@ -360,7 +360,7 @@ function VersionHistoryModal({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">What changed</div>
+                    <div className="text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">What Changed</div>
                     <ul className="space-y-1.5">
                       {selected.summary.map((s) => (
                         <li key={s.text} className="flex items-start gap-2 text-body leading-relaxed text-ink-2">

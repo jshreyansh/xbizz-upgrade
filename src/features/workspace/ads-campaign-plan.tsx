@@ -91,7 +91,7 @@ export function KeyMessageFields({
   return (
     <div className="space-y-2">
       <DecisionRow
-        label="Key message"
+        label="Key Message"
         value={leadMessage}
         icon={<MessageSquareQuote className="size-4" />}
         editing={editing === "message"}
@@ -111,7 +111,7 @@ export function KeyMessageFields({
       </DecisionRow>
       {adType === "product-claim" && (
         <DecisionRow
-          label="Approved claims"
+          label="Approved Claims"
           value={used.map((c) => c.text).join(" · ")}
           icon={<ShieldCheck className="size-4" />}
           editing={editing === "claims"}
@@ -128,7 +128,7 @@ export function KeyMessageFields({
         </DecisionRow>
       )}
       <DecisionRow
-        label="Closing line"
+        label="Closing Line"
         value={closingLine(nextStep, adType, brandName)}
         icon={<MousePointerClick className="size-4" />}
         editing={editing === "closing"}
@@ -306,7 +306,7 @@ export function AdsCampaignStoryboard({
   return (
     <>
       <div className="shrink-0 pb-1">
-        <h2 className="text-display font-[850] tracking-tight text-ink">Campaign storyboard</h2>
+        <h2 className="text-display font-[850] tracking-tight text-ink">Campaign Storyboard</h2>
         <p className="mt-0.5 text-body text-ink-3">What each ad will show, before anything is made. Select a scene or shot to change it in the chat.</p>
       </div>
 
@@ -314,7 +314,7 @@ export function AdsCampaignStoryboard({
           the storyboard is generated from it, so it isn't reopened here. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-control border border-hair bg-card px-4 py-2.5">
         <span className="min-w-0 text-label text-ink-3">
-          Key message <b className="font-bold text-ink">{leadMessage}</b>
+          Key Message <b className="font-bold text-ink">{leadMessage}</b>
         </span>
         <span className="ml-auto text-label text-ink-3">
           <b className="font-bold text-ink">{kept.length}</b> ads · <b className="font-bold text-ink">{credits.toLocaleString()}</b> credits
@@ -398,7 +398,7 @@ export function AdsCampaignStoryboard({
                   When someone searches <b className="font-bold text-ink-2">&ldquo;{searchPlan.query}&rdquo;</b>
                 </span>
                 <Button size="sm" variant="secondary" onClick={() => setSearchCombo((n) => n + 1)}>
-                  Show another combination
+                  Show Another Combination
                 </Button>
               </div>
               <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, searchCombo)} />
@@ -408,7 +408,7 @@ export function AdsCampaignStoryboard({
               <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="d" />
             </div>
             <div className="rounded-card border border-hair bg-card p-4">
-              <p className="mb-2 text-label font-bold text-ink-2">Checked against every combination</p>
+              <p className="mb-2 text-label font-bold text-ink-2">Checked Against Every Combination</p>
               <SearchChecks checks={searchPlan.checks} />
             </div>
           </section>
@@ -434,14 +434,14 @@ export function AdsCampaignStoryboard({
           <div className="space-y-8">
             {hasImage && (
               <section className="space-y-3">
-                {sectionHead("Image ad", "What will be on the image, and where. The look and the exact layout are chosen on the next screen.")}
+                {sectionHead("Image Ad", "What will be on the image, and where. The look and the exact layout are chosen on the next screen.")}
                 <div className="grid gap-5 rounded-card border border-hair bg-card p-4 sm:grid-cols-[auto_minmax(0,1fr)]">
                   <ImageAdWireframe plan={imageAd} adType={adType} />
                   <div className="space-y-3">
                     <dl className="space-y-3 text-body">
                       {([
                         ["Headline", imageAd.headline],
-                        ["Supporting claim", imageAd.support],
+                        ["Supporting Claim", imageAd.support],
                         ["Picture", imageAd.imageIdea],
                         ["Safety", imageAd.riskLine],
                         ["Packshot", imageAd.packshot ? "From Product & Device Visual Assets" : "None. Help-seeking ads can't show the product"],
@@ -531,12 +531,12 @@ function ImageAdWireframe({ plan, adType }: { plan: ImageAdPlan; adType: AdType 
       <div className="flex aspect-[4/5] w-60 flex-col gap-1.5 rounded-control border border-hair-2 bg-card p-2.5">
         {adType !== "unbranded" && <Block label="Logo" className="w-16 py-1" />}
         <Block label="Headline" className="py-2.5" />
-        {plan.support && <Block label="Supporting claim" />}
+        {plan.support && <Block label="Supporting Claim" />}
         <div className="flex min-h-0 flex-1 gap-1.5">
           <Block label="Picture" className="flex-1" />
           {plan.packshot && <Block label="Packshot" className="w-16 self-end" />}
         </div>
-        {plan.riskLine && <Block label="Safety band" />}
+        {plan.riskLine && <Block label="Safety Band" />}
       </div>
       <span className="text-caption font-bold text-ink-4">Wireframe · 4:5</span>
     </div>
@@ -555,12 +555,12 @@ function DocPageWireframe({ page, index, adType }: { page: DocPage; index: numbe
           {page.claimId && <span className="rounded-chip border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">{page.claimId}</span>}
         </span>
         {textOnly ? (
-          <Block label={page.role === "Safety" ? "Safety information" : "References"} text="Full text, no imagery" className="flex-1" />
+          <Block label={page.role === "Safety" ? "Safety Information" : "References"} text="Full text, no imagery" className="flex-1" />
         ) : (
           <>
             {page.role !== "Ask" && <Block label="Picture" text={page.visual} className="flex-1 overflow-hidden" />}
             <Block label="Headline" text={page.title} className={page.role === "Ask" ? "flex-1" : undefined} />
-            {adType === "product-claim" && <Block label="Safety line" className="py-1" />}
+            {adType === "product-claim" && <Block label="Safety Line" className="py-1" />}
           </>
         )}
       </div>
@@ -578,12 +578,12 @@ function CarouselCardWireframe({ card, index, adType }: { card: CarouselCard; in
           {index + 1} · {card.role}
         </span>
         {safety ? (
-          <Block label="Safety information" text="Full text, no imagery" className="flex-1" />
+          <Block label="Safety Information" text="Full text, no imagery" className="flex-1" />
         ) : (
           <>
             <Block label="Picture" text={card.image} className="flex-1 overflow-hidden" />
             <Block label="Headline" text={card.title} />
-            {adType === "product-claim" && <Block label="Safety line" className="py-1" />}
+            {adType === "product-claim" && <Block label="Safety Line" className="py-1" />}
           </>
         )}
       </div>

@@ -16,6 +16,7 @@ import { CharacterCreateModal } from "@/features/content-library/character-creat
 import { CharacterEditModal } from "@/features/content-library/character-edit-modal";
 import { CharacterRefineModal } from "@/features/content-library/character-refine-modal";
 import { CharacterGalleryModal } from "@/features/content-library/character-gallery-modal";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 type Shelf = "active" | "archived";
 
@@ -114,7 +115,7 @@ export function CharactersScreen() {
              button somebody has to go looking for. */
           <CreateTile
             icon={<UserRoundPlus className="size-5" />}
-            title="Create new Character"
+            title="Create New Character"
             subtitle="From a description, or from footage and photographs of a real person."
             onSelect={() => setCreating(true)}
           />
@@ -140,12 +141,12 @@ export function CharactersScreen() {
         ))}
 
         {visible.length === 0 && shelf === "archived" && (
-          <div className="col-span-full rounded-panel border border-dashed border-hair-2 py-16 text-center">
-            <p className="text-body-lg font-bold text-ink-2">Nothing archived</p>
-            <p className="mt-1 text-body text-ink-4">
-              Characters you archive are kept here rather than deleted.
-            </p>
-          </div>
+          <EmptyState
+            size="md"
+            className="col-span-full"
+            title="Nothing archived"
+            hint="Characters you archive are kept here rather than deleted."
+          />
         )}
       </div>
 

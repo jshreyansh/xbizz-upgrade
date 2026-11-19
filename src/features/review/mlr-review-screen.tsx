@@ -21,6 +21,7 @@ import {
   type ReviewItem,
 } from "@/features/review/review-store";
 import { cn } from "@/lib/cn";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 const KIND_LABEL: Record<ReviewItem["kind"], string> = { video: "Video", document: "Document", ad: "Ad campaign", email: "Approved email" };
 
@@ -65,9 +66,9 @@ export function MlrReviewScreen() {
     approved: visible.filter((i) => i.status === "approved"),
   };
   const tabs: Array<{ id: Tab; label: string }> = [
-    ...(reviewer ? [{ id: "mine" as const, label: "Waiting for me" }] : []),
-    { id: "in_review", label: reviewer ? "In review" : "My submissions in review" },
-    { id: "changes", label: "Changes requested" },
+    ...(reviewer ? [{ id: "mine" as const, label: "Waiting for Me" }] : []),
+    { id: "in_review", label: reviewer ? "In Review" : "My Submissions in Review" },
+    { id: "changes", label: "Changes Requested" },
     { id: "approved", label: "Approved" },
   ];
   const list = lists[activeTab];
@@ -77,7 +78,7 @@ export function MlrReviewScreen() {
     return (
       <div className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-2 px-4 py-20 text-center">
         <ShieldCheck className="size-7 text-ink-4" />
-        <h1 className="text-title font-[850] text-ink">MLR Review isn&rsquo;t part of your role</h1>
+        <h1 className="text-title font-[850] text-ink">MLR Review Isn&rsquo;t Part of Your Role</h1>
         <Text size="body" tone="muted" className="block">
           It&rsquo;s for reviewers who approve content and for people who create it. {viewer?.name} is {viewer?.role}, which has neither.
           An admin can change that in Settings → Team.
@@ -98,7 +99,7 @@ export function MlrReviewScreen() {
         actions={
           /* The decisions can be played again from the start. */
           <Button size="sm" variant="ghost" onClick={() => { reset(); setOpenId(null); }} className="gap-1.5" title="Put every sample back where it started">
-            <RotateCcw className="size-3.5" /> Reset samples
+            <RotateCcw className="size-3.5" /> Reset Samples
           </Button>
         }
       />
@@ -120,17 +121,13 @@ export function MlrReviewScreen() {
       </Segmented>
 
       {list.length === 0 ? (
-        <div className="rounded-panel border border-dashed border-hair-2 bg-card px-6 py-12 text-center">
-          <ShieldCheck className="mx-auto size-6 text-ok" />
-          <Text size="body-lg" weight="bold" className="mt-2 block">
-            {activeTab === "mine" ? "Nothing is waiting on you" : "Nothing here"}
-          </Text>
-          {activeTab === "mine" && (
-            <Text size="label" tone="muted" className="mt-1 block">
-              Items arrive here when they reach a stage you approve. Switch &ldquo;Viewing as&rdquo; to a reviewer to see their queue.
-            </Text>
-          )}
-        </div>
+        <EmptyState
+          size="md"
+          tone="card"
+          icon={<ShieldCheck className="size-5 text-ok" />}
+          title={activeTab === "mine" ? "Nothing is waiting on you" : "Nothing here"}
+          hint={activeTab === "mine" ? <>Items arrive here when they reach a stage you approve. Switch &ldquo;Viewing as&rdquo; to a reviewer to see their queue.</> : undefined}
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {list.map((item) => (
@@ -255,7 +252,7 @@ function ReviewItemModal({ item, onClose }: { item: ReviewItem; onClose: () => v
             <>
               <Text size="label" tone="muted" className="mr-auto">You&rsquo;re the reviewer for {stage?.name}.</Text>
               <Button size="sm" variant="secondary" onClick={() => setDeciding("changes")} className="gap-1.5">
-                <RotateCcw className="size-3.5" /> Request changes
+                <RotateCcw className="size-3.5" /> Request Changes
               </Button>
               <Button size="sm" onClick={() => setDeciding("approve")} className="gap-1.5 font-bold">
                 <Check className="size-3.5" /> Approve
@@ -272,7 +269,7 @@ function ReviewItemModal({ item, onClose }: { item: ReviewItem; onClose: () => v
                 onClick={decide}
                 className="font-bold"
               >
-                {deciding === "changes" ? "Send back for changes" : last ? "Approve and publish" : `Approve, send to ${item.stages[item.stageIndex + 1]?.name}`}
+                {deciding === "changes" ? "Send Back for Changes" : last ? "Approve and Publish" : `Approve, Send to ${item.stages[item.stageIndex + 1]?.name}`}
               </Button>
             </>
           )}
@@ -295,7 +292,7 @@ function ReviewItemModal({ item, onClose }: { item: ReviewItem; onClose: () => v
               multiline
               rows={3}
               autoFocus
-              label={deciding === "changes" ? "What needs to change? (required)" : "Note for the record (optional)"}
+              label={deciding === "changes" ? "What needs to change? (Required)" : "Note for the Record (Optional)"}
               hint={deciding === "changes" ? `It goes back to ${nameOf(item.ownerId)} with this.` : undefined}
               placeholder={deciding === "changes" ? "e.g. Page 1 makes a superiority claim with no reference." : "e.g. Claims match the label."}
               value={note}
@@ -307,7 +304,7 @@ function ReviewItemModal({ item, onClose }: { item: ReviewItem; onClose: () => v
         {/* Where it is, and what's been said. */}
         <div className="flex min-w-0 flex-col gap-4">
           <div>
-            <Text size="label" tone="muted" weight="semibold" className="mb-2 block">Approval chain</Text>
+            <Text size="label" tone="muted" weight="semibold" className="mb-2 block">Approval Chain</Text>
             <ol className="flex flex-col">
               <ChainRow tone="done" title="Submitted" detail={`${nameOf(item.ownerId)} · ${item.events[0]?.at ?? ""}`} />
               {item.stages.map((st, i) => {

@@ -6,7 +6,7 @@ import { MVHeader } from "@/features/creation/mv-header";
 
 const AUDIENCES: { id: MVAudience; title: string; desc: string }[] = [
   { id: "hcp", title: "Doctor / HCP", desc: "Clinical detail, peer-to-peer" },
-  { id: "rep", title: "Field force", desc: "30-sec pitch, objections" },
+  { id: "rep", title: "Field Force", desc: "30-sec pitch, objections" },
   { id: "patient", title: "Patient", desc: "Plain language, what to expect" },
   { id: "payer", title: "Payer", desc: "Budget impact and value" },
 ];
@@ -104,7 +104,7 @@ export function Step3AudienceVoice() {
           {/* Card: Who it speaks to */}
           <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
             <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 14 }}>
-              Who it speaks to
+              Who It Speaks To
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {AUDIENCES.map((a) => {
@@ -162,7 +162,7 @@ export function Step3AudienceVoice() {
           <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
-                Whose voice
+                Whose Voice
               </div>
               <span style={{ fontSize: 11.5, color: "var(--brand)", fontWeight: 650 }}>Click ▶ to audition voice</span>
             </div>
@@ -265,7 +265,7 @@ export function Step3AudienceVoice() {
           <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
-                Target length
+                Target Length
               </div>
               <span style={{ fontSize: 12, fontWeight: 750, color: "var(--brand)", background: "rgba(253,72,22,.1)", padding: "2px 8px", borderRadius: 99 }}>
                 {length} · ~{parseInt(length) * 2} words
@@ -307,7 +307,7 @@ export function Step3AudienceVoice() {
         {/* Right Sticky Card: What you will get */}
         <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)", position: "sticky", top: 16 }}>
           <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 14 }}>
-            What you will get
+            What You Will Get
           </div>
 
           <div style={{ display: "grid", gap: 9 }}>
@@ -318,7 +318,7 @@ export function Step3AudienceVoice() {
               ["Audience", curAud.title],
               ["Voice", `${curVoice.name} · ${curVoice.desc.split(" · ")[1]}`],
               ["Length", length],
-              ["Cost to render", cost],
+              ["Cost to Render", cost],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hair)", fontSize: 13 }}>
                 <span style={{ color: "var(--ink-3)" }}>{k}</span>
@@ -398,7 +398,7 @@ export function Step3AudienceVoice() {
             cursor: "pointer",
           }}
         >
-          ⚡ Write my script
+          ⚡ Write My Script
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

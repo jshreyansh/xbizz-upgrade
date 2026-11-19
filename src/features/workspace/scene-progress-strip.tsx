@@ -56,7 +56,7 @@ export function SceneProgressStrip({
       </div>
 
       <span className="shrink-0 text-label font-semibold text-ink-3">
-        Keep editing. The boxes are already final
+        Keep editing. The boxes are already final.
       </span>
     </div>
   );

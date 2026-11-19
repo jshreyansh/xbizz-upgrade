@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { AssetPreview, StatusChip } from "@/features/content-library/asset-preview";
 import { AD_PLACEMENTS, type AdPlacement } from "@/features/workspace/ad-options";
 import type { LibraryAsset } from "@/features/content-library/content-library-data";
@@ -114,7 +115,7 @@ export function ApprovedMaterialsModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Approved brand materials"
+      title="Approved Brand Materials"
       description={`Select approved videos, docs, or ad cutdowns for ${brandName} (${audienceNoun(audience)}) to feature in this email.`}
       size="xl"
       footer={
@@ -143,7 +144,7 @@ export function ApprovedMaterialsModal({
               iconLeft={<Search className="size-3.5" />}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search materials..."
+              placeholder="Search materials…"
               aria-label="Search approved materials"
             />
           </div>
@@ -157,7 +158,7 @@ export function ApprovedMaterialsModal({
             </SegmentedButton>
             <SegmentedButton active={tab === "docs"} onClick={() => setTab("docs")}>
               <FileText className="mr-1.5 size-3.5 inline" />
-              Docs &amp; Decks
+              Docs and Decks
             </SegmentedButton>
             <SegmentedButton active={tab === "ads"} onClick={() => setTab("ads")}>
               <Megaphone className="mr-1.5 size-3.5 inline" />
@@ -167,10 +168,11 @@ export function ApprovedMaterialsModal({
         </div>
 
         {totalResults === 0 ? (
-          <div className="rounded-control border border-dashed border-hair-3 p-8 text-center text-ink-3">
-            <p className="text-body font-semibold">No materials found</p>
-            <p className="mt-1 text-label text-ink-4">Try clearing your search query or switching categories.</p>
-          </div>
+          <EmptyState
+            className="rounded-control border-hair-3 py-8"
+            title="No materials found"
+            hint="Try clearing your search query or switching categories."
+          />
         ) : (
           <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             {/* Standard Videos and Docs */}
@@ -214,7 +216,7 @@ export function ApprovedMaterialsModal({
                       title="Inspect full material"
                     >
                       <Eye className="size-3" />
-                      <span>Full preview</span>
+                      <span>Full Preview</span>
                     </button>
                   </div>
 
@@ -269,7 +271,7 @@ export function ApprovedMaterialsModal({
                     </div>
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="ghost" onClick={() => handleSelectAllAdCutdowns(group.cutdowns)} className="h-7 text-label font-bold text-ink-2">
-                        {allChecked ? "Deselect all" : "Select all cutdowns"}
+                        {allChecked ? "Deselect All" : "Select All Cutdowns"}
                       </Button>
                       <button
                         type="button"
@@ -348,7 +350,7 @@ export function ApprovedMaterialsModal({
                             >
                               <div>
                                 <h5 className="line-clamp-1 text-label font-extrabold text-ink">{cutdown.cutdownName || cutdown.title}</h5>
-                                <p className="mt-0.5 line-clamp-1 text-caption text-ink-3">{cutdown.spec} · {placement?.sizes || "Ad Placement"}</p>
+                                <p className="mt-0.5 line-clamp-1 text-caption text-ink-3">{cutdown.spec} · {placement?.sizes || "Ad placement"}</p>
                               </div>
                               <div className="mt-2 flex items-center justify-between border-t border-hair-2 pt-1.5 text-micro">
                                 <span className="text-ink-4">Cutdown</span>

@@ -23,7 +23,7 @@ export function Step6RenderConfirm() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--ok)", display: "block" }} />
           <b style={{ fontSize: 16, fontWeight: 800 }}>Magic Video Studio · Production Queue</b>
-          <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Pre-render verification</span>
+          <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Pre-Render Verification</span>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {["1. Brief", "2. Script", "3. Scenes", "4. Render (Active)"].map((tab, i) => (
@@ -87,7 +87,7 @@ export function Step6RenderConfirm() {
           {/* Video mode */}
           <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
             <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-              Video mode
+              Video Mode
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <button
@@ -103,7 +103,7 @@ export function Step6RenderConfirm() {
               >
                 <h3 style={{ margin: "0 0 4px", fontSize: 16.5, fontWeight: 800, color: videoMode === "hd" ? "var(--brand-deep)" : "var(--ink)" }}>HD</h3>
                 <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>
-                  Lifelike motion that stops the scroll, for launches &amp; big moments.
+                  Lifelike motion that stops the scroll, for launches and big moments.
                 </p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", background: "rgba(253,72,22,.1)", padding: "2px 7px", borderRadius: 99 }}>
@@ -141,24 +141,24 @@ export function Step6RenderConfirm() {
           {/* MLR recommends */}
           <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
             <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 14 }}>
-              MLR recommends
+              MLR Recommends
             </div>
             <div style={{ display: "grid", gap: 14 }}>
               {[
                 {
-                  title: "On-screen source citations",
+                  title: "On-Screen Source Citations",
                   desc: "A lower-third source on each of the 5 evidence scenes.",
                   val: mlrCitations,
                   set: setMlrCitations,
                 },
                 {
-                  title: "References & disclaimer end-card",
+                  title: "References and Disclaimer End-Card",
                   desc: "A closing card listing every source + the HCP-only disclaimer.",
                   val: mlrReferencesCard,
                   set: setMlrReferencesCard,
                 },
                 {
-                  title: "Important Safety Information (ISI) card",
+                  title: "Important Safety Information (ISI) Card",
                   desc: "A dedicated ISI card before the outro, as required for US promotional video.",
                   val: mlrIsiCard,
                   set: setMlrIsiCard,
@@ -236,15 +236,15 @@ export function Step6RenderConfirm() {
         {/* Right Stack */}
         <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
           <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-            Production specs
+            Production Specs
           </div>
           <div style={{ display: "grid", gap: 10 }}>
             {[
-              ["Aspect ratio", "9:16 (Portrait)"],
+              ["Aspect Ratio", "9:16 (Portrait)"],
               ["Resolution", "1080 × 1920 (Full HD)"],
-              ["Audio mix", "Ava (US English) · 142 wpm"],
-              ["Regulatory scope", "🇺🇸 FDA OPDP compliant"],
-              ["Citations locked", "5 of 5 scenes"],
+              ["Audio Mix", "Ava (US English) · 142 wpm"],
+              ["Regulatory Scope", "🇺🇸 FDA OPDP compliant"],
+              ["Citations Locked", "5 of 5 scenes"],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "5px 0", borderBottom: "1px solid var(--hair)" }}>
                 <span style={{ color: "var(--ink-4)" }}>{k}</span>
@@ -305,7 +305,7 @@ export function Step6RenderConfirm() {
             cursor: "pointer",
           }}
         >
-          ⚡ Generate reel
+          ⚡ Generate Reel
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

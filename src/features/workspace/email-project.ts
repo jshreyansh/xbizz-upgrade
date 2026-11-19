@@ -28,19 +28,19 @@ export type ZoneType = "lock" | "auto" | "choose" | "type";
 
 export const ZONE_NAME: Record<EmailZone, string> = {
   header: "Header",
-  "header:logo": "Logo & Brand Mark",
+  "header:logo": "Logo and Brand Mark",
   "header:links": "Safety Links (PI / ISI)",
   "header:image": "Hero Image",
   "header:heading": "Subject Heading",
   greeting: "Greeting",
   note: "Personal Note",
-  opening: "Opening & Indication",
+  opening: "Opening and Indication",
   blocks: "Content Blocks",
   piece: "Attached Documents",
   cta: "Call to Action",
-  signoff: "Sign-Off & Signature",
+  signoff: "Sign-Off and Signature",
   isi: "Important Safety Information",
-  footer: "Footer & Compliance",
+  footer: "Footer and Compliance",
 };
 
 export const ZONE_TYPE_LABEL: Record<ZoneType, string> = { lock: "Locked", auto: "Filled in", choose: "Sender chooses", type: "Sender types" };
@@ -157,7 +157,7 @@ export function useEmailProject() {
     subject: subjects[email.subjects[0] ?? 0],
     zoneType,
     zones,
-    title: projectName || `${unbranded ? condition[0].toUpperCase() + condition.slice(1) : brandName} · ${purpose.label} email`,
+    title: projectName || `${unbranded ? condition[0].toUpperCase() + condition.slice(1) : brandName} · ${purpose.label} Email`,
     /** Every claim the email shows: its blocks and anything inserted with a claim on it. */
     claimIds: [...new Set([...included.filter((b) => !b.newClaim).map((b) => b.claimId), ...email.media.flatMap((m) => m.claims)])],
   };

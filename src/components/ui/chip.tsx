@@ -12,23 +12,28 @@ import { IconButton } from "@/components/ui/button";
  * so a non-interactive chip does not land in the tab order.
  */
 
-type ChipTone = "default" | "brand" | "ok" | "warn" | "danger" | "dark" | "overlay";
+type ChipTone = "default" | "neutral" | "brand" | "ok" | "warn" | "danger" | "dark" | "overlay";
 type ChipSize = "xs" | "sm" | "md" | "lg";
+type ChipWeight = "semibold" | "bold";
 
 // Each tone's classes are the dominant string already used at the call sites
 // it replaces, so adopting a tone does not restyle anything.
 const unselected: Record<ChipTone, string> = {
   default: "border-hair-2 bg-card text-ink-2",
+  /* The quiet grey tag ("Read-Only", "Coming soon", a type label): the most
+     common chip still hand-rolled in feature code. */
+  neutral: "border-hair bg-subtle text-ink-3",
   brand: "border-tint-line bg-tint text-brand-deep",
   ok: "border-ok-line bg-ok-bg text-ok",
   warn: "border-warn-line bg-warn-bg text-warn",
-  danger: "border-danger bg-danger-bg text-danger",
+  danger: "border-danger-line bg-danger-bg text-danger",
   dark: "border-white/15 bg-white/10 text-white/85",
   overlay: "border-transparent bg-white/90 text-ink shadow-xs",
 };
 
 const selectedTone: Record<ChipTone, string> = {
   default: "border-brand bg-tint text-brand-deep",
+  neutral: "border-hair-3 bg-card text-ink",
   brand: "border-brand bg-brand text-white",
   ok: "border-ok bg-ok text-white",
   warn: "border-warn bg-warn text-white",
@@ -51,6 +56,9 @@ export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLElement>, "onSe
   selected?: boolean;
   tone?: ChipTone;
   size?: ChipSize;
+  /** semibold by default; bold for a status tag that has to be read at a glance. */
+  weight?: ChipWeight;
+  /** A glyph before the label, e.g. a Lock on a "Read-Only" chip. */
   iconLeft?: ReactNode;
   /** Shows a remove affordance. Requires onRemove. */
   removable?: boolean;
@@ -59,7 +67,7 @@ export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLElement>, "onSe
 }
 
 export const Chip = forwardRef<HTMLElement, ChipProps>(function Chip(
-  { selected, tone = "default", size = "sm", iconLeft, removable, onRemove,
+  { selected, tone = "default", size = "sm", weight = "semibold", iconLeft, removable, onRemove,
     removeLabel = "Remove", className, children, onClick, ...props },
   ref,
 ) {
@@ -71,7 +79,8 @@ export const Chip = forwardRef<HTMLElement, ChipProps>(function Chip(
       ref={ref as React.Ref<HTMLButtonElement>}
       {...(interactive ? { type: "button" as const, onClick, "aria-pressed": selected } : {})}
       className={cn(
-        "inline-flex shrink-0 items-center rounded-chip border font-semibold transition-colors",
+        "inline-flex shrink-0 items-center rounded-chip border transition-colors",
+        weight === "bold" ? "font-bold" : "font-semibold",
         interactive && "focus-ring cursor-pointer",
         selected ? selectedTone[tone] : unselected[tone],
         sizes[size],

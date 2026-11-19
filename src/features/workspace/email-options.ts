@@ -84,24 +84,24 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
     sub: "Vault CRM + PromoMats Approved Email",
     category: "crm",
     tokens: "{{insertEmailFragments}}, {{customText}}, {{$VaultDocID}}",
-    complianceTag: "Field Rep & MSL Approved Email",
+    complianceTag: "Field Rep and MSL Approved Email",
     hint: "Uses Veeva fragment architecture, MLR locking tokens, and Vault Doc IDs.",
     recommendedFor: (a, s) => a === "HCP" && s !== "hq",
   },
   {
     id: "hubspot",
     name: "HubSpot",
-    sub: "Marketing Hub & Sales CRM Email Sequences",
+    sub: "Marketing Hub and Sales CRM Email Sequences",
     category: "marketing",
     tokens: "{{contact.firstname}}, {{personal_token}}, {{unsubscribe_link}}",
-    complianceTag: "Inbound Marketing & Sales Sequences",
-    hint: "Compatible with HubSpot personalization tokens and responsive email templates.",
+    complianceTag: "Inbound Marketing and Sales Sequences",
+    hint: "Compatible with HubSpot personalisation tokens and responsive email templates.",
     recommendedFor: () => false,
   },
   {
     id: "sfmc",
     name: "Salesforce Marketing Cloud",
-    sub: "SFMC Journeys & Email Studio",
+    sub: "SFMC Journeys and Email Studio",
     category: "marketing",
     tokens: "%%FirstName%%, %%SenderNote%%, %%unsub_center_url%%",
     complianceTag: "Enterprise Marketing Automation",
@@ -121,7 +121,7 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
   {
     id: "sfdc",
     name: "Salesforce Life Sciences Cloud",
-    sub: "HCP engagement & hybrid commercial teams",
+    sub: "HCP engagement and hybrid commercial teams",
     category: "crm",
     tokens: "{{recipient.Name}}, {{rep.Signature}}",
     complianceTag: "Commercial Life Sciences",
@@ -131,20 +131,20 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
   {
     id: "braze",
     name: "Braze",
-    sub: "Customer engagement platform & lifecycle campaigns",
+    sub: "Customer engagement platform and lifecycle campaigns",
     category: "marketing",
     tokens: "{{${first_name}}}, {{campaign_id}}",
     complianceTag: "Consumer Lifecycle Engagement",
-    hint: "Liquid syntax personalization and mobile cross-channel delivery.",
+    hint: "Liquid syntax personalisation and mobile cross-channel delivery.",
     recommendedFor: () => false,
   },
   {
     id: "html",
     name: "HTML Package",
-    sub: "Universal ZIP with inline CSS, assets & tracking labels",
+    sub: "Universal ZIP with inline CSS, assets and tracking labels",
     category: "custom",
     tokens: "Standards-compliant responsive HTML package",
-    complianceTag: "Agency & Custom ESP Handoff",
+    complianceTag: "Agency and Custom ESP Handoff",
     hint: "Portable production package tested across Outlook, Gmail, and Apple Mail.",
     recommendedFor: () => false,
   },
@@ -166,7 +166,7 @@ export const EMAIL_TODAY = "2 Nov 2026";
 export const EMAIL_AUDIENCES: EmailAudience[] = ["HCP", "PT_Committee"];
 export const AUDIENCE_LABEL: Record<EmailAudience, { title: string; hint: string }> = {
   HCP: { title: "HCPs", hint: "Doctors, nurses and clinical specialists" },
-  PT_Committee: { title: "P&T Committee", hint: "Pharmacy & Therapeutics and formulary decision-makers" },
+  PT_Committee: { title: "P&T Committee", hint: "Pharmacy and Therapeutics committees and formulary decision-makers" },
   Patient: { title: "Patients", hint: "People prescribed the drug, and their carers" },
   Consumer: { title: "Consumers", hint: "The public, about the condition" },
 };
@@ -199,8 +199,8 @@ interface SenderDef {
 const SENDERS: Record<EmailSender, SenderDef> = {
   rep: {
     label: "Rep",
-    long: "Sales rep",
-    subtitle: "Field team · Commercial & promotional follow-up",
+    long: "Sales Rep",
+    subtitle: "Field team · Commercial and promotional follow-up",
     hint: "Adds a personal note and picks from approved promotional blocks.",
     signoff: ["Priya Menon", "Specialty Representative"],
     address: "priya.menon@corvane.com",
@@ -208,16 +208,16 @@ const SENDERS: Record<EmailSender, SenderDef> = {
   },
   msl: {
     label: "MSL",
-    long: "Medical science liaison",
-    subtitle: "Medical affairs · Scientific & clinical exchange",
+    long: "Medical Science Liaison",
+    subtitle: "Medical affairs · Scientific and clinical exchange",
     hint: "Scientific exchange. Non-promotional, no commercial claims.",
     signoff: ["Dr. Arjun Rao", "Medical Science Liaison"],
     address: "arjun.rao@corvane.com",
     sampleNote: "Thank you for the question at Tuesday's meeting. The information is below.",
   },
   hq: {
-    label: "Head office",
-    long: "Head office",
+    label: "Head Office",
+    long: "Head Office",
     subtitle: "Brand team · Broad updates sent as approved",
     hint: "Sent from the brand to opted-in prescribers. Nothing personalised.",
     signoff: ["The brand team", "Corvane Pharma US"],
@@ -225,9 +225,9 @@ const SENDERS: Record<EmailSender, SenderDef> = {
     sampleNote: "",
   },
   support: {
-    label: "Support nurse",
-    long: "Patient support nurse",
-    subtitle: "Care team · Treatment guidance & patient onboarding",
+    label: "Support Nurse",
+    long: "Patient Support Nurse",
+    subtitle: "Care team · Treatment guidance and patient onboarding",
     hint: "Adds a short note and picks from approved patient support blocks.",
     signoff: ["Alex Rivera, RN", "Patient Support Nurse"],
     address: "support@corvane-care.com",
@@ -240,8 +240,8 @@ export function senderInfo(id: EmailSender, audience: EmailAudience): SenderDef 
   if (id === "hq" && !isProfessional(audience))
     return {
       ...SENDERS.hq,
-      label: "Brand team",
-      long: "Brand team",
+      label: "Brand Team",
+      long: "Brand Team",
       subtitle: "Brand team · Direct patient communications sent as approved",
       hint: "Sent from the brand to people who signed up. Nothing personalised.",
       address: "hello@corvane-care.com",
@@ -270,12 +270,12 @@ interface PurposeDef {
 
 export const EMAIL_PURPOSES: Record<EmailPurpose, PurposeDef> = {
   followup: {
-    label: "Meeting follow-up", subtitle: "After a rep visit, with the piece they showed", audience: "HCP", senders: ["rep"], cta: "Book a follow-up",
+    label: "Meeting Follow-Up", subtitle: "After a rep visit, with the piece they showed", audience: "HCP", senders: ["rep"], cta: "Book a follow-up",
     opening: (b) => `Thank you for your time. As promised, here is the ${b} information we discussed.`,
     subjects: (b) => [`Following up on our ${b} conversation`, `The ${b} data we discussed`, `Your ${b} leave-behind, as promised`],
   },
   newdata: {
-    label: "New data", subtitle: "A new result or follow-up analysis", audience: "HCP", senders: ["rep", "hq"], cta: "See the full results",
+    label: "New Data", subtitle: "A new result or follow-up analysis", audience: "HCP", senders: ["rep", "hq"], cta: "See the full results",
     opening: (b, c) => `New long-term results for ${b} in ${c} are now available.`,
     subjects: (b, c) => [`New long-term ${b} data in ${c}`, `${b}: what the follow-up showed`, `Updated ${b} results for your patients`],
   },
@@ -285,62 +285,62 @@ export const EMAIL_PURPOSES: Record<EmailPurpose, PurposeDef> = {
     subjects: (b, c) => [`${b} is now available for ${c}`, `Introducing ${b}`, `Starting patients on ${b}`],
   },
   congress: {
-    label: "Congress invite", subtitle: "An invitation to a symposium or booth", audience: "HCP", senders: ["rep", "hq"], cta: "Reserve a seat",
+    label: "Congress Invite", subtitle: "An invitation to a symposium or booth", audience: "HCP", senders: ["rep", "hq"], cta: "Reserve a seat",
     opening: (b) => `You are invited to the ${b} industry symposium at this year's congress.`,
     subjects: (b) => [`Join us: ${b} symposium`, `Your seat at the ${b} symposium`, `${b} at congress: you're invited`],
   },
   access: {
-    label: "Access & support", subtitle: "Copay, pharmacy and starting patients", audience: "HCP", senders: ["rep", "hq"], cta: "Contact patient support",
+    label: "Access and Support", subtitle: "Copay, pharmacy and starting patients", audience: "HCP", senders: ["rep", "hq"], cta: "Contact patient support",
     opening: (b) => `Starting a patient on ${b}? Here is how the support programme can help.`,
     subjects: (b) => [`${b} support for your patients`, `Helping your patients start ${b}`, `Copay and pharmacy support for ${b}`],
   },
   medq: {
-    label: "Answer a medical question", subtitle: "Reply to a doctor's unsolicited question", audience: "HCP", senders: ["msl"], cta: "Ask another question",
+    label: "Answer a Medical Question", subtitle: "Reply to a doctor's unsolicited question", audience: "HCP", senders: ["msl"], cta: "Ask another question",
     opening: () => "Thank you for your question. The information you asked for is below.",
     subjects: (b) => [`Your question about ${b}`, `Medical information: ${b}`, `Re: your ${b} question`],
   },
   pub: {
-    label: "Share a publication", subtitle: "A paper or reprint a doctor asked for", audience: "HCP", senders: ["msl"], cta: "Request a discussion",
+    label: "Share a Publication", subtitle: "A paper or reprint a doctor asked for", audience: "HCP", senders: ["msl"], cta: "Request a discussion",
     opening: (b) => `As discussed, here is the primary publication for ${b}.`,
     subjects: (b) => [`${b} primary publication`, "The paper we discussed", `${b}: publication you asked for`],
   },
   mslcongress: {
-    label: "Congress follow-up", subtitle: "Presentations a doctor asked about", audience: "HCP", senders: ["msl"], cta: "Request a discussion",
+    label: "Congress Follow-Up", subtitle: "Presentations a doctor asked about", audience: "HCP", senders: ["msl"], cta: "Request a discussion",
     opening: (b) => `Here are the ${b} presentations from congress that you asked about.`,
     subjects: (b) => [`${b} presentations from congress`, `The ${b} poster you asked about`, "The congress data you asked about"],
   },
   formulary: {
-    label: "Formulary review", subtitle: "Ahead of a P&T or formulary decision", audience: "HCP", senders: ["rep", "hq"], cta: "Request the formulary kit",
+    label: "Formulary Review", subtitle: "Ahead of a P&T or formulary decision", audience: "HCP", senders: ["rep", "hq"], cta: "Request the formulary kit",
     opening: (b, c) => `Ahead of your formulary review, here is a summary of ${b} for ${c}.`,
     subjects: (b) => [`${b}: summary for your formulary review`, `${b} formulary kit`, `Preparing for P&T: ${b}`],
   },
   value: {
-    label: "Value & outcomes", subtitle: "Budget impact and health outcomes", audience: "HCP", senders: ["rep", "hq"], cta: "Open the value dossier",
+    label: "Value and Outcomes", subtitle: "Budget impact and health outcomes", audience: "HCP", senders: ["rep", "hq"], cta: "Open the value dossier",
     opening: (b) => `Here is the budget impact and outcomes evidence for ${b} that you asked about.`,
     subjects: (b) => [`${b}: budget impact and outcomes`, `The ${b} value dossier`, `Health economics for ${b}`],
   },
   onboarding: {
-    label: "Starting treatment", subtitle: "Welcome, and what to expect", audience: "Patient", senders: ["hq", "support"], cta: "Join the support programme",
+    label: "Starting Treatment", subtitle: "Welcome, and what to expect", audience: "Patient", senders: ["hq", "support"], cta: "Join the support programme",
     opening: (b) => `Welcome. Your doctor has prescribed ${b}. Here is what to expect in your first few weeks.`,
     subjects: (b) => [`Welcome to ${b}`, `Starting ${b}: what to expect`, `Your first weeks on ${b}`],
   },
   savings: {
-    label: "Savings & copay", subtitle: "Help paying for treatment", audience: "Patient", senders: ["hq", "support"], cta: "Get your savings card",
+    label: "Savings and Copay", subtitle: "Help paying for treatment", audience: "Patient", senders: ["hq", "support"], cta: "Get your savings card",
     opening: (b) => `You may be able to pay less for ${b}. Here is how the savings programme works.`,
     subjects: (b) => [`You could pay less for ${b}`, `Your ${b} savings card`, `Help paying for ${b}`],
   },
   adherence: {
-    label: "Staying on treatment", subtitle: "Reminders and tips between visits", audience: "Patient", senders: ["hq", "support"], cta: "Set up reminders",
+    label: "Staying on Treatment", subtitle: "Reminders and tips between visits", audience: "Patient", senders: ["hq", "support"], cta: "Set up reminders",
     opening: (b) => `Taking ${b} as prescribed matters. Here are a few tips for staying on track.`,
     subjects: (b) => [`Staying on track with ${b}`, "A few tips for your treatment", `Reminders for taking ${b}`],
   },
   supportfu: {
-    label: "Support follow-up", subtitle: "After a call with a support nurse", audience: "Patient", senders: ["support"], cta: "Book another call",
+    label: "Support Follow-Up", subtitle: "After a call with a support nurse", audience: "Patient", senders: ["support"], cta: "Book another call",
     opening: () => "Thank you for speaking with me today. As promised, here is the information we discussed.",
     subjects: () => ["Following up on our call", "What we talked about today", "Your notes from today's call"],
   },
   awareness: {
-    label: "Disease awareness", subtitle: "About the condition, with no product named", audience: "Consumer", senders: ["hq"], cta: "Find a specialist", unbranded: true,
+    label: "Disease Awareness", subtitle: "About the condition, with no product named", audience: "Consumer", senders: ["hq"], cta: "Find a specialist", unbranded: true,
     opening: (_b, c) => `Living with ${c}? You are not alone, and there are questions worth asking your doctor.`,
     subjects: (_b, c) => [`Questions to ask about ${c}`, `Living with ${c}`, `What to know about ${c}`],
   },
@@ -364,42 +364,42 @@ export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender,
   if (therapy) return therapyEmailPrompts(audience, sender, therapy, prescribers);
   if (audience === "PT_Committee" || purpose === "formulary" || purpose === "value")
     return [
-      { id: "formulary", tag: "Formulary review", prompt: `Write an email an account manager can send to the P&T committee regarding the formulary review for ${subject}, linking the formulary kit.` },
-      { id: "value", tag: "Value & outcomes", prompt: `Draft an email for the P&T committee highlighting budget impact models and clinical outcomes for ${subject}.` },
-      { id: "dossier", tag: "Value dossier", prompt: `Create a concise email offering the AMCP value dossier for ${subject} to the health system formulary evaluation team.` },
+      { id: "formulary", tag: "Formulary Review", prompt: `Write an email an account manager can send to the P&T committee regarding the formulary review for ${subject}, linking the formulary kit.` },
+      { id: "value", tag: "Value and Outcomes", prompt: `Draft an email for the P&T committee highlighting budget impact models and clinical outcomes for ${subject}.` },
+      { id: "dossier", tag: "Value Dossier", prompt: `Create a concise email offering the AMCP value dossier for ${subject} to the health system formulary evaluation team.` },
     ];
   if (audience === "Patient")
     return [
-      { id: "onboarding", tag: "Starting treatment", prompt: `Write a welcome email for people just prescribed ${subject}: what to expect, how to take it, and how the support programme helps.` },
+      { id: "onboarding", tag: "Starting Treatment", prompt: `Write a welcome email for people just prescribed ${subject}: what to expect, how to take it, and how the support programme helps.` },
       { id: "savings", tag: "Savings", prompt: `Draft a plain-language email explaining the savings card for ${subject} and how to sign up.` },
-      { id: "adherence", tag: "Staying on treatment", prompt: `Create a reminder email with tips for staying on ${subject} between doctor visits.` },
+      { id: "adherence", tag: "Staying on Treatment", prompt: `Create a reminder email with tips for staying on ${subject} between doctor visits.` },
     ];
   if (audience === "Consumer")
     return [
-      { id: "awareness", tag: "Disease awareness", prompt: `Write an unbranded email about ${condition}: common signs, questions to ask a doctor, and where to find a specialist.` },
+      { id: "awareness", tag: "Disease Awareness", prompt: `Write an unbranded email about ${condition}: common signs, questions to ask a doctor, and where to find a specialist.` },
       { id: "signup", tag: "Welcome", prompt: `Draft a welcome email for people who signed up for updates about ${condition}, with no product named.` },
-      { id: "specialist", tag: "Find a specialist", prompt: `Create a short email encouraging people living with ${condition} to talk to a specialist.` },
+      { id: "specialist", tag: "Find a Specialist", prompt: `Create a short email encouraging people living with ${condition} to talk to a specialist.` },
     ];
   if (sender === "msl")
     return [
-      { id: "medq", tag: "Medical question", prompt: `Answer an unsolicited question from one of the ${prescribers} about dose modification on ${subject}, citing the Prescribing Information.` },
+      { id: "medq", tag: "Medical Question", prompt: `Answer an unsolicited question from one of the ${prescribers} about dose modification on ${subject}, citing the Prescribing Information.` },
       { id: "pub", tag: "Publication", prompt: `Write a non-promotional MSL email sharing the primary publication for ${subject} with a doctor who asked for it.` },
       { id: "congress", tag: "Congress", prompt: `Draft an MSL follow-up sharing the long-term poster for ${subject} with investigators who asked about durability.` },
     ];
   if (sender === "hq")
     return [
-      { id: "newdata", tag: "New data", prompt: `Create a head-office email to opted-in ${prescribers} announcing the long-term results for ${subject}.` },
+      { id: "newdata", tag: "New Data", prompt: `Create a head-office email to opted-in ${prescribers} announcing the long-term results for ${subject}.` },
       { id: "congress", tag: "Congress", prompt: `Invite opted-in ${prescribers} to the industry symposium on ${subject}, with the key efficacy result.` },
       { id: "access", tag: "Access", prompt: `Write a head-office email explaining copay and specialty pharmacy support for ${subject}.` },
     ];
   const lead =
     purpose === "followup"
-      ? { id: "followup", tag: "Follow-up", prompt: `Write a follow-up email reps can send ${prescribers} after a visit about ${subject}, led by the primary endpoint, with the leave-behind attached.` }
+      ? { id: "followup", tag: "Follow-Up", prompt: `Write a follow-up email reps can send ${prescribers} after a visit about ${subject}, led by the primary endpoint, with the leave-behind attached.` }
       : { id: purpose, tag: EMAIL_PURPOSES[purpose].label, prompt: `Write a ${EMAIL_PURPOSES[purpose].label.toLowerCase()} email reps can send ${prescribers} about ${subject}.` };
   return [
     lead,
-    { id: "symptoms", tag: "Secondary endpoint", prompt: `Draft a short email for ${prescribers} built around the key secondary endpoint for ${subject}.` },
-    { id: "starting", tag: "Starting patients", prompt: `Create an email for reps to send after a first prescription, covering dosing and how the support programme helps patients start ${subject}.` },
+    { id: "symptoms", tag: "Secondary Endpoint", prompt: `Draft a short email for ${prescribers} built around the key secondary endpoint for ${subject}.` },
+    { id: "starting", tag: "Starting Patients", prompt: `Create an email for reps to send after a first prescription, covering dosing and how the support programme helps patients start ${subject}.` },
   ];
 }
 
@@ -407,20 +407,20 @@ export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender,
 function therapyEmailPrompts(audience: EmailAudience, sender: EmailSender, therapy: string, prescribers: string) {
   if (audience === "PT_Committee")
     return [
-      { id: "burden", tag: "Disease burden", prompt: `Write an unbranded email for the P&T committee on the burden of ${therapy}: prevalence, hospitalisations and cost to the health system, with no product named.` },
+      { id: "burden", tag: "Disease Burden", prompt: `Write an unbranded email for the P&T committee on the burden of ${therapy}: prevalence, hospitalisations and cost to the health system, with no product named.` },
       { id: "guidelines", tag: "Guidelines", prompt: `Draft an email summarising what current treatment guidelines say about ${therapy}, for the formulary team, with no product named.` },
-      { id: "unmet", tag: "Unmet need", prompt: `Create a short email setting out the unmet need in ${therapy} care, citing the sources in the dossier.` },
+      { id: "unmet", tag: "Unmet Need", prompt: `Create a short email setting out the unmet need in ${therapy} care, citing the sources in the dossier.` },
     ];
   if (sender === "msl")
     return [
-      { id: "science", tag: "Disease science", prompt: `Write a non-promotional MSL email sharing a recent review of ${therapy} pathophysiology with a doctor who asked for it.` },
+      { id: "science", tag: "Disease Science", prompt: `Write a non-promotional MSL email sharing a recent review of ${therapy} pathophysiology with a doctor who asked for it.` },
       { id: "guidelines", tag: "Guidelines", prompt: `Draft an MSL email outlining the latest guideline changes for ${therapy}, cited to the source, with no product named.` },
       { id: "congress", tag: "Congress", prompt: `Create an MSL follow-up sharing the key ${therapy} sessions from the congress with doctors who asked about them.` },
     ];
   return [
     { id: "diagnosis", tag: "Diagnosis", prompt: `Write an unbranded email for ${prescribers} on recognising and diagnosing ${therapy} earlier, with the screening criteria from the dossier.` },
-    { id: "burden", tag: "Disease burden", prompt: `Draft a short email for ${prescribers} on the burden of ${therapy} and why timely referral matters, with no product named.` },
-    { id: "patients", tag: "Right patients", prompt: `Create an email helping ${prescribers} identify which patients with ${therapy} need a specialist review, cited to current guidelines.` },
+    { id: "burden", tag: "Disease Burden", prompt: `Draft a short email for ${prescribers} on the burden of ${therapy} and why timely referral matters, with no product named.` },
+    { id: "patients", tag: "Right Patients", prompt: `Create an email helping ${prescribers} identify which patients with ${therapy} need a specialist review, cited to current guidelines.` },
   ];
 }
 
@@ -477,7 +477,7 @@ const statOf = (text: string) => text.match(/\d+(\.\d+)?%/)?.[0];
 /* Brands the ad claims don't cover yet. */
 const EXTRA_CLAIMS: Record<string, Array<{ id: string; text: string; source: string }>> = {
   cardioxa: [
-    { id: "CL-401", text: "21% lower risk of cardiovascular death or heart failure hospitalization vs placebo", source: "DELIVER-HF · Primary endpoint" },
+    { id: "CL-401", text: "21% lower risk of cardiovascular death or heart failure hospitalisation vs placebo", source: "DELIVER-HF · Primary endpoint" },
     { id: "CL-405", text: "One capsule, once a day", source: "Prescribing Information §2.1" },
   ],
 };
@@ -949,3 +949,5 @@ export function emailLinks(
 export const SENDER_PLURAL: Record<EmailSender, string> = { rep: "reps", msl: "MSLs", hq: "head office", support: "support nurses" };
 /** "a rep", "an MSL", for "Try it as …". */
 export const SENDER_AS: Record<EmailSender, string> = { rep: "a rep", msl: "an MSL", hq: "head office", support: "a support nurse" };
+/** The same, for a button or title: "Try It as a Rep". */
+export const SENDER_AS_TITLE: Record<EmailSender, string> = { rep: "a Rep", msl: "an MSL", hq: "Head Office", support: "a Support Nurse" };

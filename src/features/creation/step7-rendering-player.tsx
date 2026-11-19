@@ -95,7 +95,7 @@ export function Step7RenderingPlayer() {
             >
               <span style={{ fontSize: 20 }}>⏳</span>
               <div>
-                <b style={{ display: "block", fontSize: 13.5 }}>Synthesizing molecular kinetics &amp; on-screen citations…</b>
+                <b style={{ display: "block", fontSize: 13.5 }}>Synthesising molecular kinetics and on-screen citations…</b>
                 <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Assembling 5 scenes with zero hallucinated claims.</span>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function Step7RenderingPlayer() {
                 <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Generated in 8.4s</span>
               </div>
               <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, letterSpacing: "-.6px" }}>
-                Velmora: Mechanism &amp; Phase III Readout
+                Velmora: Mechanism and Phase III Readout
               </h2>
             </div>
 
@@ -185,7 +185,7 @@ export function Step7RenderingPlayer() {
               {/* Claims Audit Card */}
               <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
                 <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-                  Regulatory Verification &amp; Audit Trail
+                  Regulatory Verification and Audit Trail
                 </div>
 
                 <div style={{ display: "grid", gap: 10 }}>
@@ -193,7 +193,7 @@ export function Step7RenderingPlayer() {
                     ["Anchor Molecule", "Velmora (tirzelamide) 100mg"],
                     ["Regulatory Guidance", "FDA OPDP Promotional Guidance (21 CFR 202.1)"],
                     ["On-screen Citations", "5 scenes cited with Drugs@FDA label links"],
-                    ["Disclaimers & ISI", "Important Safety Info end-card included"],
+                    ["Disclaimers and ISI", "Important Safety Info end-card included"],
                     ["Uncited Claims", "0 (63 held out by MLR engine)"],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "7px 0", borderBottom: "1px solid var(--hair)" }}>

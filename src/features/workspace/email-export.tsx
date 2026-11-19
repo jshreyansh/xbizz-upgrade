@@ -66,9 +66,9 @@ export function LinksTable({ p }: { p: EmailProject }) {
         <thead>
           <tr>
             <th className={TH}>Link</th>
-            <th className={TH}>Goes to</th>
+            <th className={TH}>Goes To</th>
             <th className={TH}>Status</th>
-            <th className={TH}>Tracked as</th>
+            <th className={TH}>Tracked As</th>
           </tr>
         </thead>
         <tbody>

@@ -20,9 +20,9 @@ const STRUCTURES: { id: MVScriptStructure; type: string; title: string; desc: st
   {
     id: "custom",
     type: "Your words",
-    title: "Use my own script",
+    title: "Use My Own Script",
     desc: "Paste your own narration. We skip AI writing and jump straight to voice and visuals.",
-    flow: ["Your script", "Voice", "Visuals"],
+    flow: ["Your Script", "Voice", "Visuals"],
   },
 ];
 
@@ -107,7 +107,7 @@ export function Step4ScriptReview() {
           {/* Card 1: Script Structure */}
           <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
             <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-              Script structure
+              Script Structure
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               {STRUCTURES.map((st) => {
@@ -169,7 +169,7 @@ export function Step4ScriptReview() {
           <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "16px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 2 }}>
-                Target length
+                Target Length
               </div>
               <span style={{ fontSize: 12.5, color: "var(--ink-3)" }}>Script pacing calculated at 140 words per minute</span>
             </div>
@@ -230,7 +230,7 @@ export function Step4ScriptReview() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11.5, color: "var(--ink-4)" }}>
                       <span>sourced to {sc.source}</span>
                       <span style={{ padding: "2px 6px", borderRadius: 4, background: "var(--ok-bg)", color: "var(--ok)", fontWeight: 750, border: "1px solid var(--ok-line)" }}>
-                        ✓ ON-LABEL
+                        ✓ On-label
                       </span>
                     </div>
                   </div>
@@ -296,7 +296,7 @@ export function Step4ScriptReview() {
         {/* Right Stack: Source Card */}
         <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px", position: "sticky", top: 16 }}>
           <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-            What I&apos;m starting from
+            What I&apos;m Starting From
           </div>
           <div
             style={{
@@ -377,7 +377,7 @@ export function Step4ScriptReview() {
             cursor: "pointer",
           }}
         >
-          Review scenes
+          Review Scenes
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>

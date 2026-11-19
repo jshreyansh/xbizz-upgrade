@@ -195,25 +195,25 @@ export interface Congress {
 
 export const RULE_LABELS: Record<RuleKey, string> = {
   sizes: "Size",
-  deliverables: "What you deliver",
-  fontSizes: "Font sizes",
-  fontFamilies: "Font families",
-  drugNames: "Drug names",
-  companyName: "Company name",
-  sponsorWording: "Sponsor wording",
+  deliverables: "What You Deliver",
+  fontSizes: "Font Sizes",
+  fontFamilies: "Font Families",
+  drugNames: "Drug Names",
+  companyName: "Company Name",
+  sponsorWording: "Sponsor Wording",
   logos: "Logos",
-  brandLook: "Brand look",
-  congressLogo: "Congress logo",
-  otherBranding: "Other instructions",
+  brandLook: "Brand Look",
+  congressLogo: "Congress Logo",
+  otherBranding: "Other Instructions",
   disclosure: "Disclosures",
-  qr: "QR codes",
-  requiredItems: "Required on the poster",
+  qr: "QR Codes",
+  requiredItems: "Required on the Poster",
   content: "Content",
-  embargo: "Embargo and reuse",
+  embargo: "Embargo and Reuse",
 };
 
 export const RULE_GROUPS: Array<{ id: string; label: string; keys: RuleKey[] }> = [
-  { id: "delivery", label: "Size and delivery", keys: ["sizes", "deliverables"] },
+  { id: "delivery", label: "Size and Delivery", keys: ["sizes", "deliverables"] },
   { id: "type", label: "Type", keys: ["fontSizes", "fontFamilies"] },
   {
     id: "branding",
@@ -221,10 +221,10 @@ export const RULE_GROUPS: Array<{ id: string; label: string; keys: RuleKey[] }> 
     keys: ["drugNames", "companyName", "sponsorWording", "logos", "brandLook", "congressLogo", "otherBranding"],
   },
   { id: "disclosure", label: "Disclosures", keys: ["disclosure"] },
-  { id: "qr", label: "QR codes", keys: ["qr"] },
-  { id: "required", label: "Required on the poster", keys: ["requiredItems"] },
+  { id: "qr", label: "QR Codes", keys: ["qr"] },
+  { id: "required", label: "Required on the Poster", keys: ["requiredItems"] },
   { id: "content", label: "Content", keys: ["content"] },
-  { id: "embargo", label: "Embargo and reuse", keys: ["embargo"] },
+  { id: "embargo", label: "Embargo and Reuse", keys: ["embargo"] },
 ];
 
 export const DRUG_NAME_LABELS: Record<DrugNames, string> = {
@@ -1067,7 +1067,7 @@ export function focusQuestion(congress: Congress, type: PresentationType["id"]):
       options: [
         { label: "Not yet enrolling", hint: "Sites are opening; the poster invites interest" },
         { label: "Enrolling", hint: "Recruiting now; the poster lists sites and criteria" },
-        { label: "Enrollment complete", hint: "Fully recruited; results expected later" },
+        { label: "Enrolment complete", hint: "Fully recruited; results expected later" },
         { label: "Follow-up ongoing", hint: "Treatment done; patients still being followed" },
       ],
     };

@@ -8,8 +8,9 @@ import { Field } from "@/components/ui/field";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { cn } from "@/lib/cn";
 import { EmailCanvas, recipientFor } from "@/features/workspace/email-canvas";
-import { getBlockRule, SENDER_AS, SENDER_PLURAL } from "@/features/workspace/email-options";
+import { getBlockRule, SENDER_AS_TITLE, SENDER_PLURAL } from "@/features/workspace/email-options";
 import type { EmailProject } from "@/features/workspace/email-project";
+import { Chip } from "@/components/ui/chip";
 
 type Consent = "in" | "none" | "out";
 const NOTE_MAX = 255;
@@ -76,8 +77,8 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
     <Modal
       open
       onClose={onClose}
-      title={`Try as ${SENDER_AS[email.sender]}`}
-      description={`Simulate how ${SENDER_PLURAL[email.sender]} personalize and select fragments before sending in ${p.professional ? "your CRM" : "your patient support platform"}.`}
+      title={`Try It as ${SENDER_AS_TITLE[email.sender]}`}
+      description={`Simulate how ${SENDER_PLURAL[email.sender]} personalise and select fragments before sending in ${p.professional ? "your CRM" : "your patient support platform"}.`}
       size="xl"
     >
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -129,7 +130,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-label font-bold text-ink-2">
-                  Content Blocks <span className="font-semibold text-ink-4">· {chooses ? "Select & Reorder" : "Reorder Allowed"}</span>
+                  Content Blocks <span className="font-semibold text-ink-4">· {chooses ? "Select and Reorder" : "Reorder Allowed"}</span>
                 </span>
                 {canReorder && (
                   <span className="text-micro font-bold text-accent-violet">Reorder enabled</span>
@@ -182,13 +183,13 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
                         <div className="flex items-center gap-1.5">
                           <span className="truncate font-semibold text-ink">{b.title}</span>
                           {isMandatory ? (
-                            <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.2 text-micro font-bold text-ink-3 border border-hair-2">
+                            <Chip tone="neutral" size="xs" weight="bold" className="border-hair-2 px-1.5 py-0.2">
                               Mandatory
-                            </span>
+                            </Chip>
                           ) : (
-                            <span className="shrink-0 rounded-chip bg-ok-bg px-1.5 py-0.2 text-micro font-bold text-ok border border-ok-line">
+                            <Chip tone="ok" size="xs" weight="bold" className="px-1.5 py-0.2">
                               Optional
-                            </span>
+                            </Chip>
                           )}
                         </div>
                       </div>
@@ -328,7 +329,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           </div>
         </div>
         <div className="grid justify-items-center gap-2 rounded-panel bg-canvas p-4">
-          <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">What {lastName} gets</span>
+          <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">What {lastName} Gets</span>
           <EmailCanvas project={p} view="rep" note={note} picked={activePicked} pieceIds={pieces} expired={expired} subject={subject} />
         </div>
       </div>

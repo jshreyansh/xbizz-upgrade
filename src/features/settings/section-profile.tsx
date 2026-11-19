@@ -29,14 +29,14 @@ export function SectionProfile() {
 
   return (
     <Stack gap={4}>
-      <SettingsCard title="Your details" description="How you appear to the rest of the workspace.">
+      <SettingsCard title="Your Details" description="How you appear to the rest of the workspace.">
         <div>
-          <SettingRow label="First name" htmlFor="p-first">
+          <SettingRow label="First Name" htmlFor="p-first">
             <Field id="p-first" value={s.firstName}
               onChange={(e) => { s.setProfileField("firstName", e.target.value); touch(); }}
               className="max-w-xs text-body" />
           </SettingRow>
-          <SettingRow label="Last name" htmlFor="p-last">
+          <SettingRow label="Last Name" htmlFor="p-last">
             <Field id="p-last" value={s.lastName}
               onChange={(e) => { s.setProfileField("lastName", e.target.value); touch(); }}
               className="max-w-xs text-body" />
@@ -64,9 +64,9 @@ export function SectionProfile() {
             <ReadOnlyValue value={me?.seniority ?? "—"} note="Set by an admin in Team" />
           </SettingRow>
 
-          <SettingRow label="Sign-in" hint="Password and sessions">
+          <SettingRow label="Sign-In" hint="Password and sessions">
             <Button size="sm" variant="secondary">
-              <KeyRound className="size-3.5" /> Change password
+              <KeyRound className="size-3.5" /> Change Password
             </Button>
           </SettingRow>
         </div>
@@ -83,7 +83,7 @@ export function SectionProfile() {
                 <th scope="col" className="border-b border-hair px-0 pb-2 text-left text-caption font-bold uppercase tracking-wider text-ink-3">
                   Event
                 </th>
-                {(["Email", "In-app", "Teams"] as const).map((h) => (
+                {(["Email", "In-App", "Teams"] as const).map((h) => (
                   <th key={h} scope="col" className="w-24 border-b border-hair px-2 pb-2 text-center text-caption font-bold uppercase tracking-wider text-ink-3">
                     {h}
                   </th>

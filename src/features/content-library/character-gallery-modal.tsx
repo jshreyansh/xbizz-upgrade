@@ -94,7 +94,7 @@ export function CharacterGalleryModal({
             <section>
               <div className="flex items-center gap-1.5">
                 <Layers className="size-3.5 text-brand" />
-                <span className="text-body font-extrabold text-ink">Generated views</span>
+                <span className="text-body font-extrabold text-ink">Generated Views</span>
               </div>
               <p className="mt-0.5 text-caption text-ink-3">Identity-checked character pack</p>
 
@@ -153,7 +153,7 @@ export function CharacterGalleryModal({
                   <Camera className="size-3.5 text-brand" />
                 )}
                 <span className="text-body font-extrabold text-ink">
-                  {character.method === "prompt" ? "Source prompt" : "Source footage"}
+                  {character.method === "prompt" ? "Source Prompt" : "Source Footage"}
                 </span>
               </div>
               <p className="mt-0.5 text-caption text-ink-3">

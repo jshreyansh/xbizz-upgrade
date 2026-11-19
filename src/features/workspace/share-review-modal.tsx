@@ -62,11 +62,11 @@ export function ShareReviewModal({
   /* What each download is, said the way the button and the toast say it. */
   const VIDEO_DOWNLOADS: Array<{ id: VideoDownload; label: string; detail: string; file: string }> = [
     ...(hasCaptions
-      ? [{ id: "with" as const, label: "With captions", detail: `1080p MP4 with ${captionLabel(captions).toLowerCase()} captions burned into the picture. Plays anywhere, captions always on.`, file: "MP4 with captions" }]
+      ? [{ id: "with" as const, label: "With Captions", detail: `1080p MP4 with ${captionLabel(captions).toLowerCase()} captions burned into the picture. Plays anywhere, captions always on.`, file: "MP4 with captions" }]
       : []),
     {
       id: "without",
-      label: hasCaptions ? "Without captions" : "MP4",
+      label: hasCaptions ? "Without Captions" : "MP4",
       detail: "1080p MP4 with the voiceover and no captions.",
       file: hasCaptions ? "MP4 without captions" : "MP4",
     },
@@ -89,17 +89,17 @@ export function ShareReviewModal({
 
   const handleOneDrive = () => {
     setActiveAction("onedrive");
-    onShowToast?.("Connecting to Microsoft OneDrive / SharePoint...");
+    onShowToast?.("Connecting to Microsoft OneDrive / SharePoint…");
     setTimeout(() => {
       setActiveAction(null);
-      onShowToast?.("✓ Asset & MLR metadata successfully saved to OneDrive: /Medical-Affairs/2026-Launches");
+      onShowToast?.("✓ Asset and MLR metadata successfully saved to OneDrive: /Medical-Affairs/2026-Launches");
       onClose();
     }, 1400);
   };
 
   const handleVeeva = () => {
     setActiveAction("veeva");
-    onShowToast?.("Packaging Veeva Vault PromoMats binder with 24 verified claims...");
+    onShowToast?.("Packaging Veeva Vault PromoMats binder with 24 verified claims…");
     setTimeout(() => {
       setActiveAction(null);
       onShowToast?.("✓ Document submitted to Veeva PromoMats (Ref #PRM-8842-US) with claim annotations.");
@@ -145,10 +145,10 @@ export function ShareReviewModal({
               </div>
               <div>
                 <h2 className="text-title font-[850] text-ink tracking-tight">
-                  Share &amp; Distribute Asset
+                  Share and Distribute Asset
                 </h2>
                 <p className="text-body text-ink-3">
-                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : assetType === "ad" ? `Ad campaign${assetSummary ? ` (${assetSummary})` : ""}` : assetType === "email" ? "Approved Email" : "Infographic (Print-Ready)"}
+                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : assetType === "ad" ? `Ad campaign${assetSummary ? ` (${assetSummary})` : ""}` : assetType === "email" ? "Approved Email" : "Infographic (print-ready)"}
                 </p>
               </div>
             </div>
@@ -172,7 +172,7 @@ export function ShareReviewModal({
                   <span>Shareable Review Link</span>
                 </label>
                 <span className="text-caption font-semibold text-ok bg-ok-bg border border-ok-line px-2 py-0.5 rounded-chip">
-                  Comments &amp; MLR Audit Enabled
+                  Comments and MLR Audit Enabled
                 </span>
               </div>
 
@@ -215,7 +215,7 @@ export function ShareReviewModal({
             {/* 2. Enterprise Pharma & Cloud Destinations (ACTIVE) */}
             <div className="space-y-2.5">
               <div className="text-label font-extrabold uppercase tracking-wider text-ink-3">
-                Enterprise &amp; Compliance Destinations
+                Enterprise and Compliance Destinations
               </div>
 
               <div className="grid grid-cols-1 gap-2.5">
@@ -243,7 +243,7 @@ export function ShareReviewModal({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-label font-bold text-[#0078d4] opacity-80 group-hover:opacity-100 shrink-0 ml-2">
-                    <span>{activeAction === "onedrive" ? "Saving..." : "Save"}</span>
+                    <span>{activeAction === "onedrive" ? "Saving…" : "Save"}</span>
                     <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
@@ -271,12 +271,12 @@ export function ShareReviewModal({
                         </span>
                       </h4>
                       <p className="text-label text-ink-3">
-                        Submit document package with claim citations &amp; audit log to Veeva Vault
+                        Submit document package with claim citations and audit log to Veeva Vault
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-label font-bold text-warn opacity-80 group-hover:opacity-100 shrink-0 ml-2">
-                    <span>{activeAction === "veeva" ? "Packaging..." : "Send"}</span>
+                    <span>{activeAction === "veeva" ? "Packaging…" : "Send"}</span>
                     <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
@@ -294,7 +294,7 @@ export function ShareReviewModal({
                       </div>
                       <div>
                         <h4 className="text-body-lg font-bold text-ink flex items-center gap-1.5">
-                          <span>Export the ad package</span>
+                          <span>Export the Ad Package</span>
                           <span className="rounded-glyph bg-tint text-brand-deep text-caption font-bold px-1.5 py-0.2 border border-tint-line">ZIP</span>
                         </h4>
                         <p className="text-label text-ink-3">Every ad in every size, named by placement, ready to upload to each platform</p>
@@ -313,7 +313,7 @@ export function ShareReviewModal({
                         <div className="size-8 rounded-control bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
                           <Download className="size-4.5" />
                         </div>
-                        <h4 className="text-body-lg font-bold text-ink">Download the video</h4>
+                        <h4 className="text-body-lg font-bold text-ink">Download the Video</h4>
                       </div>
                       {/* A choice only when there is one to make: without captions, there is just the MP4. */}
                       {VIDEO_DOWNLOADS.length > 1 && (
@@ -381,11 +381,11 @@ export function ShareReviewModal({
                     <div className="flex items-center justify-between pt-2 border-t border-hair">
                       <p className="text-label text-ink-3 pr-3 leading-snug">
                         {creativeFormat === "pdf" &&
-                          "Print-ready vector PDF proof with complete ISI fair balance tables & 3mm bleed."}
+                          "Print-ready vector PDF proof with complete ISI fair balance tables and 3mm bleed."}
                         {creativeFormat === "png" &&
-                          "Lossless 4K transparent/solid image asset (2400×3200px) for slides & displays."}
+                          "Lossless 4K transparent/solid image asset (2400×3200px) for slides and displays."}
                         {creativeFormat === "jpg" &&
-                          "Standard compressed high-quality RGB image optimized for web portals & emails."}
+                          "Standard compressed high-quality RGB image optimised for web portals and emails."}
                       </p>
 
                       <Button
@@ -409,7 +409,7 @@ export function ShareReviewModal({
           <div className="p-4 px-6 border-t border-hair bg-canvas flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-label text-ink-3">
               <ShieldCheck className="size-3.5 text-ok" />
-              <span>21 CFR Part 11 &amp; Veeva Audit Trail Verified</span>
+              <span>21 CFR Part 11 and Veeva Audit Trail Verified</span>
             </div>
             <Button size="sm" variant="secondary" onClick={onClose} className="px-4">
               Done

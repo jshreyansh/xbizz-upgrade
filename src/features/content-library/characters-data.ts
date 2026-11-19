@@ -13,9 +13,9 @@ export type CharacterViewId = (typeof CHARACTER_VIEWS)[number];
 
 export const VIEW_LABEL: Record<CharacterViewId, string> = {
   front: "Front",
-  threeQuarter: "¾ view",
+  threeQuarter: "¾ View",
   profile: "Profile",
-  fullBody: "Full body",
+  fullBody: "Full Body",
 };
 
 /** What the identity was built from. */

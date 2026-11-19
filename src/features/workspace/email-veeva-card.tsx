@@ -24,7 +24,7 @@ export function EmailVeevaCard({ pkg, onDownloaded }: { pkg: VeevaPackage; onDow
 
   const contents = [
     { icon: FileCode2, label: "Email Template", detail: `${template.number} · HTML with Veeva tokens` },
-    ...(footer ? [{ icon: FileCode2, label: "ISI footer", detail: `${footer.number} · Template Fragment` }] : []),
+    ...(footer ? [{ icon: FileCode2, label: "ISI Footer", detail: `${footer.number} · Template Fragment` }] : []),
     ...(fragments.length ? [{ icon: FileCode2, label: `${fragments.length} Email Fragment${fragments.length === 1 ? "" : "s"}`, detail: "The blocks a rep can choose" }] : []),
     { icon: Images, label: "Images", detail: "assets.zip, for the Assets field" },
     { icon: FileSpreadsheet, label: "Metadata", detail: `${fieldCount} fields, ${pkg.relationships.length} relationships, content rules, claims, links` },
@@ -60,11 +60,11 @@ export function EmailVeevaCard({ pkg, onDownloaded }: { pkg: VeevaPackage; onDow
       <div className="flex items-center gap-2">
         <Button size="sm" variant="secondary" onClick={downloadMetadata} className="gap-1.5 font-bold">
           <FileSpreadsheet className="size-3.5" />
-          Download metadata only (.csv)
+          Download Metadata Only (.csv)
         </Button>
         <Button size="sm" onClick={downloadPackage} disabled={busy} className="gap-1.5 px-4 font-bold">
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-          Download package (.zip)
+          Download Package (.zip)
         </Button>
       </div>
       <ul className="flex flex-col divide-y divide-hair rounded-control border border-hair bg-subtle">
@@ -83,7 +83,7 @@ export function EmailVeevaCard({ pkg, onDownloaded }: { pkg: VeevaPackage; onDow
         className="flex cursor-pointer items-center gap-1 self-start text-label font-bold text-ink-2 hover:text-ink"
         aria-expanded={stepsOpen}
       >
-        How to upload it
+        How to Upload It
         <ChevronDown className={cn("size-3.5 transition-transform", stepsOpen && "rotate-180")} />
       </button>
       {stepsOpen && (

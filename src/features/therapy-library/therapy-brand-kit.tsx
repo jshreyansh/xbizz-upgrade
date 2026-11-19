@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { SectionHeading } from "@/components/patterns/section-heading";
 import { BrandKitEditor } from "@/features/settings/brand-kit-editor";
 import { SaveBar } from "@/features/settings/settings-parts";
 import { useSettingsStore } from "@/features/settings/settings-store";
@@ -50,42 +51,48 @@ function KitEditor({ kitKey, start, name, readOnly }: { kitKey: string; start: B
   );
 }
 
-/**
- * The therapy area's brand kit, for unbranded and awareness campaigns that
- * have a look of their own. A disease uses the area's kit unless it is given
- * its own. Anything left empty falls back to the workspace kit.
- */
+/** The therapy area's brand kit. Its diseases use it unless one is given its own. */
 export function TherapyBrandKit({ areaId, areaName, dossiers, readOnly }: { areaId: string; areaName: string; dossiers: TherapyDossier[]; readOnly: boolean }) {
   const workspaceKit = useSettingsStore((s) => s.brandKit);
   const kits = useTherapyLibraryStore((s) => s.kits);
+  const own = dossiers.filter((d) => kits[d.id]).map((d) => d.disease);
+  return (
+    <div className="space-y-4">
+      <SectionHeading
+        title="Brand Kit"
+        description={
+          <>
+            The look of {areaName} awareness content. Every disease in it uses this kit unless it has its own; anything empty uses the workspace kit.
+            {own.length > 0 && ` ${own.join(", ")} ${own.length === 1 ? "has" : "have"} its own, set on the disease's page.`}
+            {readOnly && " View only: changing it comes with Brand Kit: Manage."}
+          </>
+        }
+      />
+      <KitEditor key={areaId} kitKey={areaId} start={kits[areaId] ?? seedKit(areaId, workspaceKit)} name={areaName} readOnly={readOnly} />
+    </div>
+  );
+}
+
+/** A disease's brand kit: the area's, until it is given one of its own. */
+export function DiseaseBrandKit({ areaId, areaName, dossier, readOnly, onOpenArea }: { areaId: string; areaName: string; dossier: TherapyDossier; readOnly: boolean; onOpenArea: () => void }) {
+  const workspaceKit = useSettingsStore((s) => s.brandKit);
+  const kits = useTherapyLibraryStore((s) => s.kits);
   const setKit = useTherapyLibraryStore((s) => s.setKit);
-  const [scope, setScope] = useState(areaId);
-  const dossier = dossiers.find((d) => d.id === scope);
   const areaKit = kits[areaId] ?? seedKit(areaId, workspaceKit);
+  const ownKit = kits[dossier.id];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-title font-extrabold tracking-tight text-ink">Brand Kit</h2>
-          <p className="text-body text-ink-3">
-            The look of {areaName} awareness content. Each disease uses it unless it has its own; anything empty uses the workspace kit.
-            {readOnly && " View only: changing it comes with Brand kit: Manage."}
-          </p>
-        </div>
-        {dossiers.length > 0 && (
-          <Segmented aria-label="Whose kit">
-            <SegmentedButton active={scope === areaId} onClick={() => setScope(areaId)}>{areaName}</SegmentedButton>
-            {dossiers.map((d) => (
-              <SegmentedButton key={d.id} active={scope === d.id} onClick={() => setScope(d.id)}>{d.disease}</SegmentedButton>
-            ))}
-          </Segmented>
-        )}
-      </div>
-
-      {!dossier ? (
-        <KitEditor key={areaId} kitKey={areaId} start={areaKit} name={areaName} readOnly={readOnly} />
-      ) : kits[dossier.id] ? (
+      <SectionHeading
+        title="Brand Kit"
+        description={
+          <>
+            {ownKit ? `${dossier.disease} has a look of its own.` : `${dossier.disease} uses the ${areaName} kit.`} Anything empty uses the workspace kit.
+            {readOnly && " View only: changing it comes with Brand Kit: Manage."}
+          </>
+        }
+      />
+      {ownKit ? (
         <>
           {!readOnly && (
             <div className="flex items-center justify-between gap-3 rounded-panel border border-hair bg-canvas px-3.5 py-2.5 text-label text-ink-3">
@@ -93,21 +100,25 @@ export function TherapyBrandKit({ areaId, areaName, dossiers, readOnly }: { area
               <Button variant="ghost" size="sm" onClick={() => setKit(dossier.id, undefined)}>Use the {areaName} Kit Again</Button>
             </div>
           )}
-          <KitEditor key={dossier.id} kitKey={dossier.id} start={kits[dossier.id]} name={dossier.disease} readOnly={readOnly} />
+          <KitEditor key={dossier.id} kitKey={dossier.id} start={ownKit} name={dossier.disease} readOnly={readOnly} />
         </>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-panel border border-dashed border-hair-2 bg-card px-4 py-10 text-center">
-          <Palette className="size-6 text-ink-4" />
-          <div>
-            <p className="text-body font-bold text-ink-2">{dossier.disease} uses the {areaName} kit</p>
-            <p className="mt-0.5 text-label text-ink-4">Give it its own when its campaign has a different look.</p>
-          </div>
-          {!readOnly && (
-            <Button variant="soft" size="sm" onClick={() => setKit(dossier.id, { ...areaKit, logos: { ...areaKit.logos } })}>
-              Give {dossier.disease} Its Own Kit
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          tone="card"
+          icon={<Palette className="size-5" />}
+          title={`${dossier.disease} uses the ${areaName} kit`}
+          hint="Give it its own when its campaign has a different look."
+          action={
+            <>
+              <Button variant="secondary" size="sm" onClick={onOpenArea}>See the {areaName} Kit</Button>
+              {!readOnly && (
+                <Button variant="soft" size="sm" onClick={() => setKit(dossier.id, { ...areaKit, logos: { ...areaKit.logos } })}>
+                  Give {dossier.disease} Its Own Kit
+                </Button>
+              )}
+            </>
+          }
+        />
       )}
     </div>
   );

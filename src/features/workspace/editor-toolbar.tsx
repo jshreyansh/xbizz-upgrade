@@ -124,16 +124,16 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
         options: [
           { label: "Title", icon: Type },
           { label: "Heading", icon: Heading },
-          { label: "Body text", icon: Pilcrow },
-          { label: "Bulleted list", icon: List },
-          { label: "Numbered list", icon: ListOrdered },
+          { label: "Body Text", icon: Pilcrow },
+          { label: "Bulleted List", icon: List },
+          { label: "Numbered List", icon: ListOrdered },
           { label: "Quote", icon: Quote, hint: "An HCP or KOL quote" },
         ],
       },
       {
         title: "Boxes",
         options: [
-          { label: "Callout box", icon: Info, hint: "A highlighted point" },
+          { label: "Callout Box", icon: Info, hint: "A highlighted point" },
           { label: "Footnote", icon: Hash, hint: "Small print, numbered" },
         ],
       },
@@ -148,12 +148,12 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Images",
         options: [
-          { label: "Brand images library", icon: Package, hint: "Images attached to this drug" },
-          { label: "Workspace media library", icon: FolderOpen, hint: "From every drug and project" },
+          { label: "Brand Images Library", icon: Package, hint: "Images attached to this drug" },
+          { label: "Workspace Media Library", icon: FolderOpen, hint: "From every drug and project" },
           { label: "Upload", icon: Upload, hint: "PNG, JPG or SVG" },
-          { label: "Generate image", icon: Sparkles, hint: "Describe it, SwishX draws it" },
+          { label: "Generate Image", icon: Sparkles, hint: "Describe it, SwishX draws it" },
           { label: "Icon", icon: Shapes, hint: "Line icons in brand colour" },
-          { label: "QR code", icon: QrCode, hint: "To the PI or a poster copy" },
+          { label: "QR Code", icon: QrCode, hint: "To the PI or a poster copy" },
         ],
       },
     ],
@@ -167,12 +167,12 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Layouts",
         options: [
-          { label: "Two columns", frame: "two", explain: "Two columns side by side, under one heading" },
-          { label: "Three columns", frame: "three", explain: "Three equal columns, under one heading" },
-          { label: "Image and text", frame: "imageText", explain: "An image on the left with the text beside it" },
-          { label: "Stat row", frame: "statRow", explain: "Three numbers side by side, each with its claim", hint: "Three numbers side by side" },
-          { label: "Process steps", frame: "steps", explain: "Numbered steps, read left to right", hint: "Numbered, left to right" },
-          { label: "Comparison table", frame: "table", explain: "The drug against its comparator, row by row", hint: "Drug vs comparator" },
+          { label: "Two Columns", frame: "two", explain: "Two columns side by side, under one heading" },
+          { label: "Three Columns", frame: "three", explain: "Three equal columns, under one heading" },
+          { label: "Image and Text", frame: "imageText", explain: "An image on the left with the text beside it" },
+          { label: "Stat Row", frame: "statRow", explain: "Three numbers side by side, each with its claim", hint: "Three numbers side by side" },
+          { label: "Process Steps", frame: "steps", explain: "Numbered steps, read left to right", hint: "Numbered, left to right" },
+          { label: "Comparison Table", frame: "table", explain: "The drug against its comparator, row by row", hint: "Drug vs comparator" },
         ],
       },
     ],
@@ -186,12 +186,12 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Charts",
         options: [
-          { label: "Bar chart", icon: BarChartHorizontal },
-          { label: "Column chart", icon: BarChart3 },
-          { label: "Line chart", icon: LineChart, hint: "Change over time" },
-          { label: "Kaplan–Meier curve", icon: TrendingDown, hint: "Survival over time" },
-          { label: "Forest plot", icon: ScatterChart, hint: "Subgroup effects" },
-          { label: "Donut chart", icon: PieChart, hint: "Share of a whole" },
+          { label: "Bar Chart", icon: BarChartHorizontal },
+          { label: "Column Chart", icon: BarChart3 },
+          { label: "Line Chart", icon: LineChart, hint: "Change over time" },
+          { label: "Kaplan–Meier Curve", icon: TrendingDown, hint: "Survival over time" },
+          { label: "Forest Plot", icon: ScatterChart, hint: "Subgroup effects" },
+          { label: "Donut Chart", icon: PieChart, hint: "Share of a whole" },
         ],
       },
     ],
@@ -205,12 +205,12 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Diagrams",
         options: [
-          { label: "Mechanism pathway", icon: Network, hint: "How the drug acts" },
-          { label: "Process flow", icon: Workflow, hint: "Step to step" },
+          { label: "Mechanism Pathway", icon: Network, hint: "How the drug acts" },
+          { label: "Process Flow", icon: Workflow, hint: "Step to step" },
           { label: "Cycle", icon: RefreshCw, hint: "A repeating process" },
           { label: "Timeline", icon: CalendarRange, hint: "Trial or dosing schedule" },
           { label: "Funnel", icon: Filter, hint: "Narrowing down" },
-          { label: "Venn diagram", icon: Blend, hint: "Overlap between groups" },
+          { label: "Venn Diagram", icon: Blend, hint: "Overlap between groups" },
         ],
       },
     ],
@@ -224,8 +224,8 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Video",
         options: [
-          { label: "Video library", icon: Film, hint: "Approved videos for this drug" },
-          { label: "Upload video", icon: Upload, hint: "Goes to MLR as a new item" },
+          { label: "Video Library", icon: Film, hint: "Approved videos for this drug" },
+          { label: "Upload Video", icon: Upload, hint: "Goes to MLR as a new item" },
         ],
       },
     ],
@@ -241,7 +241,7 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
         options: [
           { label: "Paste a URL", icon: Link2, hint: "Checked, then reviewed by MLR" },
           { label: "Document", icon: FileText, hint: "A leave-behind, detail aid or reprint" },
-          { label: "Upload document", icon: Upload, hint: "PDF, goes to MLR" },
+          { label: "Upload Document", icon: Upload, hint: "PDF, goes to MLR" },
         ],
       },
     ],
@@ -592,7 +592,7 @@ export function textOptions({
         >
           {(close) => (
             <ColourChoices
-              title="Text colour"
+              title="Text Colour"
               swatches={SWATCHES}
               value={style?.color ?? null}
               onPick={(color) => {
@@ -640,11 +640,11 @@ export function textOptions({
       ),
     },
     toolbarDivider("d2"),
-    ...(onEdit ? [{ key: "edit", node: <ToolButton icon={Type} label="Edit text" onClick={onEdit} /> }] : []),
+    ...(onEdit ? [{ key: "edit", node: <ToolButton icon={Type} label="Edit Text" onClick={onEdit} /> }] : []),
     ...(element.citation
       ? [{ key: "claim", node: <ToolNote icon={BadgeCheck} tone="ok">Claim {element.citation}</ToolNote> }]
       : onCite
-        ? [{ key: "claim", node: <ToolButton icon={Link2} label="Cite a claim" onClick={onCite} /> }]
+        ? [{ key: "claim", node: <ToolButton icon={Link2} label="Cite a Claim" onClick={onCite} /> }]
         : []),
     ...(onDelete ? [{ key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> }] : []),
   ];
@@ -686,8 +686,8 @@ export function artOptions({
       ),
     },
     toolbarDivider("d1"),
-    { key: "forward", node: <ToolButton icon={ArrowUp} label="Bring forward" onClick={onBringForward} disabled={z >= Z_MAX} /> },
-    { key: "back", node: <ToolButton icon={ArrowDown} label="Send backward" onClick={onSendBack} disabled={z <= 0} /> },
+    { key: "forward", node: <ToolButton icon={ArrowUp} label="Bring Forward" onClick={onBringForward} disabled={z >= Z_MAX} /> },
+    { key: "back", node: <ToolButton icon={ArrowDown} label="Send Backward" onClick={onSendBack} disabled={z <= 0} /> },
     toolbarDivider("d2"),
     {
       key: "alt",
@@ -697,7 +697,7 @@ export function artOptions({
           trigger={
             <span className="inline-flex items-center gap-1.5">
               <ScanText className="size-3.5" />
-              Alt text
+              Alt Text
             </span>
           }
         >
@@ -724,7 +724,7 @@ function AltTextForm({ initial, onSave }: { initial: string; onSave: (alt: strin
     >
       <Field
         size="sm"
-        label="Describe the image"
+        label="Describe the Image"
         hint="Read aloud by screen readers and kept in the export."
         value={value}
         autoFocus
@@ -761,8 +761,8 @@ export function blockOptions({
   return [
     ...extra,
     ...(extra.length ? [toolbarDivider("d0")] : []),
-    { key: "up", node: <ToolButton icon={ArrowUp} label="Move up" onClick={onMoveUp} disabled={!canMoveUp} /> },
-    { key: "down", node: <ToolButton icon={ArrowDown} label="Move down" onClick={onMoveDown} disabled={!canMoveDown} /> },
+    { key: "up", node: <ToolButton icon={ArrowUp} label="Move Up" onClick={onMoveUp} disabled={!canMoveUp} /> },
+    { key: "down", node: <ToolButton icon={ArrowDown} label="Move Down" onClick={onMoveDown} disabled={!canMoveDown} /> },
     toolbarDivider("d1"),
     { key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> },
   ];
@@ -1055,7 +1055,7 @@ export function blockStyleOptions({
                 options={[
                   { label: "Square", value: "square" as const },
                   { label: "Rounded", value: "rounded" as const },
-                  { label: "More rounded", value: "round" as const },
+                  { label: "More Rounded", value: "round" as const },
                 ]}
                 onPick={(radius) => {
                   onStyle({ radius });
@@ -1138,7 +1138,7 @@ export function pageOptions({
         >
           {(close) => (
             <ColourChoices
-              title="Page background"
+              title="Page Background"
               swatches={FILLS}
               templateValue={templateFill}
               value={fill}
@@ -1157,7 +1157,7 @@ export function pageOptions({
             key: "page-art",
             node: (
               <div className="flex shrink-0 items-center gap-1.5">
-                <span className="text-label font-semibold text-ink-3">Background art</span>
+                <span className="text-label font-semibold text-ink-3">Background Art</span>
                 <Choice
                   value={art ? "show" : "hide"}
                   options={[
@@ -1180,7 +1180,7 @@ export function pageOptions({
 export function chartExtras({ source, onEditData }: { source: string; onEditData: () => void }): ToolbarItem[] {
   return [
     { key: "source", node: <ToolNote icon={BadgeCheck} tone="ok">{source}</ToolNote> },
-    { key: "data", node: <ToolButton icon={Table2} label="Edit data" onClick={onEditData} /> },
+    { key: "data", node: <ToolButton icon={Table2} label="Edit Data" onClick={onEditData} /> },
   ];
 }
 
@@ -1303,6 +1303,7 @@ export function EditorToolbar({
   onTemplates,
   menus = MENU_IDS,
   idle,
+  trailing,
 }: {
   selection: ToolbarSelection | null;
   onInsert: (menu: InsertMenuId, option: string) => void;
@@ -1315,6 +1316,8 @@ export function EditorToolbar({
   menus?: InsertMenuId[];
   /** Whole-asset controls shown while nothing is selected — a video's captions. */
   idle?: ReactNode;
+  /** Always at the far end, selection or not: e.g. a video's Scene Configurations. */
+  trailing?: ReactNode;
 }) {
   const [menu, setMenu] = useState<InsertMenuId | null>(null);
   /* The folded Insert button's list of menus, open before a menu is. */
@@ -1470,7 +1473,7 @@ export function EditorToolbar({
           <FittedOptions items={selection.items} />
           <Button size="sm" onClick={selection.onAddToChat} className="h-8 shrink-0 gap-1.5 px-3">
             <LogoMark size={13} className="shrink-0" />
-            Add to chat
+            Add to Chat
           </Button>
         </div>
       ) : idle ? (
@@ -1486,6 +1489,12 @@ export function EditorToolbar({
           <TemplatesSoon />
         </>
       ) : null}
+      {trailing && (
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 pl-1.5">
+          <span className="h-5 w-px shrink-0 bg-hair-2" />
+          {trailing}
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActionBar } from "@/components/patterns/action-bar";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { DOC_CREDITS_PER_PAGE } from "@/features/workspace/plan-decisions";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
@@ -144,7 +145,7 @@ export function TemplateStepScreen({
             below, where the filters that change them are. */}
         <div className="mb-4 min-w-0">
           <h2 className="text-display font-[850] tracking-tight text-ink">
-            Choose a template
+            Choose a Template
           </h2>
           <p className="mt-0.5 text-body text-ink-3">
             The template decides which blocks the page has, and how much each one holds.
@@ -204,8 +205,8 @@ export function TemplateStepScreen({
             <div className="space-y-2 border-t border-hair pt-2">
               <FilterRow label="Showing">
                 {[
-                  { id: true, label: "Matches this brief", count: matching },
-                  { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
+                  { id: true, label: "Matches This Brief", count: matching },
+                  { id: false, label: "All Templates", count: TEMPLATE_LIBRARY.length },
                 ].map((scope) => (
                   <Chip
                     key={String(scope.id)}
@@ -225,7 +226,7 @@ export function TemplateStepScreen({
                     className="size-3.5 accent-[#fd4816]"
                   />
                   <ShieldCheck className="size-3.5 text-ok" />
-                  Brand-approved only
+                  Brand-Approved Only
                 </label>
               </FilterRow>
 
@@ -276,7 +277,7 @@ export function TemplateStepScreen({
 
         {!browsing && (
           <>
-            <SectionLabel>Recommended for this brief</SectionLabel>
+            <SectionLabel>Recommended for This Brief</SectionLabel>
             <div className="mb-5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
               {TEMPLATE_ARCHETYPES.map((archetype) => (
                 <ArchetypeCard
@@ -303,12 +304,12 @@ export function TemplateStepScreen({
         </SectionLabel>
 
         {results.length === 0 ? (
-          <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-12 text-center">
-            <p className="text-body font-bold text-ink-2">Nothing matches those filters</p>
-            <p className="mt-0.5 text-label text-ink-4">
-              Widen the scope to all templates, or clear a filter.
-            </p>
-          </div>
+          <EmptyState
+            tone="canvas"
+            className="py-12"
+            title="Nothing matches those filters"
+            hint="Widen the scope to all templates, or clear a filter."
+          />
         ) : (
           <>
             <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -337,7 +338,7 @@ export function TemplateStepScreen({
                   onClick={() => setShown((n) => n + 24)}
                   className="focus-ring cursor-pointer rounded-control border border-hair-2 bg-card px-4 py-2 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
                 >
-                  Show 24 more · {(results.length - shown).toLocaleString()} left
+                  Show 24 More · {(results.length - shown).toLocaleString()} left
                 </button>
               </div>
             )}
@@ -367,7 +368,7 @@ export function TemplateStepScreen({
               disabled={blocked}
               className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
             >
-              Create document
+              Create Document
               <ArrowRight className="size-3.5" />
             </Button>
           }

@@ -61,7 +61,7 @@ export function SectionBilling() {
     { key: "cr", header: "Credits", numeric: true, cell: (t) => (
         <Text size="body" weight="bold" className="text-ok">+{t.credits.toLocaleString()}</Text>
       ) },
-    { key: "who", header: "Purchased by", cell: (t) => <Text size="body">{t.purchasedBy}</Text> },
+    { key: "who", header: "Purchased By", cell: (t) => <Text size="body">{t.purchasedBy}</Text> },
     { key: "ref", header: "Reference", secondary: true, cell: (t) => (
         <span className="font-mono text-caption text-ink-3">{t.reference}</span>
       ) },
@@ -102,7 +102,7 @@ export function SectionBilling() {
               </div>
             </div>
             <div>
-              <Text size="caption" className="block uppercase tracking-wider text-white/50">Credit balance</Text>
+              <Text size="caption" className="block uppercase tracking-wider text-white/50">Credit Balance</Text>
               <Text size="title" weight="bold" className="mt-0.5 block tabular-nums text-white">
                 {s.creditBalance.toLocaleString()}
               </Text>
@@ -113,13 +113,13 @@ export function SectionBilling() {
           </div>
           {canManage ? (
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary">Change plan</Button>
-              <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top up 10,000 · US$12,500</Button>
+              <Button size="sm" variant="secondary">Change Plan</Button>
+              <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top Up 10,000 · US$12,500</Button>
             </div>
           ) : asked ? (
             <Text size="label" className="text-white/70">Top-up requested. Whoever manages billing has been told.</Text>
           ) : (
-            <Button size="sm" onClick={s.requestTopUp}>Ask for a top-up</Button>
+            <Button size="sm" onClick={s.requestTopUp}>Ask for a Top-Up</Button>
           )}
         </div>
       </div>
@@ -129,7 +129,7 @@ export function SectionBilling() {
           <Text size="body" weight="bold" className="text-warn">
             {s.creditBalance === 0 ? "No credits left. Renders are paused until this workspace is topped up." : "Credits are running low in this workspace."}
           </Text>
-          {!canManage && !asked && <Button size="sm" variant="secondary" onClick={s.requestTopUp}>Ask for a top-up</Button>}
+          {!canManage && !asked && <Button size="sm" variant="secondary" onClick={s.requestTopUp}>Ask for a Top-Up</Button>}
         </div>
       )}
 
@@ -145,7 +145,7 @@ export function SectionBilling() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Button size="sm" variant="secondary" onClick={() => s.dismissTopUpRequest(r.id)}>Dismiss</Button>
-                  <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top up 10,000 · US$12,500</Button>
+                  <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top Up 10,000 · US$12,500</Button>
                 </div>
               </div>
             ))}
@@ -165,7 +165,7 @@ export function SectionBilling() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" variant="secondary">View offer</Button>
+            <Button size="sm" variant="secondary">View Offer</Button>
             <button
               type="button" aria-label="Dismiss offer" onClick={s.dismissPromo}
               className="grid size-7 place-items-center rounded-glyph text-ink-3 transition-colors hover:bg-card hover:text-ink cursor-pointer"
@@ -177,16 +177,16 @@ export function SectionBilling() {
       )}
 
       {canManage && <SettingsCard
-        title="Billing method"
+        title="Billing Method"
         description="Used for renewals and top-ups."
         actions={
           <Button size="sm" variant="secondary" onClick={() => setAddMethod(true)}>
-            <Plus className="size-3.5" /> {s.paymentMethod ? "Replace" : "Add method"}
+            <Plus className="size-3.5" /> {s.paymentMethod ? "Replace" : "Add Method"}
           </Button>
         }
       >
         <div>
-          <SettingRow label="Payment method">
+          <SettingRow label="Payment Method">
             {s.paymentMethod ? (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="flex items-center gap-2 rounded-control border border-hair bg-canvas px-3 py-1.5">
@@ -203,7 +203,7 @@ export function SectionBilling() {
             <Field id="b-tax" value={s.taxId}
               onChange={(e) => s.setBillingField("taxId", e.target.value)} className="max-w-sm text-body" />
           </SettingRow>
-          <SettingRow label="Billing address" htmlFor="b-addr">
+          <SettingRow label="Billing Address" htmlFor="b-addr">
             <Field id="b-addr" value={s.billingAddress}
               onChange={(e) => s.setBillingField("billingAddress", e.target.value)} className="text-body" />
           </SettingRow>
@@ -222,7 +222,7 @@ export function SectionBilling() {
             items={[
               { id: "usage", label: "Usage", badge: s.usage.length },
               ...(canManage ? [
-                { id: "topups", label: "Top-ups", badge: s.topUps.length },
+                { id: "topups", label: "Top-Ups", badge: s.topUps.length },
                 { id: "invoices", label: "Invoices", badge: s.invoices.length },
               ] : []),
             ]}
@@ -260,7 +260,7 @@ export function SectionBilling() {
       <Modal
         open={addMethod}
         onClose={() => setAddMethod(false)}
-        title="Add a payment method"
+        title="Add a Payment Method"
         description="In production this is the provider's own hosted field, card numbers never reach our inputs."
         footer={
           <>
@@ -269,14 +269,14 @@ export function SectionBilling() {
               s.setPaymentMethod({ brand: "Visa", last4: "4242", expiry: "12 / 2029" });
               setAddMethod(false);
             }}>
-              Add method
+              Add Method
             </Button>
           </>
         }
       >
         <Stack gap={3}>
-          <Field label="Name on card" placeholder="Maya Kapoor" className="text-body" />
-          <Field label="Card number" placeholder="4242 4242 4242 4242" className="text-body" />
+          <Field label="Name on Card" placeholder="Maya Kapoor" className="text-body" />
+          <Field label="Card Number" placeholder="4242 4242 4242 4242" className="text-body" />
           <div className="flex gap-3">
             <Field label="Expiry" placeholder="MM / YY" className="text-body" />
             <Field label="CVC" placeholder="123" className="text-body" />
@@ -304,7 +304,7 @@ export function SectionBilling() {
               ))}
             </div>
             <div>
-              <Text size="caption" tone="subtle" className="block">Billed to</Text>
+              <Text size="caption" tone="subtle" className="block">Billed To</Text>
               <Text size="body" className="block">{s.legalEntity}</Text>
               <Text size="label" tone="muted" className="block">{s.billingAddress}</Text>
               <Text size="label" tone="muted" className="block">{s.taxId}</Text>

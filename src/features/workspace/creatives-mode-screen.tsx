@@ -38,7 +38,7 @@ const CHART_EXAMPLES: StartingPointExample[] = [
     id: "chart-cutoff",
     badge: "Dosing & Cut-Off",
     aspect: "3:4 Tablet",
-    eyebrow: "License Boundary & Prescribing Cut-Off",
+    eyebrow: "Licence Boundary & Prescribing Cut-Off",
     metric: "eGFR ≥25",
     metricLabel: "mL/min/1.73m² Threshold",
     caption: "Approved indication cut-off with once-daily oral dosing protocol across all three organ domains.",
@@ -73,7 +73,7 @@ const DECK_EXAMPLES: StartingPointExample[] = [
   {
     id: "deck-journal",
     badge: "A4 Journal Spread",
-    aspect: "Print & Digital",
+    aspect: "Print and Digital",
     eyebrow: "Journal Advertisement Spread",
     metric: "21 CFR 202.1",
     metricLabel: "Full Fair Balance",
@@ -147,7 +147,7 @@ export function CreativesModeScreen() {
   return (
     <div className="page-enter max-w-[1140px] space-y-6 text-left">
       {/* Header, the same shape as the video screen's. */}
-      <PageHeading title="Create Doc/Images" description="Grounded in your verified label claims, from the first page." />
+      <PageHeading title="Create Docs" description="Grounded in your verified label claims, from the first page." />
 
       {/* Three document types, three across: the same grid the video screen
           uses. Each starts from its own brief and follows the same steps. */}
@@ -160,7 +160,7 @@ export function CreativesModeScreen() {
           onSelect={() =>
             handleSelectMode(
               "magic-chart",
-              "Create a high-impact clinical leave-behind infographic summarizing pivotal efficacy endpoints, mechanism of action, and licensed indication cut-offs.",
+              "Create a high-impact clinical leave-behind infographic summarising pivotal efficacy endpoints, mechanism of action, and licensed indication cut-offs.",
               "infographic"
             )
           }

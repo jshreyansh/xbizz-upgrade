@@ -119,7 +119,7 @@ export function ReviewComments({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          placeholder="Provide compliance or marketing feedback at current timestamp..."
+          placeholder="Provide compliance or marketing feedback at current timestamp…"
           className="w-full resize-none rounded-control border border-hair-2 bg-card p-2.5 text-body text-ink transition-all focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
         />
         <div className="flex justify-end">
@@ -329,7 +329,7 @@ function Group({
                         onClick={() => onAddAsSuggestion(comment.id)}
                         className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-brand/25 bg-tint px-2 py-1 text-caption font-bold text-brand-deep transition hover:border-brand"
                       >
-                        <MessageSquarePlus className="size-3" /> Add as suggestion
+                        <MessageSquarePlus className="size-3" /> Add as Suggestion
                       </button>
                     )}
                     <span className="ml-auto text-micro text-ink-4">
@@ -372,7 +372,7 @@ function Group({
                       onClick={() => onAddAsSuggestion(comment.id)}
                       className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-brand/25 bg-tint px-2 py-1 text-caption font-bold text-brand-deep transition hover:border-brand"
                     >
-                      <MessageSquarePlus className="size-3" /> Add as suggestion
+                      <MessageSquarePlus className="size-3" /> Add as Suggestion
                     </button>
                   )}
                 </div>
