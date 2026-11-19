@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { INITIAL_BRANDS, type BrandItem } from "@/features/workspace/brand-modal-data";
+import { INITIAL_BRANDS, INITIAL_DISEASE_OPTIONS, type BrandItem } from "@/features/workspace/brand-modal-data";
+import { cdcDisease } from "@/features/workspace/ad-options";
+import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import type { LibraryProduct } from "@/features/product-library/product-library-types";
 
@@ -94,5 +96,14 @@ export function brandNameForDossier(brands: BrandItem[], dossierId?: string): st
 /** The same lookup, for a component that has a dossier id and wants a name. */
 export function useBrandName(dossierId?: string): string {
   const brands = useBrandCatalogue();
-  return useMemo(() => brandNameForDossier(brands, dossierId), [brands, dossierId]);
+  const therapy = useTherapyLibraryStore((s) => s.dossiers);
+  return useMemo(() => {
+    /* A therapy-grounded project names its disease or area, never a brand. */
+    const ids = (dossierId ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+    const named = ids.map(
+      (id) => therapy.find((d) => d.id === id)?.disease ?? cdcDisease(id)?.label ?? INITIAL_DISEASE_OPTIONS.find((o) => o.id === id)?.label
+    );
+    if (ids.length > 0 && named.every(Boolean)) return named.length > 1 ? `${named[0]} +${named.length - 1}` : named[0]!;
+    return brandNameForDossier(brands, dossierId);
+  }, [brands, therapy, dossierId]);
 }

@@ -16,6 +16,8 @@ export function ProductLibraryScreen() {
   const products = useProductLibraryStore((s) => s.products);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  /* Drugs or devices. A device is its own product type; everything else is a drug. */
+  const [kind, setKind] = useState<"all" | "drug" | "device">("all");
   const [createOpen, setCreateOpen] = useState(false);
 
   const STATS = useMemo(
@@ -30,9 +32,11 @@ export function ProductLibraryScreen() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => p.name.toLowerCase().includes(q) || p.genericName.toLowerCase().includes(q));
-  }, [products, query]);
+    return products
+      .filter((p) => kind === "all" || (kind === "device") === (p.type === "Device"))
+      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.genericName.toLowerCase().includes(q));
+  }, [products, query, kind]);
+  const deviceCount = products.filter((p) => p.type === "Device").length;
 
   return (
     <div className="page-enter space-y-6">
@@ -53,10 +57,22 @@ export function ProductLibraryScreen() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products or molecules…"
+            placeholder="Search drugs, devices or molecules…"
             style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
           />
         </div>
+        <Segmented aria-label="Drugs or devices">
+          {([
+            ["all", "All", products.length],
+            ["drug", "Drugs", products.length - deviceCount],
+            ["device", "Devices", deviceCount],
+          ] as const).map(([k, label, n]) => (
+            <SegmentedButton key={k} active={kind === k} onClick={() => setKind(k)}>
+              {label}
+              <span className="tabular-nums text-ink-4">{n}</span>
+            </SegmentedButton>
+          ))}
+        </Segmented>
         <Segmented>
           {(["grid", "list"] as const).map((v) => (
             <SegmentedButton key={v} active={view === v} onClick={() => setView(v)}>

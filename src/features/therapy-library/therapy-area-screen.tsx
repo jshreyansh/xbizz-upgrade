@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, FileText, Image as ImageIcon, Loader2, Lock, Palette, Plus, Upload, X } from "lucide-react";
+import { ChevronLeft, FileText, Image as ImageIcon, Palette, Plus, Upload, X } from "lucide-react";
 import { useCan } from "@/features/settings/view-as";
 import { Button } from "@/components/ui/button";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
@@ -10,7 +10,8 @@ import { diseaseArea } from "@/features/workspace/ad-options";
 import { useTherapyLibraryStore, type TherapyImage } from "@/features/therapy-library/therapy-library-store";
 import { TherapyAreaMark } from "@/features/therapy-library/therapy-area-mark";
 import { NewTherapyDossierModal } from "@/features/therapy-library/new-therapy-dossier-modal";
-import { TherapyDossierReader, originWords } from "@/features/therapy-library/therapy-dossier-reader";
+import { TherapyDossierReader } from "@/features/therapy-library/therapy-dossier-reader";
+import { TherapyDossierRow } from "@/features/therapy-library/therapy-dossier-row";
 import { TherapyBrandKit } from "@/features/therapy-library/therapy-brand-kit";
 
 type Tab = "dossiers" | "images" | "brand-kit";
@@ -98,38 +99,7 @@ export function TherapyAreaScreen({ areaId }: { areaId: string }) {
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">
-              {dossiers.map((d) => {
-                const making = d.status === "making";
-                return (
-                  <div
-                    key={d.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setReading(d.id)}
-                    onKeyDown={(e) => { if (e.key === "Enter") setReading(d.id); }}
-                    className="group flex cursor-pointer items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
-                  >
-                    <span className={`grid size-9 shrink-0 place-items-center rounded-control ${making ? "bg-tint text-brand" : "bg-ok-bg text-ok"}`}>
-                      {making ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <b className="block text-subhead font-bold text-ink">{d.disease}</b>
-                      <span className="block truncate text-body text-ink-3">
-                        {making
-                          ? d.origin === "swishx" ? "SwishX is writing it from cited sources…" : `Reading ${d.fileName ?? "your file"}…`
-                          : `v${d.version} · ${originWords(d)} · ${d.sources} sources · Updated ${d.updated}${d.previous.length ? ` · ${d.previous.length} earlier ${d.previous.length === 1 ? "version" : "versions"} kept` : ""}`}
-                      </span>
-                    </div>
-                    {!making && (
-                      <span className="inline-flex items-center gap-1 rounded-chip border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                        <Lock className="size-3" />
-                        Read-Only
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">View →</span>
-                  </div>
-                );
-              })}
+              {dossiers.map((d) => <TherapyDossierRow key={d.id} dossier={d} onOpen={() => setReading(d.id)} />)}
             </div>
           )}
         </div>

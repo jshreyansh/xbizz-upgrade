@@ -174,6 +174,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const emailSender = useEmailStore((s) => s.sender);
   const emailAudience = useEmailStore((s) => s.audience);
   const emailPurpose = useEmailStore((s) => s.purpose);
+  const emailTherapy = useEmailStore((s) => s.therapy);
   const [emailAboutOpen, setEmailAboutOpen] = useState(false);
   const adKind = useWorkspaceStore((s) => s.adKind);
   const adType = useWorkspaceStore((s) => s.adType);
@@ -382,7 +383,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
 
   const samplePrompts = useMemo(
-    () => isEmail ? emailSamplePrompts(emailAudience, emailSender, emailPurpose, subjectPhrase, prescribers, condition ?? projectIndication.options[0]?.condition ?? "the condition") : isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName, condition ?? (adSubject.kind === "disease" ? adSubject.condition : undefined)) : [
+    () => isEmail ? emailSamplePrompts(emailAudience, emailSender, emailPurpose, subjectPhrase, prescribers, condition ?? projectIndication.options[0]?.condition ?? "the condition", emailTherapy) : isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName, condition ?? (adSubject.kind === "disease" ? adSubject.condition : undefined)) : [
       {
         id: "hcp-launch",
         tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
@@ -405,7 +406,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           : `Generate a presenter-led clinical briefing for ${prescribers} explaining the mechanism of action and fair balance safety profile of ${subjectPhrase}.`,
       },
     ],
-    [isEmail, emailAudience, emailSender, emailPurpose, projectIndication.options, currentBrandName, isInfographic, isAd, adKind, adType, audience, condition, subjectPhrase, prescribers, adSubject.kind, adSubject.condition]
+    [isEmail, emailAudience, emailSender, emailPurpose, emailTherapy, projectIndication.options, currentBrandName, isInfographic, isAd, adKind, adType, audience, condition, subjectPhrase, prescribers, adSubject.kind, adSubject.condition]
   );
 
 

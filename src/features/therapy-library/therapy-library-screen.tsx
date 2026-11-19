@@ -12,6 +12,9 @@ import { DISEASE_THERAPY_AREAS } from "@/features/workspace/ad-options";
 import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { TherapyAreaMark, areaMark } from "@/features/therapy-library/therapy-area-mark";
 import { NewTherapyDossierModal } from "@/features/therapy-library/new-therapy-dossier-modal";
+import { TherapyDossierReader } from "@/features/therapy-library/therapy-dossier-reader";
+import { TherapyDossierRow } from "@/features/therapy-library/therapy-dossier-row";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 
 /**
  * Therapy areas with their disease dossiers, for unbranded and awareness
@@ -25,6 +28,9 @@ export function TherapyLibraryScreen() {
   const images = useTherapyLibraryStore((s) => s.images);
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
+  /* Browse by therapy area, or straight to the diseases across every area. */
+  const [by, setBy] = useState<"areas" | "diseases">("areas");
+  const [reading, setReading] = useState<string>();
 
   /* Only areas with something in them; the pop-up offers every area. */
   const areas = useMemo(() => {
@@ -35,6 +41,14 @@ export function TherapyLibraryScreen() {
       .filter((a) => !q || a.name.toLowerCase().includes(q) || a.dossiers.some((d) => d.disease.toLowerCase().includes(q)));
   }, [dossiers, images, query]);
   const empty = dossiers.length === 0;
+  const diseases = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return dossiers
+      .map((d) => ({ d, areaName: DISEASE_THERAPY_AREAS.find((a) => a.id === d.areaId)?.name ?? "" }))
+      .filter(({ d, areaName }) => !q || d.disease.toLowerCase().includes(q) || areaName.toLowerCase().includes(q))
+      .sort((x, y) => x.d.disease.localeCompare(y.d.disease));
+  }, [dossiers, query]);
+  const areaCount = DISEASE_THERAPY_AREAS.filter((a) => dossiers.some((d) => d.areaId === a.id) || (images[a.id]?.length ?? 0) > 0).length;
 
   return (
     <div className="page-enter space-y-6">
@@ -66,9 +80,28 @@ export function TherapyLibraryScreen() {
         </div>
       ) : (
         <>
-          <div className="max-w-[420px]">
-            <PickSearch value={query} onChange={setQuery} placeholder="Search therapy areas or diseases…" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="min-w-[240px] max-w-[420px] flex-1">
+              <PickSearch value={query} onChange={setQuery} placeholder={by === "areas" ? "Search therapy areas or diseases…" : "Search diseases…"} />
+            </div>
+            <Segmented aria-label="Browse by">
+              <SegmentedButton active={by === "areas"} onClick={() => setBy("areas")}>
+                Therapy Areas <span className="tabular-nums text-ink-4">{areaCount}</span>
+              </SegmentedButton>
+              <SegmentedButton active={by === "diseases"} onClick={() => setBy("diseases")}>
+                Diseases <span className="tabular-nums text-ink-4">{dossiers.length}</span>
+              </SegmentedButton>
+            </Segmented>
           </div>
+          {by === "diseases" ? (
+            <div className="flex flex-col gap-2.5">
+              {diseases.map(({ d, areaName }) => (
+                <TherapyDossierRow key={d.id} dossier={d} areaName={areaName} onOpen={() => setReading(d.id)} />
+              ))}
+              {diseases.length === 0 && <p className="py-14 text-center text-body text-ink-4">No disease matches &ldquo;{query}&rdquo;.</p>}
+            </div>
+          ) : (
+          <>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
             {areas.map((a, i) => (
               <LibraryTile
@@ -98,9 +131,12 @@ export function TherapyLibraryScreen() {
             ))}
           </div>
           {areas.length === 0 && <p className="py-14 text-center text-body text-ink-4">Nothing matches &ldquo;{query}&rdquo;.</p>}
+          </>
+          )}
         </>
       )}
 
+      <TherapyDossierReader id={reading} onClose={() => setReading(undefined)} canManage={canManage} />
       <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={(id) => { setAdding(false); router.push(`/therapy-library/${id}`); }} />
     </div>
   );

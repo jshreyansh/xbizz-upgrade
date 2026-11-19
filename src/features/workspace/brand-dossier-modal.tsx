@@ -22,8 +22,10 @@ import {
   Info,
   ShieldAlert,
   Stethoscope,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { useEmailStore } from "@/features/workspace/email-store";
 import { EmailAboutFields } from "@/features/workspace/email-about-fields";
 import { EMAIL_AUDIENCES, EMAIL_PURPOSES, approvedPieces, emailSamplePrompts, suggestedPiece, type EmailAudience } from "@/features/workspace/email-options";
@@ -46,6 +48,7 @@ import {
   type AdType,
   CDC_DISEASES,
   MEDTECH_DEVICES,
+  isDeviceId,
   cdcDisease,
   medtechDevice,
   type MedtechDevice,
@@ -73,8 +76,7 @@ import {
   INITIAL_HCP_SPECIALITIES,
   AUDIENCE_OPTIONS,
   TOPICS_BY_AUDIENCE,
-  DISEASE_TOPICS,
-  GROUNDING_BY_AUDIENCE,
+  diseaseTopicsFor,
 } from "@/features/workspace/brand-modal-data";
 import type {
   BrandItem,
@@ -82,10 +84,9 @@ import type {
 } from "@/features/workspace/brand-modal-data";
 
 /**
- * Audience comes first because it decides what grounding is even offered —
- * asking for a brand before knowing who the asset is for meant the Brand /
- * Therapy Area toggle had to show both options to everyone, including the four
- * audiences for which therapy-area grounding makes no sense.
+ * Audience comes first, then what the asset is about: Products (a drug or a
+ * device) or Therapy (a disease or a therapy area). The same two answers in
+ * every studio and for every audience; the audience decides the topics.
  */
 /** Ads add a step between the brand and where the ads run: which kind of ad. */
 type RevealStage = "audience" | "grounding" | "adtype" | "details";
@@ -290,8 +291,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // Progressive Stage: "audience" -> "grounding" -> "details"
   const [stage, setStage] = useState<RevealStage>("audience");
 
-  // 2. Grounding: Brand vs Therapy Area (Starts completely empty)
+  // 2. Grounding: Products or Therapy
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
+  /* Under Products: drugs, devices or both. */
+  const [productKind, setProductKind] = useState<"all" | "drug" | "device">("all");
   const [brandSearch, setBrandSearch] = useState("");
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
@@ -347,6 +350,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     if (open) {
       setStage("audience");
       setSourceMode("brand");
+      setProductKind("all");
       setProjectNameLocal("");
       setNameEdited(false);
       setEditingName(false);
@@ -380,16 +384,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     /* Topics belong to an audience, so a new audience clears them rather than picking new ones. */
     setSelectedTopics([]);
     setSelectedSpecialities([]);
-    // Therapy-area grounding vanishes for brand-only audiences. Drop a
-    // selection made under a previous audience rather than carrying an
-    // impossible one forward — picking Patient, choosing two therapy areas,
-    // then switching to HCP would otherwise start a project grounded in
-    // something the audience cannot use.
-    if (!(GROUNDING_BY_AUDIENCE[audience] ?? ["brand"]).includes("disease")) {
-      setSourceMode("brand");
-      setSelectedDiseaseIds([]);
-      setDiseaseSearch("");
-    }
   }, [audience]);
 
   const brandCatalogue = useBrandCatalogue();
@@ -424,8 +418,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
    * work belongs.
    */
   const filteredBrands = useMemo(
-    () => filterBrands(brandCatalogue, brandSearch).filter((b) => b.hasDossier),
-    [brandCatalogue, brandSearch]
+    () =>
+      (brandSearch.trim() ? filterBrands(brandCatalogue, brandSearch) : brandCatalogue)
+        .filter((b) => b.hasDossier)
+        .filter((b) => productKind === "all" || (productKind === "device") === (b.type === "Device")),
+    [brandCatalogue, brandSearch, productKind]
   );
 
   /* Disease dossiers from the Therapy Library: picked like an area, but grounded in the dossier itself. */
@@ -435,6 +432,20 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   );
   const allDiseases = useMemo(() => [...libraryOptions, ...INITIAL_DISEASE_OPTIONS, ...customDiseases], [libraryOptions, customDiseases]);
 
+  /* Typing a disease name finds it too, not only the areas. */
+  const diseaseMatches = useMemo(() => {
+    const q = diseaseSearch.toLowerCase().trim();
+    if (!q) return [];
+    return CDC_DISEASES.filter((d) => d.label.toLowerCase().includes(q) && !libraryOptions.some((o) => o.label === d.label))
+      .slice(0, 12)
+      .map((d) => ({ id: d.id, label: d.label, desc: d.group }));
+  }, [diseaseSearch, libraryOptions]);
+  const toggleSearchedDisease = (id: string) => {
+    const hit = diseaseMatches.find((d) => d.id === id);
+    if (hit && !customDiseases.some((d) => d.id === id)) setCustomDiseases((prev) => [...prev, hit]);
+    toggleDisease(id);
+  };
+
   const filteredDiseases = useMemo(() => {
     const q = diseaseSearch.toLowerCase().trim();
     if (!q) return allDiseases;
@@ -443,7 +454,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const allSpecialities = INITIAL_HCP_SPECIALITIES;
 
-  const currentTopics = sourceMode === "disease" ? DISEASE_TOPICS : (audience && TOPICS_BY_AUDIENCE[audience]) || TOPICS_BY_AUDIENCE.HCP;
+  const currentTopics = sourceMode === "disease" ? diseaseTopicsFor(audience) : (audience && TOPICS_BY_AUDIENCE[audience]) || TOPICS_BY_AUDIENCE.HCP;
 
   /* Ads reach patients and HCPs. Trade and market-access audiences are
      reached through dossiers and portals, not ad accounts. */
@@ -454,13 +465,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       : AUDIENCE_OPTIONS.filter((a) => a.id !== "PT_Committee");
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
   const studioNoun = isAd ? "Ads" : isEmail ? "Email" : assetType === "infographic" ? "Creative" : "Video";
-  const groundingModes = (audience && GROUNDING_BY_AUDIENCE[audience]) || ["brand"];
-  /**
-   * Therapy-area grounding comes back once the Therapy Library has a ready
-   * dossier to ground in, for the audiences that allow it. Without one,
-   * every audience grounds in a brand.
-   */
-  const canUseTherapyArea = groundingModes.includes("disease") && therapyDossiers.some((d) => d.status === "ready");
 
   /** What the project is grounded in, in one phrase, for the name and chips. */
   const selectedDevice = medtechDevice(selectedDeviceId);
@@ -555,6 +559,27 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedSpecialities((prev) => prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]);
   };
 
+  /** Products or Therapy: switching starts the choice again. */
+  const chooseMode = (mode: "brand" | "disease") => {
+    if (mode === sourceMode) return;
+    setSelectedTopics([]);
+    setSourceMode(mode);
+    setSelectedBrandId("");
+    setBrandSearch("");
+    setSelectedVariations([]);
+    setIndications([]);
+    setSelectedDiseaseIds([]);
+    setDiseaseSearch("");
+    setSelectedDeviceId("");
+    setSelectedDiseaseId("");
+    setSubjectQuery("");
+    if (isAd) {
+      setAdSubjectKind(mode === "disease" ? "disease" : "drug");
+      /* A disease takes only help-seeking ads. */
+      if (mode === "disease" && adType && adType !== "unbranded") setAdType(null);
+    }
+  };
+
   const toggleDisease = (diseaseId: string) => {
     setSelectedDiseaseIds((prev) =>
       prev.includes(diseaseId) ? prev.filter((id) => id !== diseaseId) : [...prev, diseaseId]
@@ -578,6 +603,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
    * their own. The step stays open on All until Continue.
    */
   const handleSelectBrand = (brand: BrandItem) => {
+    /* In Ads a medical device is grounded in its IFU and clearance, not a drug label. */
+    if (isAd && isDeviceId(brand.id) && medtechDevice(brand.id)) {
+      setAdSubjectKind("device");
+      setSelectedDeviceId(brand.id);
+      setIndications([]);
+      if (adType === "reminder") setAdType(null);
+      return;
+    }
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
     setSelectedVariations([]);
@@ -680,13 +713,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         startPiece: piece,
         attached: piece ? [piece] : approvedPieces(brandName, about.audience).slice(0, 2).map((pc) => pc.id),
         media: [],
+        therapy: sourceMode === "disease" ? groundingLabel : null,
       });
       setTopicsStore([]);
       const area = therapyAreas[0];
       useWorkspaceStore
         .getState()
         .setBrief(
-          emailSamplePrompts(about.audience, about.sender, about.purpose, brandName, area ? `${area.toLowerCase()} specialists` : "specialists", pickedIndication?.condition ?? subjectIndications[0]?.condition ?? "the condition")[0].prompt
+          emailSamplePrompts(about.audience, about.sender, about.purpose, brandName, area ? `${area.toLowerCase()} specialists` : "specialists", pickedIndication?.condition ?? subjectIndications[0]?.condition ?? "the condition", sourceMode === "disease" ? groundingLabel : null)[0].prompt
         );
     } else if (assetType === "infographic") {
       setPageShapeStore("3:4");
@@ -1134,7 +1168,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                     <div className="flex justify-end pt-1">
                       <Button size="sm" variant="primary" onClick={() => setStage("grounding")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
-                        <span>Select Brand</span>
+                        <span>Continue</span>
                         <ChevronRight className="size-3.5" />
                       </Button>
                     </div>
@@ -1152,7 +1186,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  {isAd ? "What's It About?" : sourceMode === "disease" ? "Select Therapy Area" : "Select Brand"}
+                  What&apos;s It About?
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1175,13 +1209,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {(stage === "details" || stage === "adtype") && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    {isAd ? "What's It About?" : sourceMode === "disease" ? "Select Therapy Area" : "Select Brand"}
+                    What&apos;s It About?
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
-                      {sourceMode === "brand"
+                      {sourceMode === "brand" || isAd
                         ? groundingLabel
-                        : `${selectedDiseaseIds.length} Therapy Area${selectedDiseaseIds.length > 1 ? "s" : ""}: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
+                        : `Therapy: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
                     </span>
                   )}
                   {stage !== "grounding" && sourceMode === "brand" && groundingLabel && (
@@ -1200,79 +1234,56 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     <Edit3 className="size-3" />
                     <span>Change</span>
                   </button>
-                ) : canUseTherapyArea ? (
-                  /* The toggle appears only where both grounds are real. For the
-                     four brand-only audiences there is nothing to choose, so no
-                     control is drawn at all. */
-                  <div className="inline-flex rounded-chip border border-hair bg-card p-1 gap-0.5 shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => { if (sourceMode !== "brand") setSelectedTopics([]); setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
-                      className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
-                    >
-                      Brand
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { if (sourceMode !== "disease") setSelectedTopics([]); setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
-                      className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
-                    >
-                      Therapy Area
-                    </button>
-                  </div>
                 ) : null}
               </div>
 
               {/* Expanded Body for Step 2 */}
               {stage === "grounding" && (
                 <div className="pt-4 space-y-3 animate-in fade-in duration-150">
-                  {/* Ads can be about a drug, a medical device or a disease. */}
-                  {isAd && (
-                    <div className="inline-flex gap-0.5 rounded-chip border border-hair bg-card p-1 shadow-2xs" role="tablist" aria-label="What the ads are about">
-                      {(["drug", "device", "disease"] as const).map((k) => (
+                  {/* The same two answers in every studio: a product, or a therapy. */}
+                  <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="What it is about">
+                    {([
+                      { id: "brand", icon: Package, title: "Products", body: "A drug or medical device" },
+                      { id: "disease", icon: Stethoscope, title: "Therapy", body: isAd ? "A disease, for help-seeking ads" : "A disease or therapy area, unbranded" },
+                    ] as const).map((o) => {
+                      const on = sourceMode === o.id;
+                      return (
                         <button
-                          key={k}
+                          key={o.id}
                           type="button"
                           role="tab"
-                          aria-selected={adSubjectKind === k}
-                          onClick={() => {
-                            if (k === adSubjectKind) return;
-                            /* One subject per campaign: a new tab starts the choice again. */
-                            setAdSubjectKind(k);
-                            setSubjectQuery("");
-                            setIndications([]);
-                            setSelectedBrandId("");
-                            setBrandSearch("");
-                            setSelectedVariations([]);
-                            setSelectedDeviceId("");
-                            setSelectedDiseaseId("");
-                            /* A disease takes only help-seeking ads; a device has no reminder ads. */
-                            if ((k === "disease" && adType && adType !== "unbranded") || (k === "device" && adType === "reminder")) setAdType(null);
-                          }}
+                          aria-selected={on}
+                          onClick={() => chooseMode(o.id)}
                           className={cn(
-                            "cursor-pointer rounded-glyph px-3 py-1 text-label font-bold transition-all",
-                            adSubjectKind === k ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
+                            "focus-ring flex cursor-pointer items-center gap-2.5 rounded-control border p-2.5 text-left transition-colors",
+                            on ? "border-brand bg-tint" : "border-hair-2 bg-card hover:border-hair-3"
                           )}
                         >
-                          {k === "drug" ? "Drug" : k === "device" ? "Medical device" : "Disease"}
+                          <span className={cn("grid size-8 shrink-0 place-items-center rounded-chip", on ? "bg-brand text-white" : "bg-subtle text-ink-3")}>
+                            <o.icon className="size-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <b className="block text-body font-bold text-ink">{o.title}</b>
+                            <span className="block truncate text-label text-ink-3">{o.body}</span>
+                          </span>
                         </button>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                   <p className="text-label text-ink-3">
                     {isAd && adSubjectKind === "device"
                       ? "Grounded in the device's Instructions for Use and its FDA clearance, so every claim traces back to them."
-                      : isAd && adSubjectKind === "disease"
-                        ? "About the condition itself, for help-seeking ads. No product is named."
-                        : sourceMode === "disease"
-                          ? "Grounded in a disease dossier from your Therapy Library, or a whole therapy area. No product is named."
-                          : "Every asset is grounded in a specific product, so its claims can be traced back to an approved source."}
+                      : sourceMode === "disease"
+                        ? isAd
+                          ? "About the condition itself, for help-seeking ads. No product is named."
+                          : "Grounded in a disease dossier from your Therapy Library, a disease, or a whole therapy area. No product is named."
+                        : "A drug or device from your Product Library, so every claim traces back to its verified dossier."}
                   </p>
 
                   {isAd && adSubjectKind !== "drug" ? (
                     <div className="space-y-3">
                       {adSubjectKind === "device" && selectedDevice ? (
-                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndications([]); setCustomizeScope(false); }}>
+                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setAdSubjectKind("drug"); setBrandSearch(""); setIndications([]); setCustomizeScope(false); }}>
                           {isScopeExpanded ? scopeDetailsBlock : scopeSummaryRow}
                         </SelectedBrandTile>
                       ) : adSubjectKind === "disease" && selectedDisease ? (
@@ -1394,12 +1405,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           below is the answer, and leaving a half-filled search
                           box above it read as if nothing had been picked. */}
                       {!selectedBrand && (
-                        <PickSearch
-                          value={brandSearch}
-                          onChange={setBrandSearch}
-                          placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
-                          autoFocus
-                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-[220px] flex-1">
+                            <PickSearch
+                              value={brandSearch}
+                              onChange={setBrandSearch}
+                              placeholder={productKind === "device" ? "Search devices (e.g. Glucora, Cardiyn)..." : productKind === "drug" ? "Search drugs or molecules (e.g. Velmora, Onkavia)..." : "Search drugs, devices or molecules..."}
+                              autoFocus
+                            />
+                          </div>
+                          <Segmented aria-label="Drugs or devices">
+                            {([["all", "All"], ["drug", "Drugs"], ["device", "Devices"]] as const).map(([k, label]) => (
+                              <SegmentedButton key={k} active={productKind === k} onClick={() => setProductKind(k)}>{label}</SegmentedButton>
+                            ))}
+                          </Segmented>
+                        </div>
                       )}
 
                       {selectedBrand ? (
@@ -1446,14 +1466,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           </SubjectRow>
                           {isScopeExpanded ? scopeDetailsBlock : scopeSummaryRow}
                         </SelectedBrandTile>
-                      ) : !brandSearch.trim() ? (
-                        /* Nothing until there is a query — see filteredBrands. */
-                        <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
-                          <p className="text-body font-bold text-ink-2">Start typing to find a product</p>
-                          <p className="text-label text-ink-4 mt-0.5">
-                            Search your full catalogue by brand name, molecule or therapy area.
-                          </p>
-                        </div>
                       ) : (
                         <PickList>
                           {filteredBrands.map((brand) => (
@@ -1462,7 +1474,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               onSelect={() => handleSelectBrand(brand)}
                               thumb={<BrandThumb brand={brand} className="size-10 shrink-0" />}
                               title={brand.name}
-                              detail={[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
+                              detail={[brand.type === "Device" ? "Device" : "Drug", brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
                               chip={<PickChip tone="ok">Verified</PickChip>}
                             />
                           ))}
@@ -1472,7 +1484,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                job — it is not finished until the dossier is
                                verified, and that is not a step to bury inside
                                starting a project. */
-                            <PickEmpty title={<>No verified brand matching &quot;{brandSearch}&quot;</>}>
+                            <PickEmpty title={brandSearch.trim() ? <>No verified {productKind === "device" ? "device" : productKind === "drug" ? "drug" : "product"} matching &quot;{brandSearch}&quot;</> : <>No verified {productKind === "device" ? "devices" : "drugs"} yet</>}>
                               Only products with a verified dossier can ground an asset. Add or verify one in the
                               Product Library, and it will appear here.
                             </PickEmpty>
@@ -1509,13 +1521,26 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           type="text"
                           value={diseaseSearch}
                           onChange={(e) => setDiseaseSearch(e.target.value)}
-                          placeholder="Search therapy areas (e.g. Dermatology, Oncology, Cardiology)..."
+                          placeholder="Search diseases or therapy areas (e.g. Asthma, Oncology)..."
                           className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                           autoFocus
                         />
                       </div>
 
-                      {libraryOptions.length > 0 && (
+                      {diseaseMatches.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="block text-label font-bold text-ink-3">Diseases</span>
+                          <ChipMultiSelect
+                            size="md"
+                            rowClassName="p-1"
+                            options={diseaseMatches}
+                            selected={selectedDiseaseIds}
+                            onToggle={toggleSearchedDisease}
+                          />
+                        </div>
+                      )}
+
+                      {filteredDiseases.some((d) => libraryOptions.some((o) => o.id === d.id)) && (
                         <div className="space-y-1.5">
                           <span className="block text-label font-bold text-ink-3">From Your Therapy Library</span>
                           <ChipMultiSelect
@@ -1525,10 +1550,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             selected={selectedDiseaseIds}
                             onToggle={toggleDisease}
                           />
-                          <span className="block pt-1 text-label font-bold text-ink-3">Or a Whole Therapy Area</span>
                         </div>
                       )}
 
+                      <span className="block text-label font-bold text-ink-3">Therapy Areas</span>
                       <ChipMultiSelect
                         size="md"
                         rowClassName="max-h-[170px] overflow-y-auto p-1"
@@ -1548,7 +1573,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       {selectedDiseaseIds.length > 0 && (
                         <div className="flex items-center justify-between pt-2 border-t border-hair">
                           <span className="text-label font-bold text-ink-3">
-                            {selectedDiseaseIds.length} therapy area{selectedDiseaseIds.length > 1 ? "s" : ""} selected
+                            {selectedDiseaseIds.length} selected
                           </span>
                           <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
                             <span>Confirm &amp; Next</span>
@@ -1573,7 +1598,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 <span className="text-body font-bold text-ink-3">Ad Type</span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
-                <Lock className="size-3" /> {stage === "audience" ? "Confirm audience first" : "Select a brand first"}
+                <Lock className="size-3" /> {stage === "audience" ? "Confirm audience first" : "Choose what it's about first"}
               </span>
             </div>
           )}
@@ -1717,7 +1742,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
                 <Lock className="size-3" />{" "}
-                {stage === "audience" ? "Confirm audience first" : stage === "adtype" ? "Choose the ad type first" : "Select a brand first"}
+                {stage === "audience" ? "Confirm audience first" : stage === "adtype" ? "Choose the ad type first" : "Choose what it's about first"}
               </span>
             </div>
           ) : (

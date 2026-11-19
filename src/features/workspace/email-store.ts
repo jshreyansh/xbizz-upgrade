@@ -44,6 +44,8 @@ interface EmailState {
   purpose: EmailPurpose;
   /** The approved piece the email is built from, if any. Its claims lead and it is attached. */
   startPiece: string | null;
+  /** The disease or therapy area, when the email is unbranded and grounded in a therapy. */
+  therapy: string | null;
   /** One of the brand's approved email shells, or null when SwishX designs it. */
   template: string | null;
   /** Product and device shots, placed in the email by SwishX. */
@@ -86,7 +88,7 @@ interface EmailState {
   setAbout: (patch: Partial<Pick<EmailState, "audience" | "sender" | "purpose">>) => void;
   set: (patch: Partial<Omit<EmailState, "set" | "setAbout" | "start">>) => void;
   /** A fresh email, from the start step's answers. */
-  start: (about: { audience: EmailAudience; sender: EmailSender; purpose: EmailPurpose; startPiece: string | null; attached: string[]; media: EmailMedia[] }) => void;
+  start: (about: { audience: EmailAudience; sender: EmailSender; purpose: EmailPurpose; startPiece: string | null; attached: string[]; media: EmailMedia[]; therapy?: string | null }) => void;
 }
 
 /** Who can send to this audience, and what they can send, kept consistent with each other. */
@@ -119,6 +121,7 @@ export const useEmailStore = create<EmailState>((set) => ({
   channels: defaultChannelsFor("HCP", "rep"),
   styles: DEFAULT_EMAIL_STYLES,
   startPiece: null,
+  therapy: null,
   template: null,
   packshots: [],
   references: [],
@@ -206,6 +209,7 @@ export const useEmailStore = create<EmailState>((set) => ({
     set({
       ...about,
       ...fitted,
+      therapy: about.therapy ?? null,
       subjects: [0],
       subjectMode: "one",
       offBlocks: [],

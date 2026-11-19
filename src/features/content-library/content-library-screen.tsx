@@ -29,7 +29,7 @@ import { AssetPreview, STATUS_STYLE } from "@/features/content-library/asset-pre
  * review — the same screen the link in the email opens.
  */
 
-type KindFilter = "all" | "video" | "infographic" | "ad";
+type KindFilter = "all" | "video" | "infographic" | "ad" | "email";
 
 const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone, email: Mail };
 const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / image", visual: "Doc / image", carousel: "Doc / image", ad: "Ads", email: "Email" };
@@ -97,6 +97,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
             { id: "video", label: "Video", count: kindCount("video") },
             { id: "infographic", label: "Doc & image", count: kindCount("infographic") },
             { id: "ad", label: "Ads", count: kindCount("ad") },
+            { id: "email", label: "Email", count: kindCount("email") },
           ]}
         />
         <FilterBar

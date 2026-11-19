@@ -359,7 +359,9 @@ export const purposesFor = (sender: EmailSender, audience: EmailAudience): Email
 };
 
 /** The prompt screen's examples, by who it is for and who sends it. */
-export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender, purpose: EmailPurpose, subject: string, prescribers: string, condition: string) {
+export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender, purpose: EmailPurpose, subject: string, prescribers: string, condition: string, therapy?: string | null) {
+  /* Grounded in a therapy: unbranded disease education, no product named. */
+  if (therapy) return therapyEmailPrompts(audience, sender, therapy, prescribers);
   if (audience === "PT_Committee" || purpose === "formulary" || purpose === "value")
     return [
       { id: "formulary", tag: "Formulary review", prompt: `Write an email an account manager can send to the P&T committee regarding the formulary review for ${subject}, linking the formulary kit.` },
@@ -398,6 +400,27 @@ export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender,
     lead,
     { id: "symptoms", tag: "Secondary endpoint", prompt: `Draft a short email for ${prescribers} built around the key secondary endpoint for ${subject}.` },
     { id: "starting", tag: "Starting patients", prompt: `Create an email for reps to send after a first prescription, covering dosing and how the support programme helps patients start ${subject}.` },
+  ];
+}
+
+/** Unbranded briefs for an email about a disease or therapy area. Nothing here names a product. */
+function therapyEmailPrompts(audience: EmailAudience, sender: EmailSender, therapy: string, prescribers: string) {
+  if (audience === "PT_Committee")
+    return [
+      { id: "burden", tag: "Disease burden", prompt: `Write an unbranded email for the P&T committee on the burden of ${therapy}: prevalence, hospitalisations and cost to the health system, with no product named.` },
+      { id: "guidelines", tag: "Guidelines", prompt: `Draft an email summarising what current treatment guidelines say about ${therapy}, for the formulary team, with no product named.` },
+      { id: "unmet", tag: "Unmet need", prompt: `Create a short email setting out the unmet need in ${therapy} care, citing the sources in the dossier.` },
+    ];
+  if (sender === "msl")
+    return [
+      { id: "science", tag: "Disease science", prompt: `Write a non-promotional MSL email sharing a recent review of ${therapy} pathophysiology with a doctor who asked for it.` },
+      { id: "guidelines", tag: "Guidelines", prompt: `Draft an MSL email outlining the latest guideline changes for ${therapy}, cited to the source, with no product named.` },
+      { id: "congress", tag: "Congress", prompt: `Create an MSL follow-up sharing the key ${therapy} sessions from the congress with doctors who asked about them.` },
+    ];
+  return [
+    { id: "diagnosis", tag: "Diagnosis", prompt: `Write an unbranded email for ${prescribers} on recognising and diagnosing ${therapy} earlier, with the screening criteria from the dossier.` },
+    { id: "burden", tag: "Disease burden", prompt: `Draft a short email for ${prescribers} on the burden of ${therapy} and why timely referral matters, with no product named.` },
+    { id: "patients", tag: "Right patients", prompt: `Create an email helping ${prescribers} identify which patients with ${therapy} need a specialist review, cited to current guidelines.` },
   ];
 }
 

@@ -92,6 +92,10 @@ export const INITIAL_BRANDS: BrandItem[] = [
   { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false, variants: ["0.1% cream · 30 g", "0.1% ointment · 30 g", "Lotion · 60 mL"] },
   { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false, variants: ["100 mg capsule", "150 mg capsule"] },
   { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false, variants: ["4 mg tablet", "8 mg tablet", "16 mg tablet"] },
+  /* Sample devices (mock data), with the presentations they ship in. */
+  { id: "device-glucora", name: "Glucora CGM", genericName: "Continuous glucose monitor", therapyAreas: ["Diabetes"], hasDossier: true, variants: ["14-day sensor", "Reader app"], type: "Device" },
+  { id: "device-cardiyn", name: "Cardiyn", genericName: "Leadless pacemaker", therapyAreas: ["Cardiology"], hasDossier: true, variants: ["Single-chamber", "Dual-chamber"], type: "Device" },
+  { id: "device-pulseva", name: "Pulseva Patch", genericName: "Wearable ECG monitor", therapyAreas: ["Cardiology"], hasDossier: true, variants: ["7-day patch", "14-day patch"], type: "Device" },
 ];
 
 export const DOSSIERS: Record<string, DossierItem> = {
@@ -177,26 +181,6 @@ export const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: st
 ];
 
 /**
- * Which grounding an audience is allowed to use.
- *
- * A conversation with a prescriber, a rep, a procurement lead or a trade
- * partner is always about a specific product — there is no such thing as a
- * detail aid for a therapy area. Patient and consumer education genuinely can
- * be about the condition itself ("living with psoriasis"), so those two keep
- * the choice. Four of six are brand-only, which is why the toggle is absent
- * rather than disabled: an absent control asks no question.
- */
-export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">> = {
-  HCP:            ["brand"],
-  PT_Committee:   ["brand"],
-  "Field team":   ["brand"],
-  Patient:        ["brand", "disease"],
-  Consumer:       ["brand", "disease"],
-  Hospital:       ["brand"],
-  Distributor:    ["brand"],
-};
-
-/**
  * What each audience is actually asked about.
  *
  * Every audience used to get exactly six, and the six were written from the
@@ -212,8 +196,8 @@ export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">>
  */
 /**
  * Topics for unbranded content grounded in a therapy dossier: no product is
- * named, so the story is about the condition. Patients and consumers only,
- * the audiences that can ground in a therapy area.
+ * named, so the story is about the condition. These are for patients and
+ * consumers; professional audiences get DISEASE_TOPICS_PROFESSIONAL.
  */
 export const DISEASE_TOPICS: Array<{ id: string; label: string; icon: LucideIcon }> = [
   { id: "understanding", label: "Understanding the Condition", icon: BookOpen },
@@ -224,6 +208,25 @@ export const DISEASE_TOPICS: Array<{ id: string; label: string; icon: LucideIcon
   { id: "talk-to-doctor-disease", label: "Questions for Your Doctor", icon: MessageSquareQuote },
   { id: "support", label: "Support and Resources", icon: Users },
 ];
+
+/** Unbranded disease education for HCPs, field teams, hospitals and trade. */
+export const DISEASE_TOPICS_PROFESSIONAL: Array<{ id: string; label: string; icon: LucideIcon }> = [
+  { id: "disease-burden", label: "Disease Burden", icon: BarChart3 },
+  { id: "pathophysiology", label: "Pathophysiology", icon: Activity },
+  { id: "diagnosis-screening", label: "Diagnosis and Screening", icon: Stethoscope },
+  { id: "treatment-guidelines", label: "Treatment Guidelines", icon: BookOpenCheck },
+  { id: "unmet-need", label: "Unmet Need", icon: Target },
+  { id: "patient-identification", label: "Identifying the Right Patients", icon: Users },
+];
+
+/** The condition topics an audience is asked about, for a therapy-grounded project. */
+export function diseaseTopicsFor(audience: Audience | null | undefined) {
+  return audience === "Patient" || audience === "Consumer" ? DISEASE_TOPICS : DISEASE_TOPICS_PROFESSIONAL;
+}
+
+/** True when the topics came from either list above. */
+export const isDiseaseTopic = (label: string) =>
+  DISEASE_TOPICS.some((d) => d.label === label) || DISEASE_TOPICS_PROFESSIONAL.some((d) => d.label === label);
 
 export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; icon: LucideIcon }>> = {
   HCP: [
