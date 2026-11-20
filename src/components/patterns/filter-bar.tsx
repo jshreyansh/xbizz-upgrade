@@ -12,47 +12,12 @@ import { cn } from "@/lib/cn";
  * rows of pills that all looked equally important. Three tiers now:
  *
  *   1. Tabs across the top for the one split everybody makes first (what kind
- *      of thing), each with its count. Underlined, because they are the same
- *      list filtered, not somewhere else (TabNav is for somewhere else).
+ *      of thing), each with its count: PageTabs, the one tab row every page uses.
  *   2. One toolbar: search, a Filters button holding every secondary question
  *      with a badge for how many are set, and anything trailing (view toggle).
  *   3. What's applied, as chips you can take off one at a time — shown only
  *      when something is applied, so the resting state is two quiet rows.
  */
-
-export interface FilterTab {
-  id: string;
-  label: string;
-  count?: number;
-}
-
-export function FilterTabs({ items, activeId, onSelect, ariaLabel }: { items: FilterTab[]; activeId: string; onSelect: (id: string) => void; ariaLabel: string }) {
-  return (
-    <div role="tablist" aria-label={ariaLabel} className="flex items-end gap-5 overflow-x-auto border-b border-hair [scrollbar-width:none]">
-      {items.map((tab) => {
-        const on = tab.id === activeId;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={on}
-            onClick={() => onSelect(tab.id)}
-            className={cn(
-              "-mb-px flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 pb-2.5 pt-1 text-body font-bold transition-colors",
-              on ? "border-brand text-ink" : "border-transparent text-ink-3 hover:text-ink"
-            )}
-          >
-            {tab.label}
-            {tab.count !== undefined && (
-              <span className={cn("rounded-glyph px-1.5 text-micro font-bold tabular-nums", on ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4")}>{tab.count}</span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 export interface FilterGroup {
   id: string;

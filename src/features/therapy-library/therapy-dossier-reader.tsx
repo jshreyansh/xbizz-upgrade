@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { FileText, History } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, FileText, History, Loader2, Paperclip, Target } from "lucide-react";
 import { THERAPY_SECTIONS, useTherapyLibraryStore, type TherapyDossier, type TherapyVersion } from "@/features/therapy-library/therapy-library-store";
 
 export const originWords = (v: TherapyVersion) => (v.origin === "swishx" ? "Made with SwishX" : `Uploaded${v.fileName ? ` · ${v.fileName}` : ""}`);
@@ -11,7 +11,7 @@ export function useNewVersion(id: string) {
   const dossier = useTherapyLibraryStore((s) => s.dossiers.find((d) => d.id === id));
   const addDossier = useTherapyLibraryStore((s) => s.addDossier);
   const fileRef = useRef<HTMLInputElement>(null);
-  const remake = () => dossier && addDossier({ areaId: dossier.areaId, diseaseId: dossier.diseaseId, disease: dossier.disease, origin: "swishx" });
+  const remake = () => dossier && addDossier({ areaId: dossier.areaId, diseaseId: dossier.diseaseId, disease: dossier.disease, origin: "swishx", brief: dossier.brief, materials: dossier.materials });
   const input = (
     <input
       ref={fileRef}
@@ -33,18 +33,10 @@ export function useNewVersion(id: string) {
  * placeholders in this prototype: real content comes from the sources or the file.
  */
 export function TherapyDossierBody({ dossier }: { dossier: TherapyDossier }) {
-  if (dossier.status === "making") {
-    return (
-      <div className="rounded-panel border border-tint-line bg-tint px-4 py-6 text-center">
-        <p className="text-body font-bold text-brand-deep">
-          {dossier.origin === "swishx" ? "SwishX is writing this dossier from cited sources…" : `Reading ${dossier.fileName ?? "your file"}…`}
-        </p>
-        <p className="mt-1 text-label text-ink-3">It opens here as soon as it is ready.</p>
-      </div>
-    );
-  }
+  if (dossier.status === "making") return <BuildProgress dossier={dossier} />;
   return (
     <div className="grid gap-5">
+      <BriefCard dossier={dossier} />
       <div className="flex flex-wrap gap-x-5 gap-y-1 text-label text-ink-3">
         <span><b className="text-ink">{dossier.sections}</b> sections</span>
         <span><b className="text-ink">{dossier.sources}</b> sources cited</span>
@@ -79,6 +71,86 @@ export function TherapyDossierBody({ dossier }: { dossier: TherapyDossier }) {
           ))}
         </section>
       )}
+    </div>
+  );
+}
+
+/** What it was asked for and what it was given, so a reader knows what it was built to do. */
+function BriefCard({ dossier }: { dossier: TherapyDossier }) {
+  if (!dossier.brief && !dossier.materials?.length) return null;
+  return (
+    <div className="grid gap-2 rounded-panel border border-hair bg-canvas p-3.5">
+      {dossier.brief && (
+        <p className="flex gap-2 text-label text-ink-2">
+          <Target className="mt-0.5 size-3.5 shrink-0 text-brand" />
+          <span><b className="text-ink">Built for:</b> {dossier.brief}</span>
+        </p>
+      )}
+      {!!dossier.materials?.length && (
+        <div className="flex flex-wrap items-center gap-1.5 text-caption text-ink-3">
+          <Paperclip className="size-3.5 shrink-0 text-ink-4" />
+          <span>From your materials:</span>
+          {dossier.materials.map((m) => (
+            <span key={m} className="rounded-chip border border-hair bg-card px-2 py-0.5">{m}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Steps a build goes through. Prototype: they advance on a timer, not on real work. */
+function buildSteps(d: TherapyDossier) {
+  if (d.origin === "upload") {
+    return [`Reading ${d.fileName ?? "your file"}`, "Sorting it into the six sections", "Matching every statement to its source", "Getting it ready to use"];
+  }
+  return [
+    ...(d.materials?.length ? [`Reading your ${d.materials.length === 1 ? "material" : `${d.materials.length} materials`}`] : []),
+    "Searching CDC, PubMed and ClinicalTrials.gov",
+    `Writing the six sections for ${d.disease}`,
+    "Checking every citation",
+    "Getting it ready to use",
+  ];
+}
+
+/** The dossier while it is being built: where it is, and that it opens here when done. */
+function BuildProgress({ dossier }: { dossier: TherapyDossier }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, []);
+  const steps = buildSteps(dossier);
+  const total = dossier.buildMs ?? 6000;
+  const done = Math.min(0.97, Math.max(0, (now - (dossier.startedAt ?? now)) / total));
+  const current = Math.min(steps.length - 1, Math.floor(done * steps.length));
+
+  return (
+    <div className="grid gap-4 rounded-panel border border-tint-line bg-tint p-5">
+      <div className="grid gap-1">
+        <p className="text-body-lg font-bold text-brand-deep">
+          {dossier.origin === "swishx" ? `SwishX is building the ${dossier.disease} dossier` : `Adding your ${dossier.disease} dossier`}
+        </p>
+        <p className="text-label text-ink-3">It opens here as soon as it is ready. You can leave this page; it keeps going.</p>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-card">
+        <div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-swish" style={{ width: `${Math.round(done * 100)}%` }} />
+      </div>
+      <ol className="grid gap-2">
+        {steps.map((s, i) => (
+          <li key={s} className={i > current ? "flex items-center gap-2 text-label text-ink-4" : "flex items-center gap-2 text-label text-ink-2"}>
+            {i < current ? (
+              <span className="grid size-4 place-items-center rounded-full bg-brand text-white"><Check className="size-2.5 stroke-[3]" /></span>
+            ) : i === current ? (
+              <Loader2 className="size-4 animate-spin text-brand" />
+            ) : (
+              <span className="size-4 rounded-full border border-hair-2 bg-card" />
+            )}
+            <span className={i === current ? "font-bold text-ink" : undefined}>{s}</span>
+          </li>
+        ))}
+      </ol>
+      <BriefCard dossier={dossier} />
     </div>
   );
 }

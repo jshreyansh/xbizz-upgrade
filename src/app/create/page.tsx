@@ -74,7 +74,7 @@ export default function CreatePage() {
     }
     if (assetType === "infographic") {
       return (
-        <AppShell pageTitle="Create Doc/Images">
+        <AppShell pageTitle="Create Docs">
           <CreativesModeScreen />
         </AppShell>
       );

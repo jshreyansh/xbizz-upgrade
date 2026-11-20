@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeading } from "@/components/patterns/page-heading";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, ShieldCheck, Eye, Star, Package } from "lucide-react";
@@ -52,6 +53,17 @@ export function ProductLibraryScreen() {
       <CreateBrandModal open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* Search + view toggle */}
+      <PageTabs
+        ariaLabel="Drugs or devices"
+        activeId={kind}
+        onSelect={(id) => setKind(id as typeof kind)}
+        items={[
+          { id: "all", label: "All", count: products.length },
+          { id: "drug", label: "Drugs", count: products.length - deviceCount },
+          { id: "device", label: "Devices", count: deviceCount },
+        ]}
+      />
+
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <div style={{ position: "relative", flex: 1, maxWidth: 420 }}>
           <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)" }} />
@@ -62,19 +74,8 @@ export function ProductLibraryScreen() {
             style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
           />
         </div>
-        <Segmented aria-label="Drugs or devices">
-          {([
-            ["all", "All", products.length],
-            ["drug", "Drugs", products.length - deviceCount],
-            ["device", "Devices", deviceCount],
-          ] as const).map(([k, label, n]) => (
-            <SegmentedButton key={k} active={kind === k} onClick={() => setKind(k)}>
-              {label}
-              <span className="tabular-nums text-ink-4">{n}</span>
-            </SegmentedButton>
-          ))}
-        </Segmented>
-        <Segmented>
+        <div style={{ flex: 1 }} />
+        <Segmented aria-label="Grid or list">
           {(["grid", "list"] as const).map((v) => (
             <SegmentedButton key={v} active={view === v} onClick={() => setView(v)}>
               {v === "grid" ? <Grid3x3 size={13} /> : <List size={13} />}

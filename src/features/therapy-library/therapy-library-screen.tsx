@@ -7,6 +7,7 @@ import { useCan } from "@/features/settings/view-as";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { PageHeading } from "@/components/patterns/page-heading";
+import { CreateTile } from "@/components/patterns/create-tile";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { PickSearch } from "@/components/patterns/pick-list";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
@@ -15,8 +16,6 @@ import { DISEASE_THERAPY_AREAS } from "@/features/workspace/ad-options";
 import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { TherapyAreaMark, areaMark } from "@/features/therapy-library/therapy-area-mark";
 import { NewTherapyDossierModal } from "@/features/therapy-library/new-therapy-dossier-modal";
-
-type Kind = "all" | "area" | "disease";
 
 /** One row of the library: a therapy area, or a disease in one. */
 interface Item {
@@ -35,12 +34,10 @@ interface Item {
   href: string;
 }
 
-const KIND_LABEL = { area: "Therapy Area", disease: "Disease" } as const;
-
 /**
  * Therapy areas and their disease dossiers, for unbranded and awareness
  * content. The Product Library holds brands; this holds the conditions.
- * Laid out like the Product Library: a filter, then grid or list.
+ * One list of therapies, areas and diseases together, in a grid or a list.
  */
 export function TherapyLibraryScreen() {
   const router = useRouter();
@@ -49,7 +46,6 @@ export function TherapyLibraryScreen() {
   const dossiers = useTherapyLibraryStore((s) => s.dossiers);
   const images = useTherapyLibraryStore((s) => s.images);
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<Kind>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [adding, setAdding] = useState(false);
 
@@ -93,9 +89,10 @@ export function TherapyLibraryScreen() {
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pool = kind === "area" ? items.areas : kind === "disease" ? items.diseases : [...items.areas, ...items.diseases];
-    return pool.filter((i) => !q || i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q));
-  }, [items, kind, query]);
+    return [...items.areas, ...items.diseases]
+      .sort((x, y) => x.name.localeCompare(y.name))
+      .filter((i) => !q || i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q));
+  }, [items, query]);
   const empty = dossiers.length === 0;
 
   return (
@@ -103,7 +100,7 @@ export function TherapyLibraryScreen() {
       <PageHeading
         title="Therapy Library"
         description="Disease dossiers by therapy area, with their images and brand kits, for unbranded and awareness content."
-        actions={canManage && !empty ? <Button onClick={() => setAdding(true)}><Plus className="size-4" />New Therapy Dossier</Button> : undefined}
+        actions={canManage && !empty ? <Button onClick={() => setAdding(true)}><Plus className="size-4" />New Therapy</Button> : undefined}
       />
 
       {empty ? (
@@ -130,20 +127,8 @@ export function TherapyLibraryScreen() {
         <>
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="min-w-[240px] max-w-[420px] flex-1">
-              <PickSearch value={query} onChange={setQuery} placeholder="Search therapy areas or diseases…" />
+              <PickSearch value={query} onChange={setQuery} placeholder="Search therapies…" />
             </div>
-            <Segmented aria-label="Therapy areas or diseases">
-              {([
-                ["all", "All", items.areas.length + items.diseases.length],
-                ["area", "Therapy Areas", items.areas.length],
-                ["disease", "Diseases", items.diseases.length],
-              ] as const).map(([k, label, n]) => (
-                <SegmentedButton key={k} active={kind === k} onClick={() => setKind(k)}>
-                  {label}
-                  <span className="tabular-nums text-ink-4">{n}</span>
-                </SegmentedButton>
-              ))}
-            </Segmented>
             <Segmented aria-label="Grid or list">
               {(["grid", "list"] as const).map((v) => (
                 <SegmentedButton key={v} active={view === v} onClick={() => setView(v)}>
@@ -156,6 +141,14 @@ export function TherapyLibraryScreen() {
 
           {view === "grid" ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
+              {canManage && !query.trim() && (
+                <CreateTile
+                  title="New Therapy"
+                  subtitle="Pick the area and disease, then upload a dossier or have SwishX make one."
+                  delayMs={40}
+                  onSelect={() => setAdding(true)}
+                />
+              )}
               {shown.map((it, i) => (
                 <LibraryTile
                   key={it.key}
@@ -166,17 +159,12 @@ export function TherapyLibraryScreen() {
                       <TherapyAreaMark areaId={it.areaId} className="size-16 rounded-full bg-card/60" iconClassName="size-8" />
                     </div>
                   }
-                  mediaTopLeft={
-                    <span className="rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90">
-                      {KIND_LABEL[it.kind]}
-                    </span>
-                  }
                   title={it.name}
                   subtitle={it.kind === "disease" ? `In ${it.detail}` : it.detail}
                   chips={
                     <>
                       <Chip tone={it.making ? "brand" : "ok"} weight="bold">
-                        {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version} · ${it.sources} sources`) : `${it.dossiers} ${it.dossiers === 1 ? "disease" : "diseases"}`}
+                        {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version} · ${it.sources} sources`) : `${it.dossiers} ${it.dossiers === 1 ? "dossier" : "dossiers"}`}
                       </Chip>
                       <Chip tone="neutral" weight="bold">{it.images} images</Chip>
                     </>
@@ -208,20 +196,12 @@ export function TherapyLibraryScreen() {
                   ),
                 },
                 {
-                  id: "type",
-                  header: "Type",
-                  width: 130,
-                  cell: (it) => (
-                    <Chip tone="neutral" weight="bold" className="uppercase tracking-[.03em]">{KIND_LABEL[it.kind]}</Chip>
-                  ),
-                },
-                {
                   id: "dossier",
                   header: "Dossier",
                   width: 130,
                   cell: (it) => (
                     <span className="text-body font-bold tabular-nums text-ink-2">
-                      {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version}`) : `${it.dossiers} ${it.dossiers === 1 ? "disease" : "diseases"}`}
+                      {it.kind === "disease" ? (it.making ? "Being prepared" : `v${it.version}`) : `${it.dossiers} ${it.dossiers === 1 ? "dossier" : "dossiers"}`}
                     </span>
                   ),
                 },
@@ -236,7 +216,7 @@ export function TherapyLibraryScreen() {
         </>
       )}
 
-      <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={(id) => { setAdding(false); router.push(`/therapy-library/${id}`); }} />
+      <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={(areaId, id) => { setAdding(false); router.push(`/therapy-library/${areaId}?disease=${id}`); }} />
     </div>
   );
 }

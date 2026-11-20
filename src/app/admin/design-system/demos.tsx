@@ -32,7 +32,8 @@ import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components
 import { RequestModal } from "@/components/patterns/request-modal";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
 import { DataList } from "@/components/patterns/data-list";
-import { FilterBar, FilterTabs } from "@/components/patterns/filter-bar";
+import { FilterBar } from "@/components/patterns/filter-bar";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { PaginationBar, usePaged } from "@/components/patterns/pagination";
 import { LibraryModalGoTo, LibraryModalHeader } from "@/components/patterns/library-modal";
 import { TileList } from "@/components/patterns/tile-list";
@@ -453,7 +454,7 @@ export function PatternDemos() {
         </div>
       </Demo>
 
-      <Demo name="Segmented / SegmentedButton" use="two to four mutually exclusive views of the same thing: grid or list, mine or team">
+      <Demo name="Segmented / SegmentedButton" use="a small view switch inside a page or editor: Grid or List, Inbox or Phone. Never a page's main tabs; that is PageTabs">
         <Segmented>
           {[["grid", "Grid"], ["list", "List"], ["archived", "Archived"]].map(([id, label]) => (
             <SegmentedButton key={id} active={seg === id} onClick={() => setSeg(id)}>{label}</SegmentedButton>
@@ -461,9 +462,14 @@ export function PatternDemos() {
         </Segmented>
       </Demo>
 
-      <Demo name="FilterTabs / FilterBar" use="filtering one list: status tabs above, search and filters in the bar">
+      <Demo name="PageTabs" use="the one tab row for a page's main split, with counts: All Content kinds, Product Library Drugs and Devices, MLR queues, Settings sections. Give a tab href to navigate by URL">
+        <PageTabs ariaLabel="Kind of content" activeId={status} onSelect={setStatus}
+          items={[{ id: "all", label: "All", count: 18 }, { id: "approved", label: "Video", count: 6 }, { id: "pending", label: "Docs", count: 4 }, { id: "held", label: "Email", count: 5 }]} />
+      </Demo>
+
+      <Demo name="PageTabs + FilterBar" use="a library shelf: the main split as tabs, then search, Filters and the view switch in one bar">
         <Stack gap={3}>
-          <FilterTabs ariaLabel="Status" activeId={status} onSelect={setStatus}
+          <PageTabs ariaLabel="Status" activeId={status} onSelect={setStatus}
             items={[{ id: "all", label: "All", count: 214 }, { id: "approved", label: "Approved", count: 180 }, { id: "pending", label: "Pending", count: 27 }, { id: "held", label: "Held Out", count: 7 }]} />
           <FilterBar query={query} onQuery={setQuery} placeholder="Search diseases or therapy areas…"
             filters={[{ id: "area", label: "Therapy Area", value: area, defaultValue: "all", onChange: setArea,

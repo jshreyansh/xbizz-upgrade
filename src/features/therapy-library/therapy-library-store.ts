@@ -30,6 +30,13 @@ export interface TherapyDossier extends TherapyVersion {
   sources: number;
   /** Earlier versions, newest first. Nothing is thrown away. */
   previous: TherapyVersion[];
+  /** What it was made for, in the asker's own words (SwishX-made only). */
+  brief?: string;
+  /** Files given to SwishX to work from, alongside its own cited sources. */
+  materials?: string[];
+  /** When the current build started, and how long it takes, to show its progress. */
+  startedAt?: number;
+  buildMs?: number;
 }
 
 export interface TherapyImage {
@@ -89,7 +96,7 @@ interface TherapyLibraryState {
   /** Brand kits by therapy area id, or by dossier id where a disease has its own. */
   kits: Record<string, BrandKit>;
   /** Adds a dossier, or a new version of the one already there for that disease. */
-  addDossier: (input: { areaId: string; diseaseId: string; disease: string; origin: TherapyOrigin; fileName?: string }) => string;
+  addDossier: (input: { areaId: string; diseaseId: string; disease: string; origin: TherapyOrigin; fileName?: string; brief?: string; materials?: string[] }) => string;
   addImages: (areaId: string, images: TherapyImage[]) => void;
   removeImage: (areaId: string, id: string) => void;
   setKit: (key: string, kit: BrandKit | undefined) => void;
@@ -103,11 +110,17 @@ export const useTherapyLibraryStore = create<TherapyLibraryState>((set, get) => 
   dossiers: SEED,
   images: SEED_IMAGES,
   kits: {},
-  addDossier: ({ areaId, diseaseId, disease, origin, fileName }) => {
+  addDossier: ({ areaId, diseaseId, disease, origin, fileName, brief, materials }) => {
+    /* Prototype timings: SwishX writing from sources takes longer than reading a finished file. */
+    const buildMs = origin === "swishx" ? 14000 : 6000;
     const existing = get().dossiers.find((d) => d.diseaseId === diseaseId);
     const id = existing?.id ?? `td-${diseaseId}-${Date.now().toString(36)}`;
     const fresh: TherapyDossier = {
       id, areaId, diseaseId, disease, origin, fileName,
+      brief: origin === "swishx" ? brief?.trim() || undefined : undefined,
+      materials: origin === "swishx" && materials?.length ? materials : undefined,
+      startedAt: Date.now(),
+      buildMs,
       status: "making",
       version: existing ? existing.version + 1 : 1,
       updated: today(), by,
@@ -125,7 +138,7 @@ export const useTherapyLibraryStore = create<TherapyLibraryState>((set, get) => 
           d.id === id && d.status === "making" ? { ...d, status: "ready", sources: origin === "swishx" ? 28 + (disease.length % 14) : 12 + (disease.length % 9) } : d
         ),
       }));
-    }, origin === "swishx" ? 4500 : 2500);
+    }, buildMs);
     return id;
   },
   addImages: (areaId, images) => set((s) => ({ images: { ...s.images, [areaId]: [...images, ...(s.images[areaId] ?? [])] } })),

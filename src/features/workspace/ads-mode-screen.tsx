@@ -1,6 +1,8 @@
 "use client";
 
 import { PageHeading } from "@/components/patterns/page-heading";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -98,7 +100,11 @@ export function AdsModeScreen() {
 
   return (
     <div className="page-enter max-w-[1140px] space-y-6">
-      <PageHeading title="Create Ads" description="Grounded in your verified label claims, ready for every platform." />
+      <PageHeading
+        title="Create Ads"
+        description="Grounded in your verified label claims, ready for every platform."
+        actions={<Button onClick={() => requireClient(() => handleSelect("scratch"))}><Plus className="size-4" />New Ad</Button>}
+      />
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile

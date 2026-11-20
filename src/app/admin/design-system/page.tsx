@@ -15,7 +15,7 @@ import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { SidePanel, SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { Sheet } from "@/components/patterns/sheet";
-import { TabNav } from "@/components/patterns/tab-nav";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { DataTable } from "@/components/patterns/data-table";
 import { SortableList } from "@/components/patterns/sortable-list";
 import { ScaleRow, SwatchRow } from "./token-table";
@@ -405,21 +405,21 @@ export default function DesignSystemPage() {
             </Stack>
 
             <Stack gap={2} className="mt-6">
-              <Label size="micro">TabNav, segmented, for different things rather than filtered views</Label>
+              <Label size="micro">PageTabs. One tab row for every page</Label>
               <Text size="caption" tone="muted">
-                Segmented rather than underlined on purpose: an underline
-                says &ldquo;same list, filtered&rdquo;, a segment says &ldquo;somewhere else&rdquo;.
-                Concentric by construction &mdash; an 18px shell with a 4px gutter around 14px tabs,
-                which is the radius scale&apos;s own step. It scrolls rather than wraps, because nine
-                tabs do not fit at 1280px and wrapping makes the row&apos;s height depend on the viewport.
+                Underlined, with an optional count. It replaced three look-alikes (FilterTabs, a
+                Segmented pill group and the TabNav pill rail) that did the same job differently on
+                different pages. Underline won because it is the tab Office, Teams and SharePoint users
+                already know. A tab with <code className="px-1">href</code> navigates, as Settings does;
+                without one it calls <code className="px-1">onSelect</code>. It scrolls rather than wraps.
               </Text>
-              <TabNav
+              <PageTabs
                 ariaLabel="Demo"
                 activeId={demoTab}
                 onSelect={setDemoTab}
                 items={[
                   { id: "one", label: "Workspace" },
-                  { id: "two", label: "Team", badge: 10 },
+                  { id: "two", label: "Team", count: 10 },
                   { id: "three", label: "Billing and Usage" },
                   { id: "four", label: "Integrations" },
                 ]}
@@ -454,12 +454,11 @@ export default function DesignSystemPage() {
 
             <Stack gap={2} className="mt-6">
               <Label size="micro">Which tabs, when</Label>
-              <Text size="caption" tone="muted">Five tab systems, each for a different job. Pick by what the tabs switch between.</Text>
+              <Text size="caption" tone="muted">Pick by where the tabs sit. A page&apos;s main tabs are always PageTabs; the others are for smaller jobs inside a page.</Text>
               {[
-                ["TabNav", "different sections of one page", "Settings: Workspace, Team, Billing and Usage"],
-                ["Segmented", "two to four views of the same thing, often a toggle", "Grid or List; Mine or Team"],
-                ["FilterTabs", "the same list, filtered, usually with counts", "All, Approved, Pending, Held Out"],
-                ["DetailHeader tabs", "the ways of looking at one object, joined to its identity card", "Product: Dossier, Claims, Images"],
+                ["PageTabs", "a page's main split, or sections, with counts", "All Content: All, Video, Docs, Ads, Email; Settings"],
+                ["Segmented", "a small view switch inside a page or editor, never a page's main tabs", "Grid or List; Inbox or Phone"],
+                ["DetailHeader tabs", "the ways of looking at one object, joined to its identity card", "Product: Dossiers, Claims, Images"],
                 ["InspectorTabs", "the studio's right panel, where width is scarce", "Chat, Claims, Comments"],
               ].map(([name, when, eg]) => (
                 <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control border border-hair bg-subtle px-3 py-2">

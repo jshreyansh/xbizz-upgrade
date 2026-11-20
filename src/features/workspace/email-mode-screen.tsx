@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { PageHeading } from "@/components/patterns/page-heading";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CreateTile } from "@/components/patterns/create-tile";
 import { requireClient } from "@/features/workspace/client-picker";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -185,7 +187,11 @@ export function EmailModeScreen() {
 
   return (
     <div className="page-enter max-w-[1140px] space-y-6">
-      <PageHeading title="Create Email" description="Approved Email for HCPs and P&T committees, sent from your CRM." />
+      <PageHeading
+        title="Create Email"
+        description="Approved Email for HCPs and P&T committees, sent from your CRM."
+        actions={<Button onClick={() => requireClient(() => handleSelect("followup"))}><Plus className="size-4" />New Email</Button>}
+      />
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile

@@ -84,6 +84,7 @@ Use Apple’s principles of hierarchy, concentricity, progressive disclosure, an
 - Content surfaces use solid standard materials. Transient controls may use subtle translucency, but decorative glass must not compete with content.
 - Maintain at least 40px desktop control height, visible focus, legible labels, and enough separation to prevent accidental activation.
 - Use symbols to clarify meaning, never as generic AI decoration.
+- A page's main tabs are always `PageTabs`: underlined, with a count where the number helps, and scrolling sideways rather than wrapping. This covers kinds, shelves, queues and settings sections. A `Segmented` pill group is only for a small view switch inside a page or editor, such as Grid / List, and is never a page's main tabs.
 
 Relevant source guidance: [Apple design principles](https://developer.apple.com/design/human-interface-guidelines/design-principles), [layout](https://developer.apple.com/design/human-interface-guidelines/layout), [buttons](https://developer.apple.com/design/human-interface-guidelines/buttons), [pop-up buttons](https://developer.apple.com/design/human-interface-guidelines/pop-up-buttons), and [materials](https://developer.apple.com/design/human-interface-guidelines/materials).
 

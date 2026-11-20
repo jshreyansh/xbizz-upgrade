@@ -4,7 +4,8 @@ import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
 import { Grid3x3, List, Film, Image as ImageIcon, Mail, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
-import { FilterBar, FilterTabs } from "@/components/patterns/filter-bar";
+import { FilterBar } from "@/components/patterns/filter-bar";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { DataList } from "@/components/patterns/data-list";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
@@ -32,7 +33,7 @@ import { AssetPreview, StatusChip } from "@/features/content-library/asset-previ
 type KindFilter = "all" | "video" | "infographic" | "ad" | "email";
 
 const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone, email: Mail };
-const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / Image", visual: "Doc / Image", carousel: "Doc / Image", ad: "Ads", email: "Email" };
+const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Docs", visual: "Docs", carousel: "Docs", ad: "Ads", email: "Email" };
 export type StageFilter = "all" | "draft" | "shared" | "published" | "archived";
 
 export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
@@ -88,14 +89,14 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
 
       {/* Kind as tabs, then search, the rest under Filters, and the view. */}
       <div className="space-y-4">
-        <FilterTabs
+        <PageTabs
           ariaLabel="Kind of content"
           activeId={kind}
           onSelect={(id) => setKind(id as KindFilter)}
           items={[
             { id: "all", label: "All", count: kindCount("all") },
             { id: "video", label: "Video", count: kindCount("video") },
-            { id: "infographic", label: "Doc and Image", count: kindCount("infographic") },
+            { id: "infographic", label: "Docs", count: kindCount("infographic") },
             { id: "ad", label: "Ads", count: kindCount("ad") },
             { id: "email", label: "Email", count: kindCount("email") },
           ]}
@@ -228,7 +229,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
                     const Icon = KIND_ICON[a.kind];
                     return <Icon size={11} />;
                   })()}
-                  {KIND_LABEL[a.kind] === "Doc / Image" ? "Doc" : KIND_LABEL[a.kind]}
+                  {KIND_LABEL[a.kind]}
                 </span>
               ),
             },

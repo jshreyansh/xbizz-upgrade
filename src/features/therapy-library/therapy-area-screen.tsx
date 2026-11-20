@@ -93,7 +93,7 @@ export function TherapyAreaScreen({ areaId, initialTab }: { areaId: string; init
         <TherapyBrandKit areaId={area.id} areaName={area.name} dossiers={dossiers.filter((d) => d.status === "ready")} readOnly={!can("brandManage")} />
       )}
 
-      <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={() => setAdding(false)} areaId={area.id} />
+      <NewTherapyDossierModal open={adding} onClose={() => setAdding(false)} onAdded={(_, id) => { setAdding(false); openDisease(id); }} areaId={area.id} />
     </div>
   );
 }

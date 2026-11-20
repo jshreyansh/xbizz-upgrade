@@ -3,14 +3,15 @@
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useCan } from "@/features/settings/view-as";
 import { useMemo, useState } from "react";
-import { Search, UserRoundPlus } from "lucide-react";
+import { Plus, Search, UserRoundPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CreateTile } from "@/components/patterns/create-tile";
 import { useCharactersStore } from "@/features/content-library/characters-store";
 import {
   characterTypeLabel,
   type Character,
 } from "@/features/content-library/characters-data";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { CharacterTile } from "@/features/content-library/character-tile";
 import { CharacterCreateModal } from "@/features/content-library/character-create-modal";
 import { CharacterEditModal } from "@/features/content-library/character-edit-modal";
@@ -78,10 +79,19 @@ export function CharactersScreen() {
       <PageHeading
         title="Characters"
         description="People your studios can cast. Each one held as a set of views that agree with each other, so the same face turns up in every asset."
+        actions={canCreate ? <Button onClick={() => setCreating(true)}><Plus className="size-4" />New Character</Button> : undefined}
       />
 
-      {/* Active / Archived, then search and filters — the order every other
-          shelf here uses. */}
+      {/* Active / Archived, then search — the order every other shelf here uses. */}
+      <PageTabs
+        ariaLabel="Active or archived"
+        activeId={shelf}
+        onSelect={(id) => setShelf(id as typeof shelf)}
+        items={[
+          { id: "active", label: "Active", count: counts.active },
+          { id: "archived", label: "Archived", count: counts.archived },
+        ]}
+      />
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Same width and height as every other library's search — a shelf
             that sizes its own controls reads as a different product. */}
@@ -95,17 +105,6 @@ export function CharactersScreen() {
           />
         </div>
 
-        <Segmented>
-          {([
-            { id: "active" as const, label: "Active", count: counts.active },
-            { id: "archived" as const, label: "Archived", count: counts.archived },
-          ]).map((tab) => (
-            <SegmentedButton key={tab.id} active={shelf === tab.id} onClick={() => setShelf(tab.id)}>
-              {tab.label}
-              <span className="text-caption tabular-nums text-ink-4">{tab.count}</span>
-            </SegmentedButton>
-          ))}
-        </Segmented>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">

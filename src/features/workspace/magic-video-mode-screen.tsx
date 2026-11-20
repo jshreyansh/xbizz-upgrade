@@ -1,6 +1,8 @@
 "use client";
 
 import { PageHeading } from "@/components/patterns/page-heading";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -93,7 +95,11 @@ export function MagicVideoModeScreen() {
 
   return (
     <div className="page-enter max-w-[1140px] space-y-6">
-      <PageHeading title="Create Videos" description="Grounded in your verified label claims, from the first scene." />
+      <PageHeading
+        title="Create Videos"
+        description="Grounded in your verified label claims, from the first scene."
+        actions={<Button onClick={() => requireClient(() => handleSelect("scratch"))}><Plus className="size-4" />New Video</Button>}
+      />
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile

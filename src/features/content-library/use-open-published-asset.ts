@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { LibraryAsset } from "@/features/content-library/content-library-data";
 import { demoScenarios } from "@/features/workspace/demo-scenarios";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useEmailStore } from "@/features/workspace/email-store";
 
 /**
  * The way back into a published asset.
@@ -36,6 +37,8 @@ export function useOpenPublishedAsset(): (asset: LibraryAsset) => void {
   const setAdFormats = useWorkspaceStore((s) => s.setAdFormats);
   const setAdSubject = useWorkspaceStore((s) => s.setAdSubject);
   const setAdCampaign = useWorkspaceStore((s) => s.setAdCampaign);
+  const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
+  const setEmailAbout = useEmailStore((s) => s.setAbout);
 
   return (asset: LibraryAsset) => {
     const scenario = demoScenarios.find((s) => s.id === asset.scenarioId);
@@ -56,6 +59,12 @@ export function useOpenPublishedAsset(): (asset: LibraryAsset) => void {
       setAdFormats(asset.ad.formats ?? {});
       setAdSubject(asset.ad.subject);
       setAdCampaign(null);
+    }
+    /* An email is rebuilt from who it is for, who sends it and why, on its brand's dossier. */
+    if (asset.email) {
+      const { dossierId, ...about } = asset.email;
+      setSourcePayload({ dossierId });
+      setEmailAbout(about);
     }
     setProjectName(asset.title);
     setAssetType(asset.kind);

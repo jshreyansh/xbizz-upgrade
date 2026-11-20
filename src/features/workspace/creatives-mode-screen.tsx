@@ -1,6 +1,9 @@
 "use client";
 
 import { PageHeading } from "@/components/patterns/page-heading";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CreateTile } from "@/components/patterns/create-tile";
 import { useState } from "react";
 import { useWorkspaceStore, type CreationMode, type DocumentType } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -147,11 +150,21 @@ export function CreativesModeScreen() {
   return (
     <div className="page-enter max-w-[1140px] space-y-6 text-left">
       {/* Header, the same shape as the video screen's. */}
-      <PageHeading title="Create Docs" description="Grounded in your verified label claims, from the first page." />
+      <PageHeading
+        title="Create Docs"
+        description="Grounded in your verified label claims, from the first page."
+        actions={<Button onClick={() => handleSelectMode("magic-chart", "", "infographic")}><Plus className="size-4" />New Doc</Button>}
+      />
 
       {/* Three document types, three across: the same grid the video screen
           uses. Each starts from its own brief and follows the same steps. */}
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
+        <CreateTile
+          title="Create From Scratch"
+          subtitle="A blank brief and your own direction, grounded in the same approved claims."
+          delayMs={60}
+          onSelect={() => handleSelectMode("magic-chart", "", "infographic")}
+        />
         <StartingPointCard
           title="Infographic / Chart"
           subtitle="One page led by a figure, for HCPs or patients"

@@ -8,7 +8,7 @@ import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { useCan } from "@/features/settings/view-as";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import type { Member } from "@/features/settings/settings-types";
@@ -104,21 +104,12 @@ export function MlrReviewScreen() {
         }
       />
 
-      <Segmented role="tablist" aria-label="Review queue" className="w-fit bg-card">
-        {tabs.map((t) => (
-          <SegmentedButton
-            key={t.id}
-            active={activeTab === t.id}
-            onClick={() => setTab(t.id)}
-            className={cn("gap-1.5 px-3 py-1.5", activeTab === t.id && "bg-ink text-white shadow-none")}
-          >
-            {t.label}
-            <span className={cn("rounded-chip px-1.5 text-caption font-bold tabular-nums", activeTab === t.id ? "bg-white/20" : "bg-subtle text-ink-3")}>
-              {lists[t.id].length}
-            </span>
-          </SegmentedButton>
-        ))}
-      </Segmented>
+      <PageTabs
+        ariaLabel="Review queue"
+        activeId={activeTab}
+        onSelect={(id) => setTab(id as typeof activeTab)}
+        items={tabs.map((t) => ({ id: t.id, label: t.label, count: lists[t.id].length }))}
+      />
 
       {list.length === 0 ? (
         <EmptyState

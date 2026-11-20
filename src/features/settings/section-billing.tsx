@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
-import { TabNav } from "@/components/patterns/tab-nav";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { CREDIT_PRICE_USD, creditsInUsd, useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, SettingRow } from "@/features/settings/settings-parts";
 import type { Invoice, TopUpEntry, UsageEntry } from "@/features/settings/settings-types";
@@ -215,15 +215,15 @@ export function SectionBilling() {
         description={canManage ? "What was spent, what was bought, and what was invoiced." : "What was spent, by whom, on which asset."}
       >
         <Stack gap={3}>
-          <TabNav
+          <PageTabs
             ariaLabel="History"
             activeId={history}
             onSelect={(id) => setHistory(id as typeof history)}
             items={[
-              { id: "usage", label: "Usage", badge: s.usage.length },
+              { id: "usage", label: "Usage", count: s.usage.length },
               ...(canManage ? [
-                { id: "topups", label: "Top-Ups", badge: s.topUps.length },
-                { id: "invoices", label: "Invoices", badge: s.invoices.length },
+                { id: "topups", label: "Top-Ups", count: s.topUps.length },
+                { id: "invoices", label: "Invoices", count: s.invoices.length },
               ] : []),
             ]}
           />

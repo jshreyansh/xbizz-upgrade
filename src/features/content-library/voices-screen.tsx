@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Mic } from "lucide-react";
+import { Mic, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeading } from "@/components/patterns/page-heading";
 import { CreateTile } from "@/components/patterns/create-tile";
-import { FilterBar, FilterTabs } from "@/components/patterns/filter-bar";
+import { FilterBar } from "@/components/patterns/filter-bar";
+import { PageTabs } from "@/components/patterns/page-tabs";
 import { useCan } from "@/features/settings/view-as";
 import { VOICE_LANGUAGES, voiceLanguage, type Voice, type VoiceGender } from "@/features/content-library/voices-data";
 import { playVoicePreview, stopVoicePreview, useVoicesStore } from "@/features/content-library/voices-store";
@@ -78,10 +80,11 @@ export function VoicesScreen() {
       <PageHeading
         title="Voices"
         description="The voices your videos can be narrated in: your team's own, cloned with consent, and SwishX's stock voices. Each one tagged with its language and voice."
+        actions={canCreate ? <Button onClick={() => setCloning(true)}><Plus className="size-4" />New Voice</Button> : undefined}
       />
 
       <div className="space-y-4">
-        <FilterTabs
+        <PageTabs
           ariaLabel="Which voices"
           activeId={shelf}
           onSelect={(id) => setShelf(id as Shelf)}

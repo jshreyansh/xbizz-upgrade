@@ -3,7 +3,7 @@
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { TabNav, type TabNavItem } from "@/components/patterns/tab-nav";
+import { PageTabs, type PageTab } from "@/components/patterns/page-tabs";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { useCan } from "@/features/settings/view-as";
 import type { PermissionId } from "@/features/settings/settings-types";
@@ -79,7 +79,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   // replace lands.
   if (!onVisibleRoute) return null;
 
-  const items: TabNavItem[] = visible.map((s) => ({
+  const items: PageTab[] = visible.map((s) => ({
     id: s.id,
     label: s.label,
     href: `/settings/${s.id}`,
@@ -93,7 +93,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
         <PageHeading title="Settings" description={active?.blurb} />
       </div>
 
-      <TabNav items={items} activeId={activeId} ariaLabel="Settings sections" className="mb-6" />
+      <PageTabs items={items} activeId={activeId} ariaLabel="Settings sections" className="mb-6" />
       {children}
     </div>
   );
